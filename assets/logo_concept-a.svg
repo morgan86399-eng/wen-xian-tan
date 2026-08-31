@@ -1,0 +1,77 @@
+<svg class="brand-logo-icon" viewBox="0 0 200 200" overflow="visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldNatA" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF7"/>
+      <stop offset="20%" stop-color="#FDE68A"/>
+      <stop offset="55%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#B45309"/>
+    </linearGradient>
+    <radialGradient id="haloNatA" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(245, 158, 11, 0.4)"/>
+      <stop offset="65%" stop-color="rgba(139, 92, 246, 0.15)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <filter id="glowA" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#F59E0B" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+  
+  <!-- 背景靈氣光暈 -->
+  <circle cx="100" cy="100" r="92" fill="url(#haloNatA)"/>
+  
+  <!-- 外層星軌神聖環 (Astrological Rings) -->
+  <circle cx="100" cy="102" r="88" stroke="url(#goldNatA)" stroke-width="1.6" stroke-dasharray="4 4" opacity="0.6"/>
+  <ellipse cx="100" cy="105" rx="84" ry="34" transform="rotate(-22 100 105)" stroke="url(#goldNatA)" stroke-width="1.2" stroke-dasharray="2 3" opacity="0.45"/>
+
+  <!-- 自然流暢人體工學手型輪廓 (Natural Hand Silhouette) -->
+  <!-- 比例：中指最高(32)，無名指(38)，食指(48)，小指(68)，大拇指外展(96) -->
+  <g filter="url(#glowA)">
+    <path d="M 80 182 
+             C 66 172, 48 152, 45 132 
+             C 42 116, 48 104, 55 98 
+             C 60 94, 66 98, 70 106 
+             C 74 114, 76 122, 78 126
+             L 78 68 
+             C 78 54, 88 54, 88 68 
+             L 89 108
+             L 90 42 
+             C 90 28, 101 28, 101 42 
+             L 102 104
+             L 104 50 
+             C 104 36, 115 36, 115 50 
+             L 115 106
+             L 118 78 
+             C 118 66, 128 66, 128 78 
+             L 127 122 
+             C 127 150, 116 176, 96 182 
+             Z" 
+          stroke="url(#goldNatA)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="rgba(7, 6, 20, 0.35)"/>
+
+    <!-- 自然掌紋系統 (三大主線：生命線、智慧線、感情線) -->
+    <!-- 生命線 (環繞大魚際) -->
+    <path d="M 74 122 C 78 136, 84 154, 88 174" stroke="url(#goldNatA)" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+    <!-- 智慧線 (橫貫掌心) -->
+    <path d="M 74 124 C 88 130, 106 138, 120 144" stroke="url(#goldNatA)" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+    <!-- 感情線 (起自小指下方弧度) -->
+    <path d="M 124 114 C 110 108, 96 108, 86 98" stroke="url(#goldNatA)" stroke-width="2" stroke-linecap="round" opacity="0.9"/>
+
+    <!-- 掌心核心：八芒解碼星芒與璀璨之眼 -->
+    <g transform="translate(98, 128)">
+      <path d="M 0 -15 Q 0 0 15 0 Q 0 0 0 15 Q 0 0 -15 0 Q 0 0 0 -15 Z" fill="url(#goldNatA)"/>
+      <circle cx="0" cy="0" r="3.5" fill="#070614"/>
+      <circle cx="0" cy="0" r="1.8" fill="#FFFDF7"/>
+    </g>
+
+    <!-- 指尖星宿節點與星座連線 -->
+    <circle cx="55" cy="98" r="3" fill="#FFFDF7"/>
+    <circle cx="83" cy="58" r="3" fill="#FFFDF7"/>
+    <circle cx="95" cy="32" r="3.5" fill="#FFFDF7"/>
+    <circle cx="109" cy="40" r="3" fill="#FFFDF7"/>
+    <circle cx="123" cy="70" r="2.8" fill="#FFFDF7"/>
+
+    <!-- 幸運四芒星飾點 -->
+    <path d="M 160 38 L 163 32 L 170 30 L 163 28 L 160 22 L 157 28 L 150 30 L 157 32 Z" fill="url(#goldNatA)"/>
+    <circle cx="34" cy="56" r="2" fill="#FDE68A"/>
+    <circle cx="168" cy="140" r="2.2" fill="#FDE68A"/>
+  </g>
+</svg>

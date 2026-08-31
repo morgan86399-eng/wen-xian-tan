@@ -1,0 +1,26 @@
+<svg class="brand-logo-icon" viewBox="0 0 100 100" overflow="visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="brandGoldLuxury" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFBEB"/>
+      <stop offset="40%" stop-color="#FBBF24"/>
+      <stop offset="80%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#78350F"/>
+    </linearGradient>
+    <radialGradient id="brandHaloLuxury" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(251, 191, 36, 0.35)"/>
+      <stop offset="70%" stop-color="rgba(180, 83, 9, 0.12)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="50" r="46" fill="url(#brandHaloLuxury)"/>
+  <circle cx="50" cy="50" r="42" stroke="url(#brandGoldLuxury)" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="160 50" transform="rotate(-45 50 50)"/>
+  <path d="M 32 80 C 22 72, 22 55, 26 46 C 30 38, 36 44, 38 48 L 40 25 C 40 20, 46 20, 46 25 L 47 44 L 51 16 C 51 11, 57 11, 57 16 L 57 44 L 62 26 C 62 22, 67 22, 67 26 L 66 52 C 66 68, 54 82, 32 80 Z" stroke="url(#brandGoldLuxury)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(48, 56)">
+    <circle cx="0" cy="0" r="8.5" stroke="url(#brandGoldLuxury)" stroke-width="1.2" fill="rgba(7, 6, 20, 0.6)"/>
+    <path d="M 0 -8.5 C 4.7 -8.5, 4.7 0, 0 0 C -4.7 0, -4.7 8.5, 0 8.5 C 4.7 8.5, 8.5 4.7, 8.5 0 C 8.5 -4.7, 4.7 -8.5, 0 -8.5 Z" fill="url(#brandGoldLuxury)"/>
+    <circle cx="0" cy="-4.2" r="1.4" fill="#070614"/>
+    <circle cx="0" cy="4.2" r="1.4" fill="#FFFDF7"/>
+  </g>
+  <circle cx="76" cy="22" r="2" fill="#FDE68A"/>
+  <circle cx="20" cy="74" r="1.5" fill="#FDE68A"/>
+</svg>

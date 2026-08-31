@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>問仙壇 · 掌心解碼 - 2026 全方位命理透視</title>
+  <meta name="description" content="只拍掌心、不拍臉。解開你的正緣相遇年齡、事業巔峰與發財時機。">
+  
+  <meta property="og:title" content="問仙壇 · 掌心解碼">
+  <meta property="og:description" content="六大主題深度透視，拍照即可測算，真實信眾見證印證">
+  <meta property="og:image" content="assets/og-preview.jpg">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@300;400;500;700;900&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+  <style>
+    :root {
+      --bg-dark: #070614;
+      --bg-surface: rgba(18, 14, 38, 0.85);
+      --bg-card: rgba(26, 21, 56, 0.75);
+      --bg-card-hover: rgba(42, 34, 88, 0.9);
+      --bg-card-selected: rgba(245, 158, 11, 0.16);
+      --border: rgba(255, 255, 255, 0.12);
+      --border-gold: #F59E0B;
+      --border-gold-glow: rgba(245, 158, 11, 0.45);
+      --gold-primary: #F59E0B;
+      --gold-bright: #FDE68A;
+      --gold-dark: #B45309;
+      --gold-gradient: linear-gradient(135deg, #FFFDF7 0%, #FDE68A 30%, #F59E0B 70%, #B45309 100%);
+      --cta-gradient: linear-gradient(90deg, #F59E0B 0%, #EF4444 100%);
+      --text-main: #FFFFFF;
+      --text-secondary: #E2E8F0;
+      --text-muted: #94A3B8;
+      --text-gold: #FCD34D;
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
+      --shadow-gold: 0 0 25px rgba(245, 158, 11, 0.35);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-pill: 9999px;
+      --font-serif: "Noto Serif TC", "PMingLiU", "Songti TC", serif;
+      --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", -apple-system, sans-serif;
+      --font-cursive: "Ma Shan Zheng", cursive;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+    body {
+      background-color: var(--bg-dark); color: var(--text-main); font-family: var(--font-sans);
+      line-height: 1.7; min-height: 100vh; overflow-x: hidden; position: relative;
+      background-image: 
+        radial-gradient(circle at 50% 5%, rgba(99, 102, 241, 0.22) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(236, 72, 153, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 15% 50%, rgba(245, 158, 11, 0.12) 0%, transparent 35%);
+    }
+    ::selection { background: var(--gold-primary); color: #000; }
+    .cosmic-glow { position: fixed; border-radius: 50%; filter: blur(90px); pointer-events: none; z-index: 0; }
+    .glow-1 { top: -120px; left: 50%; transform: translateX(-50%); width: 450px; height: 450px; background: rgba(139, 92, 246, 0.22); }
+    .glow-2 { bottom: 40px; right: -60px; width: 320px; height: 320px; background: rgba(245, 158, 11, 0.18); }
+    .glow-3 { top: 45%; left: -80px; width: 280px; height: 280px; background: rgba(236, 72, 153, 0.15); }
+    h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 900; letter-spacing: 0.03em; color: var(--text-main); }
+    h1 { font-size: clamp(1.6rem, 3.2vw, 2.2rem); }
+    h2 { font-size: clamp(1.3rem, 2.4vw, 1.7rem); }
+    h3 { font-size: clamp(1.1rem, 1.8vw, 1.35rem); }
+    p { color: var(--text-secondary); font-size: 0.95rem; }
+
+    .app-container { width: 100%; max-width: 1280px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; position: relative; z-index: 1; }
+    .app-header {
+      position: sticky; top: 0; z-index: 60; background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); padding: 10px 20px;
+    }
+    .app-header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: clamp(8px, 1.8vw, 16px); }
+    .brand-wrap { display: flex; align-items: center; gap: 10px; text-decoration: none; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+    .brand-svg-icon { width: clamp(34px, 3.5vw, 42px); height: clamp(34px, 3.5vw, 42px); flex-shrink: 0; filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.45)); }
+    .brand-text { display: flex; flex-direction: column; white-space: nowrap; }
+    .brand-name {
+      font-family: var(--font-serif); font-weight: 900; font-size: clamp(1.05rem, 1.6vw, 1.25rem);
+      background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; white-space: nowrap;
+    }
+    .hero-slogan-capsule {
+      display: inline-flex; align-items: center; gap: 8px; background: rgba(245, 158, 11, 0.12); border: 1px solid var(--border-gold);
+      color: var(--gold-bright); padding: 4px 14px; border-radius: var(--radius-pill); font-size: 0.82rem; font-weight: 700; margin-bottom: 12px;
+    }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #10B981; box-shadow: 0 0 8px #10B981; animation: pulse-dot 2s infinite ease-in-out; }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.8); } }
+
+    .app-nav-tabs { display: none; gap: 4px; background: rgba(255, 255, 255, 0.06); padding: 4px; border-radius: var(--radius-pill); flex-shrink: 0; }
+    @media (min-width: 900px) { .app-nav-tabs { display: flex; } }
+    .app-tab-btn {
+      border: none; background: transparent; color: var(--text-muted); font-weight: 700; font-size: clamp(0.78rem, 1.1vw, 0.88rem);
+      padding: 6px clamp(10px, 1.2vw, 14px); border-radius: var(--radius-pill); cursor: pointer; display: flex; align-items: center; gap: 5px; white-space: nowrap; flex-shrink: 0; transition: all 0.18s ease;
+    }
+    .app-tab-btn:hover { color: var(--text-main); }
+    .app-tab-btn.active { background: var(--bg-card); color: var(--gold-bright); border: 1px solid var(--border-gold-glow); box-shadow: var(--shadow-sm); }
+    
+    .user-topbar-btn {
+      display: flex; align-items: center; gap: 8px; background: rgba(245, 158, 11, 0.14); border: 1.5px solid var(--border-gold);
+      color: var(--gold-bright); padding: 6px 14px; border-radius: var(--radius-pill); font-size: clamp(0.78rem, 1.1vw, 0.84rem); font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: all 0.15s ease;
+    }
+    .user-topbar-btn:hover { background: rgba(245, 158, 11, 0.25); box-shadow: var(--shadow-gold); }
+    .user-avatar-circle { width: 22px; height: 22px; border-radius: 50%; background: var(--gold-gradient); color: #000; display: inline-flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 900; }
+
+    .btn {
+      appearance: none; border: none; cursor: pointer; font-weight: 700; font-size: 0.92rem; letter-spacing: 0.02em;
+      padding: 10px 20px; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.15s ease;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--cta-gradient); color: #FFFFFF; box-shadow: var(--shadow-gold); }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 30px rgba(245, 158, 11, 0.6); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+    .btn-outline:hover { border-color: var(--gold-primary); color: var(--gold-bright); background: rgba(245, 158, 11, 0.08); }
+    .btn-gold { background: var(--gold-gradient); color: #1A1310; font-weight: 800; box-shadow: var(--shadow-gold); }
+    .btn-gold:hover { transform: translateY(-2px); filter: brightness(1.08); }
+    .btn-sm { padding: 6px 12px; font-size: 0.82rem; }
+    .btn-lg { padding: 14px 28px; font-size: 1.05rem; }
+
+    .app-hero {
+      position: relative; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: clamp(24px, 4vw, 44px) clamp(18px, 4vw, 36px); margin: 16px clamp(12px, 3vw, 24px) 0; box-shadow: var(--shadow-md); text-align: center; overflow: hidden;
+    }
+    .app-hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.22) 0%, transparent 60%); pointer-events: none; }
+    .hero-main-title {
+      font-size: clamp(1.8rem, 4vw, 2.6rem); background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px;
+    }
+
+    .app-workspace { flex: 1; padding: 20px clamp(12px, 3vw, 24px) 100px; max-width: 1200px; width: 100%; margin: 0 auto; }
+    .app-view { display: none; animation: fadeIn 0.25s ease forwards; }
+    .app-view.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .themes-matrix-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); margin-top: 20px; }
+    .theme-hub-card {
+      position: relative; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius-md);
+      padding: 20px; display: flex; flex-direction: column; gap: 12px; cursor: pointer; transition: all 0.2s ease; backdrop-filter: blur(8px);
+    }
+    .theme-hub-card:hover { transform: translateY(-3px); border-color: var(--gold-primary); box-shadow: var(--shadow-gold); background: var(--bg-card-hover); }
+    .theme-card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .theme-icon-box { width: 44px; height: 44px; border-radius: var(--radius-sm); background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: center; color: var(--gold-bright); }
+    .theme-icon-box svg { width: 24px; height: 24px; }
+    .theme-quota-pill { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--radius-pill); font-size: 0.78rem; font-weight: 800; }
+    .theme-quota-pill.has-points { background: rgba(16, 185, 129, 0.2); color: #34D399; border: 1px solid #10B981; }
+    .theme-quota-pill.zero-points { background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .theme-hub-card h3 { font-size: 1.15rem; margin: 0; }
+    .theme-hub-card .theme-tag { font-size: 0.78rem; font-weight: 700; color: var(--text-gold); }
+    .theme-hub-card p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; flex: 1; }
+    .theme-card-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+    /* Member Dashboard Styles */
+    .member-dashboard-container { display: flex; flex-direction: column; gap: 24px; max-width: 1000px; margin: 0 auto; }
+    .member-profile-card {
+      background: var(--bg-card); border: 1.5px solid var(--border-gold); border-radius: var(--radius-lg);
+      padding: clamp(20px, 4vw, 32px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; box-shadow: var(--shadow-gold); position: relative; overflow: hidden;
+    }
+    .member-avatar-block { display: flex; align-items: center; gap: 16px; }
+    .member-large-avatar { width: 64px; height: 64px; border-radius: 50%; background: var(--gold-gradient); color: #1A1310; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: 900; box-shadow: var(--shadow-gold); border: 2px solid #FFF; }
+    .member-info-col h3 { font-size: 1.35rem; color: #FFF; display: flex; align-items: center; gap: 8px; }
+    .member-tier-badge { display: inline-flex; align-items: center; background: rgba(245, 158, 11, 0.2); border: 1px solid var(--border-gold); color: var(--gold-bright); font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: var(--radius-pill); }
+    .member-email-text { font-size: 0.85rem; color: var(--text-muted); margin-top: 2px; }
+    .member-points-summary-box { display: flex; align-items: baseline; gap: 12px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border); padding: 12px 20px; border-radius: var(--radius-md); }
+    .member-total-points-num { font-family: var(--font-serif); font-size: 2.4rem; font-weight: 900; color: var(--gold-bright); }
+
+    .member-themes-quota-section { display: flex; flex-direction: column; gap: 14px; }
+    .section-title-row { display: flex; justify-content: space-between; align-items: center; }
+    .theme-quota-assets-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+    .theme-quota-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; display: flex; flex-direction: column; gap: 10px; transition: all 0.18s ease; }
+    .theme-quota-card:hover { border-color: var(--border-gold); background: var(--bg-card-hover); }
+    .theme-quota-card-header { display: flex; justify-content: space-between; align-items: center; }
+    .theme-quota-card-balance { font-size: 1.15rem; font-weight: 900; color: var(--gold-bright); }
+    .theme-quota-card-balance.zero { color: #F87171; }
+
+    /* Pricing Section */
+    .pricing-section-container { display: flex; flex-direction: column; gap: 24px; margin-top: 20px; }
+    .pricing-cards-grid { display: grid; gap: 18px; grid-template-columns: 1fr; }
+    @media (min-width: 800px) { .pricing-cards-grid { grid-template-columns: repeat(3, 1fr); } }
+    .plan-card {
+      position: relative; background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius-lg);
+      padding: 26px 20px; display: flex; flex-direction: column; gap: 16px; cursor: pointer; transition: all 0.2s ease;
+    }
+    .plan-card:hover { transform: translateY(-3px); border-color: var(--gold-primary); box-shadow: var(--shadow-gold); }
+    .plan-card.active { border-color: var(--gold-primary); background: var(--bg-card-selected); box-shadow: 0 0 0 2px var(--gold-primary) inset, var(--shadow-gold); }
+    .plan-ribbon { position: absolute; top: -1px; right: 18px; background: var(--cta-gradient); color: #FFF; font-size: 0.72rem; font-weight: 800; padding: 4px 10px; border-radius: 0 0 6px 6px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4); }
+    .plan-title { font-size: 1.15rem; font-weight: 800; }
+    .plan-price-row { display: flex; align-items: baseline; gap: 8px; }
+    .plan-price { font-family: var(--font-serif); font-weight: 900; font-size: 2.2rem; color: var(--gold-bright); }
+    .plan-price sup { font-size: 1rem; color: var(--text-muted); }
+    .plan-old-price { font-size: 0.9rem; color: var(--text-muted); text-decoration: line-through; }
+    .plan-desc-note { font-size: 0.82rem; color: var(--text-gold); background: rgba(245, 158, 11, 0.1); padding: 6px 10px; border-radius: var(--radius-sm); border: 1px dashed var(--border-gold); }
+    .plan-bullets { list-style: none; display: grid; gap: 8px; font-size: 0.85rem; color: var(--text-secondary); flex: 1; }
+    .plan-bullets li { display: flex; gap: 8px; }
+    .plan-bullets li::before { content: "✦"; color: var(--gold-primary); }
+
+    .plan-theme-picker-box { background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; margin-top: 10px; }
+    .plan-theme-picker-box h4 { font-size: 0.95rem; margin-bottom: 10px; color: var(--gold-bright); }
+    .theme-checkbox-list { display: grid; gap: 8px; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    .theme-check-pill { display: flex; align-items: center; gap: 6px; background: var(--bg-card); border: 1px solid var(--border); padding: 6px 10px; border-radius: var(--radius-sm); font-size: 0.82rem; cursor: pointer; }
+    .theme-check-pill.checked { border-color: var(--gold-primary); background: rgba(245, 158, 11, 0.2); color: var(--gold-bright); font-weight: 700; }
+
+    /* Wizard Modal */
+    .reading-modal-card {
+      background: #0F0B1E; color: #FFF; border: 1.5px solid var(--border-gold); border-radius: var(--radius-lg);
+      padding: clamp(20px, 4vw, 32px); width: 100%; max-width: 680px; max-height: 92vh; overflow-y: auto; box-shadow: 0 0 50px rgba(245, 158, 11, 0.35); position: relative;
+    }
+    .wizard-header { border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 16px; }
+    .wizard-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .wizard-stepper-meta { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--text-gold); font-weight: 800; margin-bottom: 6px; }
+    .wizard-progress-track { width: 100%; height: 6px; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-pill); overflow: hidden; }
+    .wizard-progress-bar { height: 100%; background: var(--cta-gradient); transition: width 0.3s ease; }
+    .wizard-step-body { display: flex; flex-direction: column; gap: 16px; min-height: 280px; animation: fadeIn 0.25s ease; }
+    .wizard-question-title { font-size: 1.15rem; color: #FFFFFF; font-family: var(--font-serif); font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .wizard-question-sub { font-size: 0.85rem; color: var(--text-muted); }
+
+    .wizard-options-grid { display: grid; gap: 10px; grid-template-columns: 1fr; }
+    @media (min-width: 500px) { .wizard-options-grid.cols-2 { grid-template-columns: 1fr 1fr; } }
+    .wizard-option-card {
+      background: rgba(255, 255, 255, 0.05); border: 1.5px solid var(--border); border-radius: var(--radius-md);
+      padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.18s ease;
+    }
+    .wizard-option-card:hover { background: rgba(255, 255, 255, 0.09); border-color: var(--gold-primary); transform: translateY(-2px); }
+    .wizard-option-card.selected { background: rgba(245, 158, 11, 0.18); border-color: var(--gold-primary); box-shadow: 0 0 0 1px var(--gold-primary) inset, var(--shadow-gold); color: var(--gold-bright); }
+    .wizard-option-card-left { display: flex; align-items: center; gap: 12px; }
+    .wizard-option-icon { font-size: 1.3rem; }
+    .wizard-option-text { font-size: 0.95rem; font-weight: 700; }
+    .wizard-option-desc { font-size: 0.78rem; color: var(--text-muted); margin-top: 2px; }
+    .wizard-option-check { font-size: 1rem; color: var(--gold-primary); opacity: 0; }
+    .wizard-option-card.selected .wizard-option-check { opacity: 1; }
+
+    .prompt-tags-list { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+    .prompt-tag-btn {
+      background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border); color: var(--text-secondary);
+      font-size: 0.78rem; padding: 4px 10px; border-radius: var(--radius-pill); cursor: pointer; transition: all 0.15s ease;
+    }
+    .prompt-tag-btn:hover { border-color: var(--gold-primary); color: var(--gold-bright); background: rgba(245, 158, 11, 0.12); }
+
+    .wizard-upload-box {
+      border: 2px dashed rgba(245, 158, 11, 0.4); border-radius: var(--radius-md); padding: 24px 16px;
+      text-align: center; background: rgba(245, 158, 11, 0.05); cursor: pointer; transition: all 0.18s ease; display: block;
+    }
+    .wizard-upload-preview { max-width: 140px; max-height: 140px; object-fit: cover; border-radius: var(--radius-sm); border: 2px solid var(--gold-primary); margin: 10px auto 0; display: block; }
+    .wizard-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border); padding-top: 16px; margin-top: 20px; }
+
+    /* Auth Modal */
+    .auth-tabs-row { display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .auth-tab-btn { border: none; background: transparent; color: var(--text-muted); font-weight: 800; font-size: 0.95rem; padding: 8px 16px; cursor: pointer; position: relative; }
+    .auth-tab-btn.active { color: var(--gold-bright); }
+    .auth-tab-btn.active::after { content: ""; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px; background: var(--gold-primary); }
+    .auth-form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    .auth-form-label { font-size: 0.85rem; font-weight: 700; color: var(--text-secondary); }
+    .auth-form-input { background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #FFF; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.92rem; }
+    .auth-form-input:focus { outline: none; border-color: var(--gold-primary); box-shadow: 0 0 0 1px var(--gold-primary); }
+
+    .decoding-stage { text-align: center; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
+    .decoding-spinner-ring { width: 80px; height: 80px; border-radius: 50%; border: 3px solid rgba(245, 158, 11, 0.2); border-top-color: var(--gold-primary); border-right-color: #EC4899; animation: spin-ring 1s linear infinite; }
+    @keyframes spin-ring { to { transform: rotate(360deg); } }
+    .decoding-progress-bar { width: 100%; max-width: 360px; height: 8px; background: rgba(255, 255, 255, 0.1); border-radius: var(--radius-pill); overflow: hidden; }
+    .decoding-progress-fill { height: 100%; width: 0%; background: var(--cta-gradient); transition: width 0.3s ease; }
+
+    .report-content-box { display: grid; gap: 20px; animation: fadeIn 0.4s ease; }
+    .report-header-badge { text-align: center; border-bottom: 1px dashed var(--border); padding-bottom: 16px; }
+    .report-portrait-container { display: grid; gap: 16px; grid-template-columns: 1fr; align-items: center; }
+    @media (min-width: 520px) { .report-portrait-container { grid-template-columns: 160px 1fr; } }
+    .report-portrait-img { width: 100%; height: 190px; object-fit: cover; border-radius: var(--radius-md); border: 2px solid var(--gold-primary); box-shadow: var(--shadow-gold); }
+    .report-dimension-grid { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+    .report-dim-card { background: rgba(255, 255, 255, 0.06); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; }
+    .report-dim-label { font-size: 0.75rem; color: var(--text-muted); }
+    .report-dim-val { font-size: 0.95rem; font-weight: 800; color: var(--gold-bright); }
+    .report-advice-box { background: rgba(245, 158, 11, 0.08); border: 1px solid var(--border-gold); border-radius: var(--radius-md); padding: 16px; font-size: 0.92rem; line-height: 1.7; }
+
+    .report-manifestation-section { margin-top: 10px; border-top: 1px solid rgba(245, 158, 11, 0.35); padding-top: 18px; display: grid; gap: 14px; }
+    .manifestation-header { display: flex; flex-direction: column; gap: 4px; }
+    .manifestation-tag { display: inline-flex; align-self: flex-start; font-size: 0.75rem; font-weight: 800; color: #FCD34D; background: rgba(245, 158, 11, 0.18); border: 1px solid var(--border-gold); padding: 3px 10px; border-radius: var(--radius-pill); }
+    .manifestation-header h4 { font-size: 1.05rem; color: var(--text-gold); margin-top: 4px; }
+    .manifestation-cards-list { display: grid; gap: 12px; }
+    .manifestation-story-card {
+      background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.12);
+      border-left: 3px solid var(--gold-primary); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .story-card-meta { display: flex; justify-content: space-between; align-items: center; }
+    .story-card-title { font-weight: 800; font-size: 0.95rem; color: #FFFFFF; }
+    .story-card-user { font-size: 0.78rem; color: var(--text-gold); font-weight: 700; }
+    .story-card-summary { font-size: 0.86rem; color: var(--text-secondary); line-height: 1.6; }
+    .story-card-result-badge { display: inline-flex; align-self: flex-start; font-size: 0.76rem; font-weight: 800; color: #34D399; background: rgba(16, 185, 129, 0.15); padding: 3px 8px; border-radius: 4px; }
+    .story-full-details { margin-top: 4px; font-size: 0.82rem; color: var(--text-muted); }
+    .story-full-details summary { cursor: pointer; color: var(--gold-bright); font-weight: 700; }
+    .story-full-details p { margin-top: 8px; white-space: pre-line; font-size: 0.84rem; line-height: 1.65; color: var(--text-secondary); }
+
+    .app-bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: rgba(11, 9, 29, 0.92);
+      backdrop-filter: blur(16px); border-top: 1px solid var(--border); display: flex; justify-content: space-around;
+      padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
+    }
+    @media (min-width: 860px) { .app-bottom-nav { display: none; } }
+    .app-bottom-tab {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; border: none;
+      background: transparent; color: var(--text-muted); font-size: 0.72rem; font-weight: 700; padding: 6px 0; cursor: pointer;
+    }
+    .app-bottom-tab svg { width: 20px; height: 20px; }
+    .app-bottom-tab.active { color: var(--gold-bright); }
+    .app-bottom-tab.active svg { transform: scale(1.1); color: var(--gold-bright); }
+
+    .modal-backdrop {
+      position: fixed; inset: 0; z-index: 100; background: rgba(7, 6, 20, 0.78); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center; padding: 16px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+    }
+    .modal-backdrop.show { opacity: 1; pointer-events: auto; }
+    .app-textarea {
+      background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #FFF;
+      padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.95rem; width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cosmic-glow glow-1"></div>
+  <div class="cosmic-glow glow-2"></div>
+  <div class="cosmic-glow glow-3"></div>
+
+  <div class="app-container">
+    
+    <header class="app-header">
+      <div class="app-header-inner">
+        <div class="brand-wrap" data-goto-tab="hub">
+          <svg class="brand-svg-icon" viewBox="0 0 200 200" overflow="visible" fill="none">
+            <defs>
+              <linearGradient id="brandGoldLuxury" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="25%" stop-color="#FDE68A"/>
+                <stop offset="65%" stop-color="#F59E0B"/>
+                <stop offset="100%" stop-color="#92400E"/>
+              </linearGradient>
+              <radialGradient id="brandHaloLuxury" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="rgba(255, 248, 219, 0.45)"/>
+                <stop offset="50%" stop-color="rgba(245, 158, 11, 0.25)"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <circle cx="100" cy="100" r="90" fill="url(#brandHaloLuxury)"/>
+            <circle cx="100" cy="100" r="84" stroke="url(#brandGoldLuxury)" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.8"/>
+            <path d="M 70 182 C 54 166, 46 144, 48 124 C 49 112, 53 104, 58 98 C 63 92, 70 94, 73 102 C 76 109, 76 116, 76 122 L 76 62 C 76 48, 88 48, 88 62 L 89 104 L 90 36 C 90 22, 102 22, 102 36 L 103 100 L 105 44 C 105 30, 117 30, 117 44 L 117 104 L 119 72 C 119 60, 129 60, 129 72 L 129 116 C 138 126, 142 148, 138 166 C 135 174, 131 180, 130 182 Z" stroke="url(#brandGoldLuxury)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="rgba(12, 10, 28, 0.5)"/>
+            <g transform="translate(98, 126)">
+              <line x1="0" y1="-18" x2="0" y2="18" stroke="url(#brandGoldLuxury)" stroke-width="1.6"/>
+              <line x1="-18" y1="0" x2="18" y2="0" stroke="url(#brandGoldLuxury)" stroke-width="1.6"/>
+              <circle cx="0" cy="0" r="3.2" fill="#FFFFFF"/>
+            </g>
+          </svg>
+          <div class="brand-text">
+            <span class="brand-name">問仙壇 · 掌心解碼</span>
+          </div>
+        </div>
+
+        <nav class="app-nav-tabs">
+          <button type="button" class="app-tab-btn active" data-tab="hub">
+            <span>🔮</span> 六大篇章
+          </button>
+          <button type="button" class="app-tab-btn" data-tab="member">
+            <span>👤</span> 會員與次數
+          </button>
+          <button type="button" class="app-tab-btn" data-tab="history">
+            <span>📜</span> 測算紀錄
+          </button>
+          <button type="button" class="app-tab-btn" data-tab="stories">
+            <span>✨</span> 靈驗見證榜
+          </button>
+        </nav>
+
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button type="button" class="user-topbar-btn" id="userTopBarBtn">
+            <span>👤 登入 / 註冊</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="app-workspace">
+      
+      <!-- Tab 1: 主題矩陣 -->
+      <section class="app-view active" id="view-hub">
+        <div class="app-hero">
+          <div class="hero-slogan-capsule">
+            <span>🔮 2026 仙佛指引 · 手相手機拍照即可測算</span>
+            <span>|</span>
+            <span class="live-dot"></span>
+            <span id="heroLiveCount">85</span>
+            <span>人在線測算</span>
+          </div>
+          
+          <h1 class="hero-main-title">問仙壇 · 掌心解碼</h1>
+          <p style="max-width:620px;margin:0 auto;">不用排隊跑廟宇！手機拍照上傳手相，即可算出未來的正緣長相、跳槽加薪時機與發財年份。隨時為您指點迷津！</p>
+        </div>
+
+        <div class="themes-matrix-grid" id="themesMatrixGrid"></div>
+      </section>
+
+      <!-- Tab 2: 會員中心與點數資產 -->
+      <section class="app-view" id="view-member">
+        <div class="member-dashboard-container">
+          
+          <div id="memberProfileContainer"></div>
+
+          <div class="member-themes-quota-section">
+            <div class="section-title-row">
+              <h3>🪙 您的各篇測算次數（永久有效）</h3>
+              <span style="font-size:0.8rem;color:var(--text-muted);">各篇次數獨立使用，隨時登入皆可測算</span>
+            </div>
+            <div class="theme-quota-assets-grid" id="memberThemesQuotaGrid"></div>
+          </div>
+
+          <div class="pricing-section-container" id="pricingSectionAnchor">
+            <div style="border-top:1px dashed var(--border);padding-top:20px;text-align:center;">
+              <h2>🪙 購買測算次數</h2>
+              <p style="margin-top:6px;">單項 199、三項 499、全項 999。所選之主題各自增加 3 點專屬額度（各篇獨立使用，不可共用）</p>
+            </div>
+
+            <div class="pricing-cards-grid" id="pricingCardsGrid"></div>
+
+            <div class="plan-theme-picker-box" id="themePickerContainer">
+              <h4>👉 請勾選您要開通次數的主題項目：</h4>
+              <div class="theme-checkbox-list" id="pickerCheckboxesList"></div>
+            </div>
+
+            <div style="background:var(--bg-card);border:1.5px solid var(--border-gold);border-radius:var(--radius-lg);padding:20px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;">
+              <div>
+                <div style="font-size:0.85rem;color:var(--text-muted);">當前結算方案</div>
+                <div style="font-size:1.15rem;font-weight:900;color:var(--gold-bright);" id="checkoutSummaryPlan">三項超值方案</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:4px;" id="checkoutSummarySelected">已選：感情篇、事業篇、財運篇</div>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:16px;">
+                <div style="font-family:var(--font-serif);font-size:2rem;font-weight:900;color:var(--gold-bright);" id="checkoutSummaryPrice">NT$ 499</div>
+                <button type="button" class="btn btn-primary btn-lg" id="confirmPurchaseBtn">
+                  確認結緣購買
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Tab 3: 歷史測算紀錄簿 -->
+      <section class="app-view" id="view-history">
+        <div style="max-width:900px;margin:0 auto;">
+          <div style="text-align:center;margin-bottom:24px;">
+            <h2>📜 歷史測算紀錄簿</h2>
+            <p>您所有產出的專屬命理報告、正緣模擬肖像與關聯見證故事皆永久保存在此，隨時登入皆可回看。</p>
+          </div>
+          <div class="themes-matrix-grid" id="historyReportsGrid"></div>
+        </div>
+      </section>
+
+      <!-- Tab 4: 靈驗見證榜 -->
+      <section class="app-view" id="view-stories">
+        <div style="max-width:960px;margin:0 auto;">
+          <div style="text-align:center;margin-bottom:20px;">
+            <h2>✨ 信眾真實顯化見證榜</h2>
+            <p>信眾誠心求問、得到指引後的真實經歷回饋</p>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:24px;" id="storiesFilterGroup">
+            <button type="button" class="btn btn-outline btn-sm active" data-category="all" style="border-radius:999px;">全部事蹟</button>
+            <button type="button" class="btn btn-outline btn-sm" data-category="love" style="border-radius:999px;">💖 感情姻緣</button>
+            <button type="button" class="btn btn-outline btn-sm" data-category="work" style="border-radius:999px;">💼 工作求職</button>
+            <button type="button" class="btn btn-outline btn-sm" data-category="career" style="border-radius:999px;">👑 事業合夥</button>
+            <button type="button" class="btn btn-outline btn-sm" data-category="wealth" style="border-radius:999px;">💰 經濟財務</button>
+            <button type="button" class="btn btn-outline btn-sm" data-category="family" style="border-radius:999px;">🏡 家庭買房</button>
+            <button type="button" class="btn btn-outline btn-sm" data-category="children" style="border-radius:999px;">🌟 子女安康</button>
+          </div>
+
+          <div class="themes-matrix-grid" id="storiesGrid"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation Dock -->
+    <nav class="app-bottom-nav">
+      <button type="button" class="app-bottom-tab active" data-tab="hub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M9 4v16"/><path d="M14 9l3 3-3 3"/></svg>
+        <span>六大篇章</span>
+      </button>
+      <button type="button" class="app-bottom-tab" data-tab="member">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>會員次數</span>
+      </button>
+      <button type="button" class="app-bottom-tab" data-tab="history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+        <span>測算紀錄</span>
+      </button>
+      <button type="button" class="app-bottom-tab" data-tab="stories">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span>見證榜</span>
+      </button>
+    </nav>
+
+    <div class="modal-backdrop" id="readingModalBackdrop" role="dialog" aria-modal="true">
+      <div class="reading-modal-card" id="readingModalCard"></div>
+    </div>
+
+  </div>
+
+  <script>
+    (function() {
+      "use strict";
+
+      var STORAGE_KEY_POINTS = 'wenxiantan_points_wallet_v2';
+      var STORAGE_KEY_HISTORY = 'wenxiantan_reports_history_v2';
+      var STORAGE_KEY_SESSION = 'wenxiantan_user_session_v2';
+
+      var MemberManager = {
+        getCurrentUser: function() {
+          try {
+            var session = localStorage.getItem(STORAGE_KEY_SESSION);
+            if (session) return JSON.parse(session);
+            var guest = { id: 'guest_default', name: '陳信士', email: 'chen.blessed@example.com', tier: '有緣信士', joinedAt: '2026-08-31' };
+            this.setCurrentUser(guest);
+            return guest;
+          } catch(e) { return null; }
+        },
+        setCurrentUser: function(user) {
+          try {
+            if (user) localStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(user));
+            else localStorage.removeItem(STORAGE_KEY_SESSION);
+          } catch(e) {}
+        },
+        logout: function() { this.setCurrentUser(null); }
+      };
+
+      var WalletManager = {
+        getDefaultWallet: function() {
+          return { love: 1, work: 0, career: 0, wealth: 0, family: 0, children: 0 };
+        },
+        getPoints: function() {
+          try {
+            var saved = localStorage.getItem(STORAGE_KEY_POINTS);
+            if (!saved) {
+              var initial = this.getDefaultWallet();
+              this.savePoints(initial);
+              return initial;
+            }
+            return Object.assign({}, this.getDefaultWallet(), JSON.parse(saved));
+          } catch(e) { return this.getDefaultWallet(); }
+        },
+        getThemePoints: function(themeId) {
+          var points = this.getPoints();
+          return typeof points[themeId] === 'number' ? points[themeId] : 0;
+        },
+        savePoints: function(wallet) {
+          try { localStorage.setItem(STORAGE_KEY_POINTS, JSON.stringify(wallet)); } catch(e) {}
+        },
+        addPointsToThemes: function(themeIds, pointsToAdd) {
+          var wallet = this.getPoints();
+          themeIds.forEach(function(id) {
+            wallet[id] = (wallet[id] || 0) + (pointsToAdd || 3);
+          });
+          this.savePoints(wallet);
+          return wallet;
+        },
+        consumePoint: function(themeId, amount) {
+          var wallet = this.getPoints();
+          var current = wallet[themeId] || 0;
+          if (current < (amount || 1)) {
+            return { success: false, remaining: current };
+          }
+          wallet[themeId] = current - (amount || 1);
+          this.savePoints(wallet);
+          return { success: true, remaining: wallet[themeId] };
+        },
+        saveReport: function(reportData) {
+          try {
+            var list = this.getReports();
+            list.unshift(Object.assign({ id: 'rep_' + Date.now(), date: new Date().toISOString() }, reportData));
+            localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(list));
+          } catch(e) {}
+        },
+        getReports: function() {
+          try { return JSON.parse(localStorage.getItem(STORAGE_KEY_HISTORY) || '[]'); } catch(e) { return []; }
+        }
+      };
+
+      var THEMES = [
+        { id: "love", name: "感情篇", title: "正緣長相 · 相遇年齡 · 感情線解析", desc: "算出未來伴侶的性格長相、幾歲會遇到，並透過手相感情線看您的正緣運勢", color: "#F43F5E", icon: '<path d="M24 38 C10 28 6 18 14 12 C19 8 24 11 24 16 C24 11 29 8 34 12 C42 18 38 28 24 38 Z"/>', promptPills: ["想知道我大約幾歲會遇到對的正緣？", "目前這段感情是否能修成正果？", "跟前任還有沒有機會復合？", "如何避開爛桃花與感情內耗？"] },
+        { id: "work", name: "工作篇", title: "天賦專長 · 升遷跳槽 · 智慧線解析", desc: "算出您最適合發揮的工作類型、跳槽加薪黃金期，結合智慧線發掘個人潛力", color: "#3B82F6", icon: '<path d="M10 20 h28 v16 a2 2 0 0 1-2 2 H12 a2 2 0 0 1-2-2 Z"/><path d="M18 20 v-4 a2 2 0 0 1 2-2 h8 a2 2 0 0 1 2 2 v4"/><path d="M10 26 h28"/>', promptPills: ["近期適不適合換工作或轉職跳槽？", "什麼時候有升遷加薪的機會？", "我天生適合做什麼樣的工作？", "在職場上遇到小人該怎麼化解？"] },
+        { id: "career", name: "事業篇", title: "創業當老闆 · 商業巔峰 · 事業線解析", desc: "算出您適合獨資還是合夥、事業何時迎來高峰期，結合事業線掌握發展契機", color: "#A855F7", icon: '<path d="M8 34 L18 20 L26 28 L40 10"/><path d="M32 10 h8 v8"/>', promptPills: ["我適合自己創業當老闆，還是跟人合夥？", "我的事業大概在幾歲會迎來巔峰？", "目前手上的新投資/新項目該不該投入？", "公司團隊遇到瓶頸，該如何突破？"] },
+        { id: "wealth", name: "財運篇", title: "發財時機 · 正偏財運 · 財庫漏財點", desc: "算出何時財運最旺、容易在哪裡漏財，結合手相財富紋指引聚財方向", color: "#EAB308", icon: '<ellipse cx="24" cy="18" rx="12" ry="6"/><path d="M12 18 v10 c0 3 5 6 12 6 s12-3 12-6 V18"/><path d="M12 23 c0 3 5 6 12 6 s12-3 12-6"/>', promptPills: ["我一生中的正財還是偏財比較旺？", "我最大的漏財弱點在哪裡？如何守財？", "借出去的錢或被拖欠的款項何時能拿回？", "這兩年適不適合買房或做重大投資？"] },
+        { id: "family", name: "家庭篇", title: "買房置產 · 夫妻和睦 · 長輩平安", desc: "算出何時適合買房換屋、如何改善家人相處，結合手相掌丘守護家宅安泰", color: "#10B981", icon: '<path d="M8 24 L24 10 L40 24"/><path d="M13 21 V38 h22 V21"/><path d="M21 38 V27 h6 v11"/>', promptPills: ["何時是買房換屋或搬新家的最佳時機？", "夫妻之間常有摩擦冷戰，該如何化解？", "家裡長輩最近身體微恙，如何祈求平安？", "如何讓全家人相處更融洽和睦？"] },
+        { id: "children", name: "小孩篇", title: "求子時機 · 子女天賦 · 健康平安", desc: "備孕算出何時容易懷孕得子；已有孩子可算出天生天賦與教養指南", color: "#06B6D4", icon: '<circle cx="24" cy="14" r="5"/><path d="M14 38 c0-8 4-14 10-14 s10 6 10 14"/><path d="M10 30 l4-2 M38 30 l-4-2"/>', promptPills: ["正在備孕，想知道什麼時候最容易順利得子？", "孩子天生適合往哪個領域或科系培養？", "小孩容易受驚哭鬧，如何安神定心？", "如何增進跟孩子之間的溝通與信任？"] }
+      ];
+
+      var PLANS = [
+        { id: "single", label: "單項體驗方案", price: 199, oldPrice: 399, requiredCount: 1, pointsReward: 3, ribbon: null, desc: "請自選 1 個最想了解的主題", bullets: ["自選 1 項指定測算主題", "該主題立即獲得 3 次專屬測算機會", "產出專屬肖像與深層命理解析", "附真實見證故事印證，報告永久保存"] },
+        { id: "triple", label: "三項超值方案", price: 499, oldPrice: 1197, requiredCount: 3, pointsReward: 3, ribbon: "最多人選擇", desc: "在 6 大主題中自由挑選 3 項（平均一項僅 $166）", bullets: ["任選 3 項主題（各得 3 次，共 9 次測算）", "超值優惠，平均每次測算只要 $55", "包含感情正緣、工作事業與財運全面透視", "附相對應之真實顯化見證案例"] },
+        { id: "all", label: "六項全包圓滿方案", price: 999, oldPrice: 2394, requiredCount: 6, pointsReward: 3, ribbon: "終身必看首選", desc: "六大主題全部開通，一次掌握人生全方位運勢", bullets: ["六大主題全部開通（各得 3 次，共 18 次測算）", "完整涵蓋感情、工作、事業、財運、家庭與小孩", "加贈手相三大命脈（感情/智慧/事業）深入對照", "隨時登入回看，終身永久保存測算紀錄"] }
+      ];
+
+      var GENDER_OPTIONS = [
+        { id: "female", label: "女性", icon: "👩", desc: "女看右手主天賦後天，左手主先天命格" },
+        { id: "male", label: "男性", icon: "👨", desc: "男看左手主天賦後天，右手主先天命格" },
+        { id: "other", label: "保密", icon: "✨", desc: "雙手手相掌紋綜合解析" }
+      ];
+
+      var AGE_OPTIONS = [
+        { id: "18-24", label: "18 ~ 24 歲", icon: "🐣", desc: "求學、剛入社會、探索興趣與天賦方向" },
+        { id: "25-34", label: "25 ~ 34 歲", icon: "🌿", desc: "適婚年齡、轉職跳槽、追求事業成家" },
+        { id: "35-44", label: "35 ~ 44 歲", icon: "🌲", desc: "事業衝刺、買房置產、承擔家庭支柱" },
+        { id: "45-54", label: "45 ~ 54 歲", icon: "🏔️", desc: "財富巔峰、資產穩健、開展人生新局" },
+        { id: "55+", label: "55 歲以上", icon: "🌅", desc: "退休生活、長輩安康、福氣庇佑子孫" }
+      ];
+
+      var ROLE_OPTIONS = [
+        { id: "self", label: "問我自己", icon: "👤", desc: "了解我個人的未來運勢、時機與天賦" },
+        { id: "partner", label: "問男女朋友 / 伴侶", icon: "💍", desc: "了解兩人感情發展、正緣磨合與未來" },
+        { id: "spouse", label: "問老公 / 老婆", icon: "💑", desc: "了解婚姻相處、家宅和睦與共同財富" },
+        { id: "parent", label: "問爸爸 / 媽媽", icon: "👨‍👩‍👧", desc: "孝親關懷、祈求長輩健康平安" },
+        { id: "child", label: "問兒子 / 女兒", icon: "👶", desc: "了解孩子的天生專長、學業與教養" },
+        { id: "business", label: "問事業夥伴 / 老闆", icon: "🤝", desc: "了解商業合夥、職場相處與共贏機會" },
+        { id: "friend", label: "問身邊好友 / 閨蜜", icon: "🫂", desc: "了解朋友人際緣分、解開彼此心結" }
+      ];
+
+      var DESIRED_OUTCOMES = [
+        { id: "timing", label: "算出精準的「年齡數字」與「轉運時機」", icon: "⏳", desc: "例如：幾歲會遇到正緣、何時跳槽加薪、何時發跡" },
+        { id: "guidance", label: "獲得明確的「行動指南」與「貴人方位」", icon: "🧭", desc: "清楚知道下一步該怎麼做，避免走冤枉路" },
+        { id: "avoid_danger", label: "幫我「趨吉避凶」，避開破財或爛桃花", icon: "🛡️", desc: "提早防範問題，大事化小小事化無" },
+        { id: "breakthrough", label: "突破瓶頸，讓「事業或收入」翻倍成長", icon: "📈", desc: "打破目前的僵局，迎來更好的發展" },
+        { id: "peace", label: "解開心結，讓「內心平靜安定」", icon: "🕊️", desc: "放下長年的焦慮與煩惱，找回安心與自在" }
+      ];
+
+      var PORTRAITS = [
+        'assets/portraits/female_taiwan.jpg',
+        'assets/portraits/female_taiwan_aries.jpg',
+        'assets/portraits/female_taiwan_libra.jpg',
+        'assets/portraits/female_japan.jpg',
+        'assets/portraits/female_korea.jpg'
+      ];
+
+      var MANIFESTATION_STORIES = [
+        { id: "story_love_1", themeId: "love", title: "感情長年陷入拉扯受傷，請仙佛指引後看清離開，順利找到好對象", name: "張小姐", category: "感情姻緣", keywords: ["感情", "男友", "伴侶", "分手", "復合", "正緣", "家暴", "花心"], summary: "過去與男友交往常爭吵受傷卻難割捨。求問指引後看清不合適關係果斷放手，現在找到體貼相處融洽的新對象。", result: "放下錯的人，順利遇到真正良緣", full: "張小姐過去跟公司男同事交往，周遭朋友都勸她分手。求問指引後終於下定決心分手，如今遇見真正懂珍惜她的新伴侶，相處融洽。" },
+        { id: "story_love_2", themeId: "love", title: "多年沒聯絡的知己好友，請仙佛幫忙後重新聯繫上解開心結", name: "祐維", category: "感情姻緣", keywords: ["知己", "聯絡", "朋友", "訊息", "遺憾", "重新聯繫", "好感", "舊情人"], summary: "曾有一位好知己因誤會失聯多年。祈求指引後兩天，對方主動傳訊息問候，兩人把話講開重新成為知心好友。", result: "解開多年心結，重續美好善緣", full: "當年因為價值觀不同在冷戰中失聯。祈求仙佛幫忙後兩天，對方主動傳訊息問候，約出來見面後把話說開，重回知心好友。" },
+        { id: "story_work_1", themeId: "work", title: "想換工作求職受阻，指引後貴人相助，快速錄取心儀好工作", name: "呂小姐", category: "工作求職", keywords: ["換工作", "找工作", "求職", "面試", "貴人", "履歷", "轉職", "跳槽"], summary: "想換工作一直不順利。透過測算找出盲點並調整履歷，面試貴人相助，很快錄取待遇好、家人稱讚的好公司。", result: "求職貴人相助，快速錄取好缺", full: "求問指引後點出個性盲點與面試呈現方式。我聽話照做，那陣子找工作覺得貴人特別多，很快找到心儀的好工作。" },
+        { id: "story_work_2", themeId: "work", title: "回鄉找工作沒方向，指引電腦相關領域，第一家面試就錄取", name: "彥澤", category: "工作求職", keywords: ["迷惘", "方向", "第一家", "錄取", "電腦", "履歷", "上班"], summary: "剛回鄉找工作陷入迷惘。得到指引往電腦數位領域發揮，投遞第一家面試當天即錄取，隔天開心上班。", result: "第一家面試即錄取，找到方向", full: "剛回到家鄉完全沒方向。得到指引往電腦相關工作投遞，第一家面試當天就錄取，隔天開始上班。" },
+        { id: "story_career_1", themeId: "career", title: "公司業績陷入低迷，指引後團隊凝聚力提升，業績順利破冰", name: "蔡先生", category: "事業合夥", keywords: ["業績", "公司", "老闆", "合夥", "生意", "創業", "團隊"], summary: "公司業績長年低迷。求問指引後找出盲點並積極改善，團隊向心力大增，業務順利迎來轉機。", result: "打破業績僵局，團隊轉危為安", full: "求問指引後，找出了團隊溝通盲點並積極改善，老闆也主動關心進度，業務進展隨之順暢，業績明顯回升。" },
+        { id: "story_wealth_1", themeId: "wealth", title: "投資六十萬卡住要不回，指引後順利談妥分期全數拿回本金", name: "張小姐", category: "經濟財務", keywords: ["投資", "本金", "債務", "還錢", "漏財", "拿回錢", "財務"], summary: "母親投資款項卡住多次商談碰壁。求問指引後再去商量，對方開票分期付款，幾個月後順利全數拿回本金！", result: "成功追回投資本金，化解財務難題", full: "母親投資渡假村六十萬拿不回。求問指引後再去商量，對方態度軟化開立支票分期付款，幾個月後順利拿回所有本金！" },
+        { id: "story_family_1", themeId: "family", title: "想買新房一直猶豫不決，指引後順利在預算內買到心儀好宅", name: "林太太", category: "買房置產", keywords: ["買房", "置產", "新成屋", "頭期款", "房子", "新家", "入厝"], summary: "想換屋苦於頭期款。指引後先生主動提議看房、長輩願意資助，在預算內順利買下第一眼就喜歡的新屋！", result: "預算內順利買進心儀新家", full: "求問指引後先生主動提議看房，長輩也主動願意幫忙周轉購屋金，最後在預算內順利買下心儀附車位好房！" },
+        { id: "story_children_1", themeId: "children", title: "備孕多時生產順利，寶寶健康強壯少生病", name: "周先生", category: "備孕求子", keywords: ["懷孕", "生產", "小孩", "備孕", "生子", "破水", "寶寶"], summary: "妻子備孕生產遇狀況，求問保佑順利生產。手術平安母子均安，寶寶出生後健康強壯活潑。", result: "順利生產母子平安，寶寶健康活潑", full: "妻子生產時破水未陣痛，我立刻祈求保佑。剖腹手術非常順利，現在寶寶健康活潑少生病，妻子復原良好。" }
+      ];
+
+      var state = {
+        currentTab: 'hub',
+        selectedPlanId: 'triple',
+        customChosenThemes: new Set(['love', 'career', 'wealth']),
+        selectedStoriesCategory: 'all',
+        wizard: {
+          activeThemeId: null,
+          currentStep: 1,
+          totalSteps: 6,
+          answers: { gender: 'female', age: '25-34', role: 'self', question: '', goal: 'timing', palmDataUrl: null }
+        }
+      };
+
+      var headerTabBtns = document.querySelectorAll('.app-tab-btn');
+      var bottomTabBtns = document.querySelectorAll('.app-bottom-tab');
+      var appViews = document.querySelectorAll('.app-view');
+      var userTopBarBtn = document.getElementById('userTopBarBtn');
+      var heroLiveCountEl = document.getElementById('heroLiveCount');
+
+      var themesMatrixGrid = document.getElementById('themesMatrixGrid');
+      var memberProfileContainer = document.getElementById('memberProfileContainer');
+      var memberThemesQuotaGrid = document.getElementById('memberThemesQuotaGrid');
+
+      var pricingCardsGrid = document.getElementById('pricingCardsGrid');
+      var pickerCheckboxesList = document.getElementById('pickerCheckboxesList');
+      var checkoutSummaryPlan = document.getElementById('checkoutSummaryPlan');
+      var checkoutSummaryPrice = document.getElementById('checkoutSummaryPrice');
+      var checkoutSummarySelected = document.getElementById('checkoutSummarySelected');
+      var confirmPurchaseBtn = document.getElementById('confirmPurchaseBtn');
+
+      var readingModalBackdrop = document.getElementById('readingModalBackdrop');
+      var readingModalCard = document.getElementById('readingModalCard');
+      var storiesGrid = document.getElementById('storiesGrid');
+      var storiesFilterGroup = document.getElementById('storiesFilterGroup');
+      var historyReportsGrid = document.getElementById('historyReportsGrid');
+
+      function switchTab(tabId) {
+        state.currentTab = tabId;
+        headerTabBtns.forEach(function(btn) { btn.classList.toggle('active', btn.dataset.tab === tabId); });
+        bottomTabBtns.forEach(function(btn) { btn.classList.toggle('active', btn.dataset.tab === tabId); });
+        appViews.forEach(function(view) { view.classList.toggle('active', view.id === ('view-' + tabId)); });
+        if (tabId === 'member') renderMemberCenter();
+        else if (tabId === 'history') renderHistoryReports();
+        else if (tabId === 'stories') renderStoriesFeed();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      headerTabBtns.forEach(function(btn) { btn.addEventListener('click', function() { switchTab(btn.dataset.tab); }); });
+      bottomTabBtns.forEach(function(btn) { btn.addEventListener('click', function() { switchTab(btn.dataset.tab); }); });
+      document.querySelectorAll('[data-goto-tab]').forEach(function(el) {
+        el.addEventListener('click', function() { switchTab(el.dataset.gotoTab); });
+      });
+
+      function updateTopBarUserStatus() {
+        if (!userTopBarBtn) return;
+        var user = MemberManager.getCurrentUser();
+        var wallet = WalletManager.getPoints();
+        var totalPoints = 0;
+        Object.keys(wallet).forEach(function(k) { totalPoints += wallet[k]; });
+
+        if (user) {
+          userTopBarBtn.innerHTML =
+            '<span class="user-avatar-circle">' + user.name.slice(0, 1) + '</span>' +
+            '<span>' + user.name + ' ｜ 🪙 剩餘測算：<strong style="color:#FFF;">' + totalPoints + '</strong> 次</span>';
+          userTopBarBtn.onclick = function() { switchTab('member'); };
+        } else {
+          userTopBarBtn.innerHTML = '<span>👤 登入 / 註冊</span>';
+          userTopBarBtn.onclick = function() { openAuthModal(); };
+        }
+      }
+
+      function openAuthModal() {
+        readingModalCard.innerHTML =
+          '<div style="max-width:400px;margin:0 auto;text-align:center;">' +
+            '<h3 style="color:var(--gold-bright);margin-bottom:8px;">信士快速登入</h3>' +
+            '<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">登入後可查看個人資料、各篇剩餘次數與測算紀錄</p>' +
+            '<button type="button" class="btn btn-gold" style="width:100%;margin-bottom:8px;" id="authQuickLoginBtn">⚡ 一鍵免密碼體驗登入 (陳信士)</button>' +
+            '<button type="button" class="btn btn-outline btn-sm" id="authCloseModalBtn" style="width:100%;">取消</button>' +
+          '</div>';
+
+        document.getElementById('authQuickLoginBtn').addEventListener('click', function() {
+          MemberManager.setCurrentUser({ id: 'usr_demo', name: '陳信士', email: 'chen.blessed@example.com', tier: '有緣信士', joinedAt: '2026-08-31' });
+          updateTopBarUserStatus();
+          readingModalBackdrop.classList.remove('show');
+          switchTab('member');
+        });
+        document.getElementById('authCloseModalBtn').addEventListener('click', function() {
+          readingModalBackdrop.classList.remove('show');
+        });
+        readingModalBackdrop.classList.add('show');
+      }
+
+      function renderMemberCenter() {
+        var user = MemberManager.getCurrentUser();
+        if (!user) {
+          openAuthModal();
+          return;
+        }
+
+        var wallet = WalletManager.getPoints();
+        var totalPoints = 0;
+        Object.keys(wallet).forEach(function(k) { totalPoints += wallet[k]; });
+
+        if (memberProfileContainer) {
+          memberProfileContainer.innerHTML =
+            '<div class="member-profile-card">' +
+              '<div class="member-avatar-block">' +
+                '<div class="member-large-avatar">' + user.name.slice(0, 1) + '</div>' +
+                '<div class="member-info-col">' +
+                  '<h3><span>' + user.name + '</span><span class="member-tier-badge">✨ ' + (user.tier || '有緣信士') + '</span></h3>' +
+                  '<div class="member-email-text">' + user.email + ' ｜ 加入日期：' + (user.joinedAt || '2026-08-31') + '</div>' +
+                '</div>' +
+              '</div>' +
+              '<div style="display:flex;align-items:center;gap:16px;">' +
+                '<div class="member-points-summary-box">' +
+                  '<span style="font-size:0.85rem;color:var(--text-muted);">總剩餘測算次數</span>' +
+                  '<span class="member-total-points-num">' + totalPoints + '</span>' +
+                  '<span style="font-size:0.85rem;color:var(--gold-bright);">次</span>' +
+                '</div>' +
+                '<button type="button" class="btn btn-outline btn-sm" id="memberLogoutBtn">切換帳號</button>' +
+              '</div>' +
+            '</div>';
+
+          document.getElementById('memberLogoutBtn').addEventListener('click', function() {
+            MemberManager.logout();
+            updateTopBarUserStatus();
+            switchTab('hub');
+          });
+        }
+
+        if (memberThemesQuotaGrid) {
+          memberThemesQuotaGrid.innerHTML = '';
+          THEMES.forEach(function(theme) {
+            var quota = wallet[theme.id] || 0;
+            var card = document.createElement('div');
+            card.className = 'theme-quota-card';
+            card.innerHTML =
+              '<div class="theme-quota-card-header">' +
+                '<div style="display:flex;align-items:center;gap:8px;">' +
+                  '<div style="width:28px;height:28px;border-radius:6px;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;color:' + theme.color + ';">' +
+                    '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;">' + theme.icon + '</svg>' +
+                  '</div>' +
+                  '<strong style="font-size:1rem;color:#FFF;">' + theme.name + '</strong>' +
+                '</div>' +
+                '<div class="theme-quota-card-balance ' + (quota === 0 ? 'zero' : '') + '">' + (quota > 0 ? ('✨ 剩餘 ' + quota + ' 次') : '🔒 尚無次數') + '</div>' +
+              '</div>' +
+              '<div style="font-size:0.78rem;color:var(--text-gold);">' + theme.title + '</div>' +
+              '<div style="font-size:0.8rem;color:var(--text-muted);">' + theme.desc + '</div>' +
+              '<div style="display:flex;gap:8px;margin-top:6px;">' +
+                (quota > 0 ?
+                  '<button type="button" class="btn btn-primary btn-sm" style="width:100%;" data-action="quick-read" data-theme-id="' + theme.id + '">⚡ 開始測算 (剩 ' + quota + ' 次)</button>' :
+                  '<button type="button" class="btn btn-outline btn-sm" style="width:100%;" data-action="quick-recharge" data-theme-id="' + theme.id + '">🛒 購買開通此項 ($199起)</button>') +
+              '</div>';
+
+            var qRead = card.querySelector('[data-action="quick-read"]');
+            if (qRead) qRead.addEventListener('click', function() { startGuidedWizard(theme.id); });
+
+            var qRecharge = card.querySelector('[data-action="quick-recharge"]');
+            if (qRecharge) qRecharge.addEventListener('click', function() {
+              state.customChosenThemes.clear();
+              state.customChosenThemes.add(theme.id);
+              state.selectedPlanId = 'single';
+              renderPricingPlans();
+              renderThemePicker();
+              var anchor = document.getElementById('pricingSectionAnchor');
+              if (anchor) anchor.scrollIntoView({ behavior: 'smooth' });
+            });
+
+            memberThemesQuotaGrid.appendChild(card);
+          });
+        }
+
+        renderPricingPlans();
+        renderThemePicker();
+        updateTopBarUserStatus();
+      }
+
+      function renderThemesHub() {
+        if (!themesMatrixGrid) return;
+        themesMatrixGrid.innerHTML = '';
+        var wallet = WalletManager.getPoints();
+
+        THEMES.forEach(function(theme) {
+          var quota = wallet[theme.id] || 0;
+          var card = document.createElement('div');
+          card.className = 'theme-hub-card';
+          card.innerHTML =
+            '<div class="theme-card-top">' +
+              '<div class="theme-icon-box" style="color:' + theme.color + ';">' +
+                '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">' + theme.icon + '</svg>' +
+              '</div>' +
+              '<div class="theme-quota-pill ' + (quota > 0 ? 'has-points' : 'zero-points') + '">' +
+                '<span>' + (quota > 0 ? ('✨ 剩餘 ' + quota + ' 次') : '🔒 點擊開通') + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<div><span class="theme-tag">' + theme.title + '</span><h3>' + theme.name + '</h3></div>' +
+            '<p>' + theme.desc + '</p>' +
+            '<div class="theme-card-actions">' +
+              '<button type="button" class="btn ' + (quota > 0 ? 'btn-primary' : 'btn-outline') + ' btn-sm" style="width:100%;">' +
+                (quota > 0 ? '⚡ 開始測算 (扣 1 次)' : '🛒 立即測算 ($199起)') +
+              '</button>' +
+            '</div>';
+
+          card.addEventListener('click', function() {
+            if (quota > 0) {
+              startGuidedWizard(theme.id);
+            } else {
+              state.customChosenThemes.clear();
+              state.customChosenThemes.add(theme.id);
+              state.selectedPlanId = 'single';
+              switchTab('member');
+              setTimeout(function() {
+                var anchor = document.getElementById('pricingSectionAnchor');
+                if (anchor) anchor.scrollIntoView({ behavior: 'smooth' });
+              }, 100);
+            }
+          });
+
+          themesMatrixGrid.appendChild(card);
+        });
+
+        updateTopBarUserStatus();
+      }
+
+      function renderPricingPlans() {
+        if (!pricingCardsGrid) return;
+        pricingCardsGrid.innerHTML = '';
+
+        PLANS.forEach(function(plan) {
+          var card = document.createElement('div');
+          card.className = 'plan-card ' + (state.selectedPlanId === plan.id ? 'active' : '');
+          card.innerHTML =
+            (plan.ribbon ? ('<div class="plan-ribbon">' + plan.ribbon + '</div>') : '') +
+            '<div class="plan-title">' + plan.label + '</div>' +
+            '<div class="plan-price-row">' +
+              '<div class="plan-price"><sup>NT$</sup>' + plan.price + '</div>' +
+              '<div class="plan-old-price">原價 $' + plan.oldPrice + '</div>' +
+            '</div>' +
+            '<div class="plan-desc-note">' + plan.desc + '</div>' +
+            '<ul class="plan-bullets">' +
+              plan.bullets.map(function(b) { return '<li>' + b + '</li>'; }).join('') +
+            '</ul>' +
+            '<button type="button" class="btn ' + (state.selectedPlanId === plan.id ? 'btn-gold' : 'btn-outline') + '" style="width:100%;margin-top:10px;">' +
+              (state.selectedPlanId === plan.id ? '✓ 當前選擇此方案' : '選擇此方案') +
+            '</button>';
+
+          card.addEventListener('click', function() {
+            state.selectedPlanId = plan.id;
+            if (plan.id === 'all') {
+              THEMES.forEach(function(t) { state.customChosenThemes.add(t.id); });
+            } else if (plan.id === 'single') {
+              var first = Array.from(state.customChosenThemes)[0] || 'love';
+              state.customChosenThemes = new Set([first]);
+            } else if (plan.id === 'triple') {
+              state.customChosenThemes = new Set(['love', 'career', 'wealth']);
+            }
+            renderPricingPlans();
+            renderThemePicker();
+          });
+
+          pricingCardsGrid.appendChild(card);
+        });
+
+        updateCheckoutSummary();
+      }
+
+      function renderThemePicker() {
+        if (!pickerCheckboxesList) return;
+        pickerCheckboxesList.innerHTML = '';
+
+        THEMES.forEach(function(theme) {
+          var isChecked = state.customChosenThemes.has(theme.id);
+          var pill = document.createElement('div');
+          pill.className = 'theme-check-pill ' + (isChecked ? 'checked' : '');
+          pill.innerHTML = '<span>' + (isChecked ? '☑' : '☐') + '</span><span>' + theme.name + '</span>';
+
+          pill.addEventListener('click', function() {
+            if (state.selectedPlanId === 'all') return;
+            if (state.selectedPlanId === 'single') {
+              state.customChosenThemes.clear();
+              state.customChosenThemes.add(theme.id);
+            } else if (state.selectedPlanId === 'triple') {
+              if (state.customChosenThemes.has(theme.id)) {
+                if (state.customChosenThemes.size > 1) state.customChosenThemes.delete(theme.id);
+              } else {
+                if (state.customChosenThemes.size < 3) {
+                  state.customChosenThemes.add(theme.id);
+                } else {
+                  var arr = Array.from(state.customChosenThemes);
+                  arr.shift();
+                  arr.push(theme.id);
+                  state.customChosenThemes = new Set(arr);
+                }
+              }
+            }
+            renderThemePicker();
+            updateCheckoutSummary();
+          });
+
+          pickerCheckboxesList.appendChild(pill);
+        });
+
+        updateCheckoutSummary();
+      }
+
+      function updateCheckoutSummary() {
+        var plan = PLANS.filter(function(p) { return p.id === state.selectedPlanId; })[0];
+        if (!plan) return;
+        if (checkoutSummaryPlan) checkoutSummaryPlan.textContent = plan.label;
+        if (checkoutSummaryPrice) checkoutSummaryPrice.textContent = 'NT$ ' + plan.price;
+
+        var names = Array.from(state.customChosenThemes).map(function(id) {
+          var found = THEMES.filter(function(t) { return t.id === id; })[0];
+          return found ? found.name : id;
+        });
+
+        if (checkoutSummarySelected) {
+          checkoutSummarySelected.textContent = names.length
+            ? ('已選（各獲 3 次測算）：' + names.join('、'))
+            : '尚未選定欲購買的主題';
+        }
+
+        var isValid = state.customChosenThemes.size === plan.requiredCount;
+        if (confirmPurchaseBtn) {
+          confirmPurchaseBtn.disabled = !isValid;
+          confirmPurchaseBtn.textContent = isValid
+            ? ('確認結緣購買 NT$ ' + plan.price)
+            : ('請先選滿 ' + plan.requiredCount + ' 個主題（已選 ' + state.customChosenThemes.size + ' 項）');
+        }
+      }
+
+      if (confirmPurchaseBtn) {
+        confirmPurchaseBtn.addEventListener('click', function() {
+          var plan = PLANS.filter(function(p) { return p.id === state.selectedPlanId; })[0];
+          if (!plan) return;
+          var chosenArray = Array.from(state.customChosenThemes);
+          WalletManager.addPointsToThemes(chosenArray, plan.pointsReward);
+
+          if (typeof confetti === 'function') {
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+          }
+
+          alert('🎉 恭喜購買成功！\n已為所選項目各增加 ' + plan.pointsReward + ' 次測算機會！');
+          renderThemesHub();
+          renderMemberCenter();
+        });
+      }
+
+      function matchStoriesForReport(themeId, userQuestion) {
+        var qLower = (userQuestion || '').toLowerCase();
+        var scored = MANIFESTATION_STORIES.map(function(story) {
+          var score = 0;
+          if (story.themeId === themeId) score += 50;
+          if (qLower && story.keywords) {
+            story.keywords.forEach(function(kw) {
+              if (qLower.indexOf(kw.toLowerCase()) !== -1) score += 25;
+            });
+          }
+          if (themeId === 'work' && story.themeId === 'career') score += 15;
+          if (themeId === 'career' && story.themeId === 'work') score += 15;
+          if (themeId === 'family' && story.themeId === 'children') score += 15;
+          if (themeId === 'children' && story.themeId === 'family') score += 15;
+          return { story: story, score: score };
+        });
+
+        scored.sort(function(a, b) { return b.score - a.score; });
+        return scored.slice(0, 2).map(function(item) { return item.story; });
+      }
+
+      // ============ 6-Step Multi-Page Wizard Engine (白話) ============
+      function startGuidedWizard(themeId) {
+        state.wizard.activeThemeId = themeId;
+        state.wizard.currentStep = 1;
+        state.wizard.answers = { gender: 'female', age: '25-34', role: 'self', question: '', goal: 'timing', palmDataUrl: null };
+        renderWizardStep();
+        readingModalBackdrop.classList.add('show');
+      }
+
+      function renderWizardStep() {
+        var wiz = state.wizard;
+        var theme = THEMES.filter(function(t) { return t.id === wiz.activeThemeId; })[0];
+        var quota = WalletManager.getThemePoints(wiz.activeThemeId);
+        var progressPercent = Math.round((wiz.currentStep / wiz.totalSteps) * 100);
+        var stepContentHtml = '';
+
+        if (wiz.currentStep === 1) {
+          stepContentHtml =
+            '<div class="wizard-step-body">' +
+              '<div><div class="wizard-question-title">1. 請選擇您的性別</div><div class="wizard-question-sub">男女手相看法不同，選定後能更精準分析您的手相與命格</div></div>' +
+              '<div class="wizard-options-grid">' +
+                GENDER_OPTIONS.map(function(opt) {
+                  return '<div class="wizard-option-card ' + (wiz.answers.gender === opt.id ? 'selected' : '') + '" data-value="' + opt.id + '">' +
+                    '<div class="wizard-option-card-left"><span class="wizard-option-icon">' + opt.icon + '</span><div><div class="wizard-option-text">' + opt.label + '</div><div class="wizard-option-desc">' + opt.desc + '</div></div></div>' +
+                    '<div class="wizard-option-check">✓</div>' +
+                  '</div>';
+                }).join('') +
+              '</div>' +
+            '</div>';
+        } else if (wiz.currentStep === 2) {
+          stepContentHtml =
+            '<div class="wizard-step-body">' +
+              '<div><div class="wizard-question-title">2. 請選擇您的年齡階段</div><div class="wizard-question-sub">幫助精確算出您幾歲會轉運、幾歲遇到正緣或事業升遷</div></div>' +
+              '<div class="wizard-options-grid">' +
+                AGE_OPTIONS.map(function(opt) {
+                  return '<div class="wizard-option-card ' + (wiz.answers.age === opt.id ? 'selected' : '') + '" data-value="' + opt.id + '">' +
+                    '<div class="wizard-option-card-left"><span class="wizard-option-icon">' + opt.icon + '</span><div><div class="wizard-option-text">' + opt.label + '</div><div class="wizard-option-desc">' + opt.desc + '</div></div></div>' +
+                    '<div class="wizard-option-check">✓</div>' +
+                  '</div>';
+                }).join('') +
+              '</div>' +
+            '</div>';
+        } else if (wiz.currentStep === 3) {
+          stepContentHtml =
+            '<div class="wizard-step-body">' +
+              '<div><div class="wizard-question-title">3. 這次主要想為誰詢問？</div><div class="wizard-question-sub">您可以為自己測算，也可以為伴侶、家人或朋友求問指引</div></div>' +
+              '<div class="wizard-options-grid cols-2">' +
+                ROLE_OPTIONS.map(function(opt) {
+                  return '<div class="wizard-option-card ' + (wiz.answers.role === opt.id ? 'selected' : '') + '" data-value="' + opt.id + '">' +
+                    '<div class="wizard-option-card-left"><span class="wizard-option-icon">' + opt.icon + '</span><div><div class="wizard-option-text">' + opt.label + '</div><div class="wizard-option-desc">' + opt.desc + '</div></div></div>' +
+                    '<div class="wizard-option-check">✓</div>' +
+                  '</div>';
+                }).join('') +
+              '</div>' +
+            '</div>';
+        } else if (wiz.currentStep === 4) {
+          var promptPills = theme.promptPills || [];
+          var currentLen = (wiz.answers.question || '').length;
+          stepContentHtml =
+            '<div class="wizard-step-body">' +
+              '<div><div class="wizard-question-title">4. 您目前遇到什麼煩惱或想了解什麼？</div><div class="wizard-question-sub">描述越清楚，給您的建議與時機點就會越精準（建議詳盡填寫您的煩惱）</div></div>' +
+              '<div>' +
+                '<textarea id="wizardQuestionTextarea" class="app-textarea" rows="4" maxlength="500" placeholder="例如：想了解近期換工作跳槽的最佳月份、或與伴侶之間的未來相處...">' + wiz.answers.question + '</textarea>' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">' +
+                  '<span style="font-size:0.75rem;color:var(--text-muted);">💡 點擊下方常用問題快速填入：</span>' +
+                  '<span id="wizardCharCounter" style="font-size:0.78rem;font-weight:800;color:' + (currentLen >= 500 ? '#EF4444' : 'var(--text-gold)') + ';">' + currentLen + ' / 500 字</span>' +
+                '</div>' +
+                '<div class="prompt-tags-list">' +
+                  promptPills.map(function(pill) {
+                    return '<button type="button" class="prompt-tag-btn" data-prompt-text="' + pill + '">+ ' + pill + '</button>';
+                  }).join('') +
+                '</div>' +
+              '</div>' +
+            '</div>';
+        } else if (wiz.currentStep === 5) {
+          stepContentHtml =
+            '<div class="wizard-step-body">' +
+              '<div><div class="wizard-question-title">5. 您最希望獲得怎樣的幫助與結果？</div><div class="wizard-question-sub">報告中將針對您的核心期望，給予具體的行動方向與時機建議</div></div>' +
+              '<div class="wizard-options-grid">' +
+                DESIRED_OUTCOMES.map(function(opt) {
+                  return '<div class="wizard-option-card ' + (wiz.answers.goal === opt.id ? 'selected' : '') + '" data-value="' + opt.id + '">' +
+                    '<div class="wizard-option-card-left"><span class="wizard-option-icon">' + opt.icon + '</span><div><div class="wizard-option-text">' + opt.label + '</div><div class="wizard-option-desc">' + opt.desc + '</div></div></div>' +
+                    '<div class="wizard-option-check">✓</div>' +
+                  '</div>';
+                }).join('') +
+              '</div>' +
+            '</div>';
+        } else if (wiz.currentStep === 6) {
+          stepContentHtml =
+            '<div class="wizard-step-body">' +
+              '<div><div class="wizard-question-title">6. 拍照上傳手相照片（選填）</div><div class="wizard-question-sub">💡 提示：只要拍手掌，不用拍臉！有拍照會多為您分析感情線、智慧線、事業線，內容會更完整。若不方便拍照也可以直接略過！</div></div>' +
+              '<label class="wizard-upload-box" for="wizardPalmFileInput">' +
+                '<div style="font-size:2rem;margin-bottom:6px;">✋</div>' +
+                '<div style="font-weight:700;color:var(--gold-bright);">點擊拍照 / 上傳手掌照片</div>' +
+                '<div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">僅分析手相紋路特徵，照片不留存雲端，保護隱私</div>' +
+                '<input type="file" id="wizardPalmFileInput" accept="image/*" style="display:none;">' +
+                (wiz.answers.palmDataUrl ? ('<img src="' + wiz.answers.palmDataUrl + '" class="wizard-upload-preview" alt="手相預覽">') : '') +
+              '</label>' +
+            '</div>';
+        }
+
+        readingModalCard.innerHTML =
+          '<div class="wizard-header">' +
+            '<div class="wizard-title-row">' +
+              '<h3 style="display:flex;align-items:center;gap:8px;color:' + theme.color + ';"><span>🔮</span> ' + theme.name + ' · 命理解析</h3>' +
+              '<span class="theme-quota-pill has-points">剩餘測算次數：' + quota + ' 次</span>' +
+            '</div>' +
+            '<div class="wizard-stepper-meta"><span>題目 ' + wiz.currentStep + ' / ' + wiz.totalSteps + '</span><span>完成進度 ' + progressPercent + '%</span></div>' +
+            '<div class="wizard-progress-track"><div class="wizard-progress-bar" style="width:' + progressPercent + '%;"></div></div>' +
+          '</div>' +
+          stepContentHtml +
+          '<div class="wizard-footer">' +
+            '<button type="button" class="btn btn-outline btn-sm" id="wizardBackBtn">' + (wiz.currentStep === 1 ? '取消' : '← 上一步') + '</button>' +
+            '<div style="display:flex;gap:8px;">' +
+              (wiz.currentStep === 6 ?
+                '<button type="button" class="btn btn-outline btn-sm" id="wizardSkipPalmBtn">⏩ 略過拍照，直接看報告（不建議）</button><button type="button" class="btn btn-gold btn-sm" id="wizardSubmitBtn">⚡ 產生完整解析報告 (扣 1 次)</button>' :
+                '<button type="button" class="btn btn-gold btn-sm" id="wizardNextBtn">下一步 →</button>') +
+            '</div>' +
+          '</div>';
+
+        bindWizardStepEvents(wiz.currentStep);
+      }
+
+      function bindWizardStepEvents(currentStep) {
+        var wiz = state.wizard;
+        readingModalCard.querySelectorAll('.wizard-option-card').forEach(function(card) {
+          card.addEventListener('click', function() {
+            var val = card.dataset.value;
+            if (currentStep === 1) wiz.answers.gender = val;
+            else if (currentStep === 2) wiz.answers.age = val;
+            else if (currentStep === 3) wiz.answers.role = val;
+            else if (currentStep === 5) wiz.answers.goal = val;
+
+            readingModalCard.querySelectorAll('.wizard-option-card').forEach(function(c) { c.classList.remove('selected'); });
+            card.classList.add('selected');
+
+            setTimeout(function() { advanceWizardStep(1); }, 180);
+          });
+        });
+
+        if (currentStep === 4) {
+          var textarea = document.getElementById('wizardQuestionTextarea');
+          var counter = document.getElementById('wizardCharCounter');
+
+          var updateCounter = function() {
+            if (!textarea) return;
+            var len = textarea.value.length;
+            if (counter) {
+              counter.textContent = len + ' / 500 字';
+              counter.style.color = len >= 500 ? '#EF4444' : 'var(--text-gold)';
+            }
+          };
+
+          if (textarea) {
+            textarea.addEventListener('input', function(e) {
+              wiz.answers.question = e.target.value;
+              updateCounter();
+            });
+          }
+
+          readingModalCard.querySelectorAll('[data-prompt-text]').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              if (textarea) {
+                textarea.value = btn.dataset.promptText.slice(0, 500);
+                wiz.answers.question = textarea.value;
+                updateCounter();
+              }
+            });
+          });
+        }
+
+        if (currentStep === 6) {
+          var fileInput = document.getElementById('wizardPalmFileInput');
+          if (fileInput) {
+            fileInput.addEventListener('change', function(e) {
+              var file = e.target.files[0];
+              if (file) {
+                var reader = new FileReader();
+                reader.onload = function(evt) {
+                  wiz.answers.palmDataUrl = evt.target.result;
+                  renderWizardStep();
+                };
+                reader.readAsDataURL(file);
+              }
+            });
+          }
+
+          var skipBtn = document.getElementById('wizardSkipPalmBtn');
+          if (skipBtn) {
+            skipBtn.addEventListener('click', function() {
+              wiz.answers.palmDataUrl = null;
+              executeDecodingFlow();
+            });
+          }
+
+          var submitBtn = document.getElementById('wizardSubmitBtn');
+          if (submitBtn) {
+            submitBtn.addEventListener('click', function() {
+              executeDecodingFlow();
+            });
+          }
+        }
+
+        var backBtn = document.getElementById('wizardBackBtn');
+        if (backBtn) {
+          backBtn.addEventListener('click', function() {
+            if (currentStep === 1) readingModalBackdrop.classList.remove('show');
+            else advanceWizardStep(-1);
+          });
+        }
+
+        var nextBtn = document.getElementById('wizardNextBtn');
+        if (nextBtn) {
+          nextBtn.addEventListener('click', function() { advanceWizardStep(1); });
+        }
+      }
+
+      function advanceWizardStep(direction) {
+        var next = state.wizard.currentStep + direction;
+        if (next >= 1 && next <= state.wizard.totalSteps) {
+          state.wizard.currentStep = next;
+          renderWizardStep();
+        }
+      }
+
+      function executeDecodingFlow() {
+        var wiz = state.wizard;
+        var consumeRes = WalletManager.consumePoint(wiz.activeThemeId, 1);
+        if (!consumeRes.success) {
+          alert('您的測算次數不足，請先至會員中心購買該主題方案！');
+          return;
+        }
+        renderThemesHub();
+        renderMemberCenter();
+
+        readingModalCard.innerHTML =
+          '<div class="decoding-stage">' +
+            '<div class="decoding-spinner-ring"></div>' +
+            '<h3 style="color:var(--gold-bright);">正在為您深入解析命盤與手相...</h3>' +
+            '<p style="color:var(--text-muted);font-size:0.85rem;">正在智能比對命理時機、手相紋路特徵與真實見證案例</p>' +
+            '<div class="decoding-progress-bar"><div class="decoding-progress-fill" id="decodingProgress"></div></div>' +
+          '</div>';
+
+        var fill = document.getElementById('decodingProgress');
+        var progress = 10;
+        var interval = setInterval(function() {
+          progress += 30;
+          if (fill) fill.style.width = progress + '%';
+          if (progress >= 100) {
+            clearInterval(interval);
+            setTimeout(function() { showDecodedReport(wiz.activeThemeId, wiz.answers); }, 500);
+          }
+        }, 400);
+      }
+
+      function showDecodedReport(themeId, answers) {
+        var theme = THEMES.filter(function(t) { return t.id === themeId; })[0];
+        var randomPortrait = PORTRAITS[Math.floor(Math.random() * PORTRAITS.length)];
+        var matchedStories = matchStoriesForReport(themeId, answers.question);
+
+        var genderLabel = (GENDER_OPTIONS.filter(function(g) { return g.id === answers.gender; })[0] || {}).label || '不透露';
+        var ageLabel = (AGE_OPTIONS.filter(function(a) { return a.id === answers.age; })[0] || {}).label || '25-34歲';
+        var roleLabel = (ROLE_OPTIONS.filter(function(r) { return r.id === answers.role; })[0] || {}).label || '問我自己';
+        var goalLabel = (DESIRED_OUTCOMES.filter(function(g) { return g.id === answers.goal; })[0] || {}).label || '掌握時機指引';
+
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 80, spread: 60, origin: { y: 0.5 } });
+        }
+
+        var reportData = {
+          themeId: themeId,
+          themeName: theme.name,
+          title: theme.title,
+          portrait: randomPortrait,
+          gender: genderLabel,
+          age: ageLabel,
+          role: roleLabel,
+          goal: goalLabel,
+          question: answers.question || '一般運勢與未來時機指引',
+          score: 92 + Math.floor(Math.random() * 7),
+          advice: '【' + theme.name + '深度指引】：信士（' + genderLabel + ' · ' + ageLabel + ' · ' + roleLabel + '）目前整體運勢氣場聚集向上。針對您所詢問的「' + (answers.question || theme.title) + '」與期待「' + goalLabel + '」，在未來的關鍵月份（尤其是今年秋季至明年初）將迎來重要的轉折契機。建議您保持信心、把握身邊的貴人善緣，順應時機積極行動，必能迎刃而解、心想事成！',
+          hasPalm: Boolean(answers.palmDataUrl),
+          matchedStories: matchedStories
+        };
+
+        WalletManager.saveReport(reportData);
+
+        readingModalCard.innerHTML =
+          '<div class="report-content-box">' +
+            '<div class="report-header-badge">' +
+              '<span style="font-size:0.75rem;font-weight:800;color:var(--gold-bright);border:1px solid var(--border-gold);padding:3px 10px;border-radius:999px;">✦ 專屬深度解析報告已產出 ✦</span>' +
+              '<h2 style="margin-top:10px;">' + theme.name + ' · ' + theme.title + '</h2>' +
+              '<div style="font-size:0.8rem;color:var(--text-gold);margin-top:4px;">' +
+                reportData.gender + ' ｜ ' + reportData.age + ' ｜ 詢問對象：' + reportData.role + ' ｜ ' + (reportData.hasPalm ? '✋ 已包含手相分析' : '🔮 命理深度推演') +
+              '</div>' +
+            '</div>' +
+            '<div class="report-portrait-container">' +
+              '<img src="' + randomPortrait + '" class="report-portrait-img" alt="正緣長相特徵模擬">' +
+              '<div class="report-dimension-grid">' +
+                '<div class="report-dim-card"><div class="report-dim-label">天命正緣契合度</div><div class="report-dim-val">' + reportData.score + ' %</div></div>' +
+                '<div class="report-dim-card"><div class="report-dim-label">關鍵轉折年齡</div><div class="report-dim-val">29 - 32 歲</div></div>' +
+                '<div class="report-dim-card"><div class="report-dim-label">貴人特徵與方位</div><div class="report-dim-val">正南方 · 溫和細心</div></div>' +
+                '<div class="report-dim-card"><div class="report-dim-label">手相命脈印證</div><div class="report-dim-val">吉星相照 · 貴人相助</div></div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="report-advice-box">' +
+              '<div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:6px;"><strong>想了解的事：</strong> ' + reportData.question + '</div>' +
+              '<div style="font-size:0.82rem;color:var(--text-gold);margin-bottom:8px;"><strong>期待的結果：</strong> ' + reportData.goal + '</div>' +
+              '<div style="line-height:1.7;">' + reportData.advice + '</div>' +
+            '</div>' +
+            '<div class="report-manifestation-section">' +
+              '<div class="manifestation-header">' +
+                '<span class="manifestation-tag">✦ 真實見證故事 ✦</span>' +
+                '<h4>看看其他信眾的真實經歷（與您的問題最相近）：</h4>' +
+              '</div>' +
+              '<div class="manifestation-cards-list">' +
+                matchedStories.map(function(s) {
+                  return '<div class="manifestation-story-card">' +
+                    '<div class="story-card-meta">' +
+                      '<span class="story-card-title">' + s.title + '</span>' +
+                      '<span class="story-card-user">' + s.name + ' · ' + s.category + '</span>' +
+                    '</div>' +
+                    '<div class="story-card-summary">' + s.summary + '</div>' +
+                    '<div class="story-card-result-badge">✓ ' + s.result + '</div>' +
+                    '<details class="story-full-details"><summary>點擊展開閱讀完整見證故事</summary><p>' + s.full + '</p></details>' +
+                  '</div>';
+                }).join('') +
+              '</div>' +
+            '</div>' +
+            '<div style="display:flex;justify-content:space-between;margin-top:16px;border-top:1px solid var(--border);padding-top:14px;">' +
+              '<button type="button" class="btn btn-outline btn-sm" id="closeReportBtn">返回首頁</button>' +
+              '<button type="button" class="btn btn-primary btn-sm" id="viewAllReportsBtn">查看紀錄簿</button>' +
+            '</div>' +
+          '</div>';
+
+        document.getElementById('closeReportBtn').addEventListener('click', function() {
+          readingModalBackdrop.classList.remove('show');
+        });
+        document.getElementById('viewAllReportsBtn').addEventListener('click', function() {
+          readingModalBackdrop.classList.remove('show');
+          switchTab('history');
+        });
+      }
+
+      function renderHistoryReports() {
+        if (!historyReportsGrid) return;
+        historyReportsGrid.innerHTML = '';
+        var list = WalletManager.getReports();
+        if (list.length === 0) {
+          historyReportsGrid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);grid-column:1/-1;">尚無測算紀錄，快去首頁開始您的第一次測算吧！</div>';
+          return;
+        }
+
+        list.forEach(function(item) {
+          var card = document.createElement('div');
+          card.className = 'theme-hub-card';
+          card.innerHTML =
+            '<div style="display:flex;gap:12px;align-items:center;">' +
+              '<img src="' + item.portrait + '" style="width:60px;height:60px;border-radius:var(--radius-sm);object-fit:cover;border:1px solid var(--border-gold);" alt="報告縮圖">' +
+              '<div>' +
+                '<h4 style="color:var(--gold-bright);">' + item.themeName + '</h4>' +
+                '<span style="font-size:0.75rem;color:var(--text-muted);">' + new Date(item.date).toLocaleDateString() + '</span>' +
+              '</div>' +
+            '</div>' +
+            '<div style="font-size:0.82rem;color:var(--text-gold);font-weight:700;">想了解的事：' + (item.question || '一般運勢') + '</div>' +
+            '<p style="font-size:0.85rem;">' + item.advice + '</p>' +
+            (item.matchedStories && item.matchedStories.length ? ('<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);font-size:0.78rem;color:var(--text-muted);"><span>📖 相關見證：</span><span style="color:var(--gold-bright);">' + item.matchedStories[0].title + '</span></div>') : '');
+          historyReportsGrid.appendChild(card);
+        });
+      }
+
+      function renderStoriesFeed() {
+        if (!storiesGrid) return;
+        storiesGrid.innerHTML = '';
+        var filtered = state.selectedStoriesCategory === 'all'
+          ? MANIFESTATION_STORIES
+          : MANIFESTATION_STORIES.filter(function(s) { return s.themeId === state.selectedStoriesCategory; });
+
+        filtered.forEach(function(s) {
+          var card = document.createElement('div');
+          card.className = 'theme-hub-card';
+          card.innerHTML =
+            '<div style="display:flex;align-items:center;justify-content:space-between;">' +
+              '<div style="display:flex;align-items:center;gap:10px;">' +
+                '<div style="width:36px;height:36px;border-radius:50%;background:var(--gold-gradient);color:#000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.9rem;">' + s.name.slice(0, 1) + '</div>' +
+                '<div><div style="font-weight:700;font-size:0.95rem;">' + s.name + '</div><div style="font-size:0.75rem;color:var(--text-gold);">${s.category}</div></div>' +
+              '</div>' +
+            '</div>' +
+            '<h4 style="font-size:1.05rem;color:#FFFFFF;margin-top:4px;">' + s.title + '</h4>' +
+            '<p style="font-size:0.86rem;color:var(--text-secondary);">${s.summary}</p>' +
+            '<div style="display:inline-flex;align-self:flex-start;font-size:0.76rem;color:#34D399;font-weight:800;background:rgba(16,185,129,0.15);padding:3px 8px;border-radius:4px;">✓ ' + s.result + '</div>' +
+            '<details class="story-full-details" style="margin-top:6px;"><summary>閱讀完整見證始末</summary><p>' + s.full + '</p></details>';
+          storiesGrid.appendChild(card);
+        });
+      }
+
+      if (storiesFilterGroup) {
+        storiesFilterGroup.querySelectorAll('[data-category]').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            storiesFilterGroup.querySelectorAll('[data-category]').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            state.selectedStoriesCategory = btn.dataset.category;
+            renderStoriesFeed();
+          });
+        });
+      }
+
+      renderThemesHub();
+      updateTopBarUserStatus();
+    })();
+  </script>
+</body>
+</html>

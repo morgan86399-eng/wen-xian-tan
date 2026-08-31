@@ -1,0 +1,66 @@
+<svg class="brand-logo-icon" viewBox="0 0 200 200" overflow="visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="goldNatC" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFDF7"/>
+      <stop offset="30%" stop-color="#FDE68A"/>
+      <stop offset="70%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <radialGradient id="haloNatC" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(245, 158, 11, 0.35)"/>
+      <stop offset="70%" stop-color="rgba(236, 72, 153, 0.12)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+    <filter id="glowC" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#F59E0B" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <circle cx="100" cy="100" r="92" fill="url(#haloNatC)"/>
+  
+  <!-- 雙重天體八卦神聖同心環 -->
+  <circle cx="100" cy="100" r="88" stroke="url(#goldNatC)" stroke-width="1.6" opacity="0.6"/>
+  <circle cx="100" cy="100" r="82" stroke="url(#goldNatC)" stroke-width="0.8" stroke-dasharray="2 4" opacity="0.8"/>
+
+  <g filter="url(#glowC)">
+    <!-- 極致細膩的單線人體手相 (Single Clean Contour with Natural Curvature) -->
+    <path d="M 76 182 
+             C 62 170, 44 148, 42 128 
+             C 40 114, 46 104, 54 96 
+             C 60 90, 68 96, 70 106 
+             C 72 116, 74 124, 76 128
+             L 76 66 
+             C 76 52, 86 52, 86 66 
+             L 87 106
+             L 88 40 
+             C 88 26, 99 26, 99 40 
+             L 100 102
+             L 102 48 
+             C 102 34, 113 34, 113 48 
+             L 113 104
+             L 116 76 
+             C 116 64, 126 64, 126 76 
+             L 126 120 
+             C 126 148, 114 174, 98 182" 
+          stroke="url(#goldNatC)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- 自然掌紋細線 -->
+    <path d="M 74 122 C 78 138, 86 156, 92 174" stroke="url(#goldNatC)" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>
+    <path d="M 74 124 C 88 132, 106 138, 118 142" stroke="url(#goldNatC)" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>
+    <path d="M 122 112 C 108 106, 94 106, 86 96" stroke="url(#goldNatC)" stroke-width="1.8" stroke-linecap="round" opacity="0.85"/>
+
+    <!-- 掌心命運樞紐：璀璨金鑰與日輪 (融入掌心紋路，自然雅緻) -->
+    <g transform="translate(98, 128)">
+      <circle cx="0" cy="0" r="10" stroke="url(#goldNatC)" stroke-width="1.6" fill="rgba(7, 6, 20, 0.7)"/>
+      <circle cx="0" cy="0" r="5" stroke="url(#goldNatC)" stroke-width="1" stroke-dasharray="2 2"/>
+      <path d="M 0 -7 L 0 7 M -7 0 L 7 0" stroke="url(#goldNatC)" stroke-width="1.2"/>
+      <circle cx="0" cy="0" r="2" fill="#FFFDF7"/>
+    </g>
+
+    <!-- 星象方位角記號 -->
+    <polygon points="100,12 103,18 97,18" fill="url(#goldNatC)"/>
+    <polygon points="100,188 103,182 97,182" fill="url(#goldNatC)"/>
+    <polygon points="12,100 18,103 18,97" fill="url(#goldNatC)"/>
+    <polygon points="188,100 182,103 182,97" fill="url(#goldNatC)"/>
+  </g>
+</svg>

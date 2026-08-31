@@ -1,0 +1,22 @@
+{
+  "name": "wen-xian-tan",
+  "version": "1.0.0",
+  "private": true,
+  "description": "問仙壇 - 東方美學主題測算與掌紋解讀服務",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "fortune-telling",
+    "palmistry",
+    "chinese-culture",
+    "landing-page"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^5.4.2"
+  }
+}

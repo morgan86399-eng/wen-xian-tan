@@ -1,0 +1,122 @@
+<svg class="brand-logo-icon" viewBox="0 0 200 200" overflow="visible" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 高動態奢華純金漸層 -->
+    <linearGradient id="brandGoldLuxury" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="15%" stop-color="#FFF8DB"/>
+      <stop offset="35%" stop-color="#FDE68A"/>
+      <stop offset="65%" stop-color="#F59E0B"/>
+      <stop offset="88%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#92400E"/>
+    </linearGradient>
+
+    <!-- 柔光香檳金輔助漸層 -->
+    <linearGradient id="champagneGold" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FDE68A"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#FFFDF7"/>
+    </linearGradient>
+
+    <!-- 溫潤紫金宇宙靈氣光暈 -->
+    <radialGradient id="brandHaloLuxury" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(255, 248, 219, 0.5)"/>
+      <stop offset="40%" stop-color="rgba(245, 158, 11, 0.38)"/>
+      <stop offset="75%" stop-color="rgba(139, 92, 246, 0.18)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+
+    <radialGradient id="starCoreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(255, 255, 255, 0.95)"/>
+      <stop offset="45%" stop-color="rgba(253, 230, 138, 0.65)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+
+    <!-- 頂級立體金光濾鏡 -->
+    <filter id="masterGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="0" stdDeviation="3.5" flood-color="#F59E0B" flood-opacity="0.65"/>
+      <feDropShadow dx="0" dy="1.2" stdDeviation="1.5" flood-color="#FFF" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- 1. 背景宇宙聚福光環 -->
+  <circle cx="100" cy="100" r="94" fill="url(#brandHaloLuxury)"/>
+
+  <!-- 2. 外層天體神聖星軌環 (Celestial Orbit Rings) -->
+  <circle cx="100" cy="100" r="88" stroke="url(#brandGoldLuxury)" stroke-width="1.4" stroke-dasharray="3 4" opacity="0.75"/>
+  <ellipse cx="100" cy="102" rx="85" ry="33" transform="rotate(-22 100 102)" stroke="url(#brandGoldLuxury)" stroke-width="1.1" opacity="0.5"/>
+
+  <!-- 3. 圓潤飽滿・福相手型輪廓 (Plump Fortunate Hand Silhouette) -->
+  <g filter="url(#masterGlow)">
+    <!-- 
+      福相手型工學精修：
+      - 手腕寬度加寬至 60px (x=70 到 x=130)，底座寬厚穩重扎實！
+      - 大魚際（左側掌丘）曲線圓潤飽滿 (x=50)，象徵元氣充沛、厚積薄發
+      - 小魚際（右側掌丘）豐盈有致 (x=140)，象徵聚財納福
+      - 大拇指小巧適中、自然微展，指節圓潤
+      - 四指修長且具肉感溫潤度，指尖星芒點綴
+    -->
+    <path d="M 70 182 
+             C 54 166, 46 144, 48 124 
+             C 49 112, 53 104, 58 98 
+             C 63 92, 70 94, 73 102 
+             C 76 109, 76 116, 76 122
+             L 76 62 
+             C 76 48, 88 48, 88 62 
+             L 89 104
+             L 90 36 
+             C 90 22, 102 22, 102 36 
+             L 103 100
+             L 105 44 
+             C 105 30, 117 30, 117 44 
+             L 117 104
+             L 119 72 
+             C 119 60, 129 60, 129 72 
+             L 129 116 
+             C 138 126, 142 148, 138 166 
+             C 135 174, 131 180, 130 182 
+             Z" 
+          stroke="url(#brandGoldLuxury)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" fill="rgba(12, 10, 28, 0.45)"/>
+
+    <!-- 手腕寬厚神聖托弧 (Solid Blessed Wrist Foundation) -->
+    <path d="M 68 183 C 84 187, 116 187, 132 183" stroke="url(#brandGoldLuxury)" stroke-width="2.5" stroke-linecap="round" opacity="0.85"/>
+
+    <!-- 4. 圓潤福相三大命脈 (生命線、智慧線、感情線) -->
+    <!-- 生命線：深長優雅、深弧環抱大魚際 -->
+    <path d="M 74 120 C 78 140, 84 162, 88 178" stroke="url(#champagneGold)" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
+    
+    <!-- 智慧線：舒展通達、開智聚財 -->
+    <path d="M 74 122 C 90 130, 110 136, 128 142" stroke="url(#champagneGold)" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
+    
+    <!-- 感情線：鳳尾揚升、吉祥順遂 -->
+    <path d="M 130 114 C 114 108, 98 106, 86 92" stroke="url(#champagneGold)" stroke-width="2.2" stroke-linecap="round" opacity="0.95"/>
+    <!-- 鳳尾吉紋向上微分叉 -->
+    <path d="M 96 98 C 92 92, 90 86, 88 82" stroke="url(#champagneGold)" stroke-width="1.5" stroke-linecap="round" opacity="0.75"/>
+
+    <!-- 5. 掌心聚寶盆・八芒解碼星曜 (Prismatic 8-Point Treasure Core) -->
+    <g transform="translate(98, 126)">
+      <circle cx="0" cy="0" r="18" fill="url(#starCoreGlow)"/>
+      <line x1="0" y1="-20" x2="0" y2="20" stroke="url(#brandGoldLuxury)" stroke-width="1.6" stroke-linecap="round"/>
+      <line x1="-20" y1="0" x2="20" y2="0" stroke="url(#brandGoldLuxury)" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M 0 -16 Q 0 0 16 0 Q 0 0 0 16 Q 0 0 -16 0 Q 0 0 0 -16 Z" fill="url(#brandGoldLuxury)"/>
+      <polygon points="0,-11 3.2,0 0,11 -3.2,0" fill="#FFFDF7"/>
+      <polygon points="-11,0 0,3.2 11,0 0,-3.2" fill="#FFFDF7"/>
+      <circle cx="0" cy="0" r="3.2" fill="#070614"/>
+      <circle cx="0" cy="0" r="1.6" fill="#FFFFFF"/>
+    </g>
+
+    <!-- 6. 指尖福相星宿命穴 (Fingertip Auspicious Star Nodes) -->
+    <circle cx="68" cy="98" r="2.8" fill="#FFFFFF" stroke="url(#brandGoldLuxury)" stroke-width="1.2"/>
+    <circle cx="82" cy="52" r="3.2" fill="#FFFFFF" stroke="url(#brandGoldLuxury)" stroke-width="1.2"/>
+    <circle cx="96" cy="26" r="3.8" fill="#FFFFFF" stroke="url(#brandGoldLuxury)" stroke-width="1.4"/>
+    <circle cx="111" cy="34" r="3.2" fill="#FFFFFF" stroke="url(#brandGoldLuxury)" stroke-width="1.2"/>
+    <circle cx="124" cy="64" r="2.8" fill="#FFFFFF" stroke="url(#brandGoldLuxury)" stroke-width="1"/>
+
+    <!-- 7. 周圍宇宙幸運星 (Celestial Sparkle) -->
+    <g transform="translate(160, 34)">
+      <path d="M 0 -11 L 2.4 -3.2 L 11 0 L 2.4 3.2 L 0 11 L -2.4 3.2 L -11 0 L -2.4 -3.2 Z" fill="url(#brandGoldLuxury)"/>
+      <circle cx="0" cy="0" r="1.4" fill="#FFF"/>
+    </g>
+    <circle cx="34" cy="58" r="2.2" fill="#FDE68A"/>
+    <circle cx="166" cy="142" r="2.4" fill="#FDE68A"/>
+  </g>
+</svg>

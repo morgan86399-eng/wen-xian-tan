@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>問仙壇 · 掌心解碼 - 2026 全方位命理透視</title>
+  <meta name="description" content="只拍掌心、不拍臉。解開你的正緣相遇年齡、事業巔峰與發財時機。">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="問仙壇 · 掌心解碼">
+  <meta property="og:description" content="六大主題深度透視，拍照即可測算，真實信眾見證印證">
+  <meta property="og:image" content="assets/og-preview.jpg">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@300;400;500;700;900&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+
+  <!-- Canvas Confetti -->
+  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="stylesheet" href="src/css/style.css">
+</head>
+<body>
+
+  <!-- Ambient Glow Effects -->
+  <div class="cosmic-glow glow-1"></div>
+  <div class="cosmic-glow glow-2"></div>
+  <div class="cosmic-glow glow-3"></div>
+
+  <!-- Main App Shell -->
+  <div class="app-container">
+    
+    <!-- Top Persistent App Header -->
+    <header class="app-header">
+      <div class="app-header-inner">
+        <!-- Brand Logo & Title -->
+        <div class="brand-wrap" data-goto-tab="hub">
+          <svg class="brand-svg-icon" viewBox="0 0 200 200" overflow="visible" fill="none">
+            <defs>
+              <linearGradient id="brandGoldLuxury" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#FFFFFF"/>
+                <stop offset="25%" stop-color="#FDE68A"/>
+                <stop offset="65%" stop-color="#F59E0B"/>
+                <stop offset="100%" stop-color="#92400E"/>
+              </linearGradient>
+              <radialGradient id="brandHaloLuxury" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="rgba(255, 248, 219, 0.45)"/>
+                <stop offset="50%" stop-color="rgba(245, 158, 11, 0.25)"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <circle cx="100" cy="100" r="90" fill="url(#brandHaloLuxury)"/>
+            <circle cx="100" cy="100" r="84" stroke="url(#brandGoldLuxury)" stroke-width="1.5" stroke-dasharray="3 4" opacity="0.8"/>
+            <path d="M 70 182 C 54 166, 46 144, 48 124 C 49 112, 53 104, 58 98 C 63 92, 70 94, 73 102 C 76 109, 76 116, 76 122 L 76 62 C 76 48, 88 48, 88 62 L 89 104 L 90 36 C 90 22, 102 22, 102 36 L 103 100 L 105 44 C 105 30, 117 30, 117 44 L 117 104 L 119 72 C 119 60, 129 60, 129 72 L 129 116 C 138 126, 142 148, 138 166 C 135 174, 131 180, 130 182 Z" stroke="url(#brandGoldLuxury)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="rgba(12, 10, 28, 0.5)"/>
+            <g transform="translate(98, 126)">
+              <line x1="0" y1="-18" x2="0" y2="18" stroke="url(#brandGoldLuxury)" stroke-width="1.6"/>
+              <line x1="-18" y1="0" x2="18" y2="0" stroke="url(#brandGoldLuxury)" stroke-width="1.6"/>
+              <circle cx="0" cy="0" r="3.2" fill="#FFFFFF"/>
+            </g>
+          </svg>
+          <div class="brand-text">
+            <span class="brand-name">問仙壇 · 掌心解碼</span>
+          </div>
+        </div>
+
+        <!-- Desktop Navigation Tabs -->
+        <nav class="app-nav-tabs">
+          <button type="button" class="app-tab-btn active" data-tab="hub">
+            <span>🔮</span> 六大篇章
+          </button>
+          <button type="button" class="app-tab-btn" data-tab="member">
+            <span>👤</span> 會員與次數
+          </button>
+          <button type="button" class="app-tab-btn" data-tab="history">
+            <span>📜</span> 測算紀錄
+          </button>
+          <button type="button" class="app-tab-btn" data-tab="stories">
+            <span>✨</span> 靈驗見證榜
+          </button>
+        </nav>
+
+        <!-- Right Side: User Profile & Balance Capsule -->
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button type="button" class="user-topbar-btn" id="userTopBarBtn">
+            <span>👤 登入 / 註冊</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- App Body Content Views -->
+    <main class="app-workspace">
+      
+      <!-- Tab 1: 主題首頁矩陣 (Themes Matrix) -->
+      <section class="app-view active" id="view-hub">
+        <div class="app-hero">
+          <div class="hero-slogan-capsule">
+            <span>🔮 2026 仙佛指引 · 手相手機拍照即可測算</span>
+            <span>|</span>
+            <span class="live-dot"></span>
+            <span id="heroLiveCount">85</span>
+            <span>人在線測算</span>
+          </div>
+          
+          <h1 class="hero-main-title">問仙壇 · 掌心解碼</h1>
+          <p style="max-width:620px;margin:0 auto;">不用排隊跑廟宇！手機拍照上傳手相，即可算出未來的正緣長相、跳槽加薪時機與發財年份。隨時為您指點迷津！</p>
+        </div>
+
+        <div class="themes-matrix-grid" id="themesMatrixGrid"></div>
+      </section>
+
+      <!-- Tab 2: 會員中心與測算次數儀表板 (Member Center & Theme Wallet) -->
+      <section class="app-view" id="view-member">
+        <div class="member-dashboard-container">
+          
+          <!-- 1. 信士基本資料卡 -->
+          <div id="memberProfileContainer"></div>
+
+          <!-- 2. 各篇章專屬剩餘次數矩陣 -->
+          <div class="member-themes-quota-section">
+            <div class="section-title-row">
+              <h3>🪙 您的各篇測算次數（永久有效）</h3>
+              <span style="font-size:0.8rem;color:var(--text-muted);">各篇次數獨立使用，隨時登入皆可測算</span>
+            </div>
+            <div class="theme-quota-assets-grid" id="memberThemesQuotaGrid"></div>
+          </div>
+
+          <!-- 3. 儲值購買供養方案專區 -->
+          <div class="pricing-section-container" id="pricingSectionAnchor">
+            <div style="border-top:1px dashed var(--border);padding-top:20px;text-align:center;">
+              <h2>🪙 購買測算次數</h2>
+              <p style="margin-top:6px;">單項 199、三項 499、全項 999。所選之主題各自增加 3 點專屬額度（各篇獨立使用，不可共用）</p>
+            </div>
+
+            <div class="pricing-cards-grid" id="pricingCardsGrid"></div>
+
+            <div class="plan-theme-picker-box" id="themePickerContainer">
+              <h4>👉 請勾選您要開通次數的主題項目：</h4>
+              <div class="theme-checkbox-list" id="pickerCheckboxesList"></div>
+            </div>
+
+            <div style="background:var(--bg-card);border:1.5px solid var(--border-gold);border-radius:var(--radius-lg);padding:20px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;">
+              <div>
+                <div style="font-size:0.85rem;color:var(--text-muted);">當前結算方案</div>
+                <div style="font-size:1.15rem;font-weight:900;color:var(--gold-bright);" id="checkoutSummaryPlan">三項超值方案</div>
+                <div style="font-size:0.8rem;color:var(--text-secondary);margin-top:4px;" id="checkoutSummarySelected">已選：感情篇、事業篇、財運篇</div>
+              </div>
+
+              <div style="display:flex;align-items:center;gap:16px;">
+                <div style="font-family:var(--font-serif);font-size:2rem;font-weight:900;color:var(--gold-bright);" id="checkoutSummaryPrice">NT$ 499</div>
+                <button type="button" class="btn btn-primary btn-lg" id="confirmPurchaseBtn">
+                  確認結緣購買
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Tab 3: 歷史測算紀錄簿 (History) -->
+      <section class="app-view" id="view-history">
+        <div style="max-width:900px;margin:0 auto;">
+          <div style="text-align:center;margin-bottom:24px;">
+            <h2>📜 歷史測算紀錄簿</h2>
+            <p>您所有產出的專屬命理報告、正緣模擬肖像與關聯見證故事皆永久保存在此，隨時登入皆可回看。</p>
+          </div>
+          <div class="themes-matrix-grid" id="historyReportsGrid"></div>
+        </div>
+      </section>
+
+      <!-- Tab 4: 靈驗見證榜 (Stories Feed) -->
+      <section class="app-view" id="view-stories">
+        <div style="max-width:960px;margin:0 auto;">
+          <div style="text-align:center;margin-bottom:20px;">
+            <h2>✨ 信眾真實顯化見證榜</h2>
+            <p>信眾誠心求問、得到指引後的真實經歷回饋</p>
+          </div>
+
+          <!-- Category Filter Pills -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:24px;" id="storiesFilterGroup">
+            <button type="button" class="btn btn-outline btn-sm active" data-category="all" style="border-radius:999px;">全部事蹟</button>
+            <button type="button" class="btn btn-outline btn-sm" data-category="love" style="border-radius:999px;">💖 感情姻緣</button>
+            <button type="button" class="btn btn-outline btn-sm" data-category="work" style="border-radius:999px;">💼 工作求職</button>
+            <button type="button" class="btn btn-outline btn-sm" data-category="career" style="border-radius:999px;">👑 事業合夥</button>
+            <button type="button" class="btn btn-outline btn-sm" data-category="wealth" style="border-radius:999px;">💰 經濟財務</button>
+            <button type="button" class="btn btn-outline btn-sm" data-category="family" style="border-radius:999px;">🏡 家庭買房</button>
+            <button type="button" class="btn btn-outline btn-sm" data-category="children" style="border-radius:999px;">🌟 子女安康</button>
+          </div>
+
+          <div class="themes-matrix-grid" id="storiesGrid"></div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation Dock -->
+    <nav class="app-bottom-nav">
+      <button type="button" class="app-bottom-tab active" data-tab="hub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M9 4v16"/><path d="M14 9l3 3-3 3"/></svg>
+        <span>六大篇章</span>
+      </button>
+      <button type="button" class="app-bottom-tab" data-tab="member">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>會員次數</span>
+      </button>
+      <button type="button" class="app-bottom-tab" data-tab="history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+        <span>測算紀錄</span>
+      </button>
+      <button type="button" class="app-bottom-tab" data-tab="stories">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+        <span>見證榜</span>
+      </button>
+    </nav>
+
+    <!-- Modal Host Container (Wizard, Reports & Auth) -->
+    <div class="modal-backdrop" id="readingModalBackdrop" role="dialog" aria-modal="true">
+      <div class="reading-modal-card" id="readingModalCard"></div>
+    </div>
+
+  </div>
+
+  <script type="module" src="src/js/app.js"></script>
+</body>
+</html>
