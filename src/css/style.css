@@ -689,7 +689,7 @@ p {
   border-radius: 160px 160px 30px 30px;
   background:
     linear-gradient(180deg, rgba(10, 8, 18, .12), rgba(10, 8, 18, .88)),
-    url('../../assets/og-preview.jpg') center 72% / auto 138%;
+    url('../../assets/generated/hero-wenxian-v1.png') center / cover;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .04), 0 22px 48px rgba(0, 0, 0, .36);
 }
 
@@ -807,41 +807,24 @@ p {
   margin: 0 -20px 4px;
   overflow: hidden;
   border-radius: var(--radius-md) var(--radius-md) 24px 24px;
-  background:
-    radial-gradient(circle at 76% 26%, rgba(255,255,255,.36), transparent 7%),
-    linear-gradient(125deg, rgba(255,255,255,.08), transparent 44%),
-    linear-gradient(135deg, #292242, #141126);
+  background-image:
+    linear-gradient(180deg, rgba(7, 8, 18, .04), rgba(7, 8, 18, .35)),
+    url('../../assets/generated/theme-atlas-wenxian-v1.png');
+  background-size: 100% 100%, 300% 200%;
+  background-position: center, 0% 0%;
 }
 
 .theme-card-art::before,
 .theme-card-art::after {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 246, 204, .44);
+  display: none;
 }
 
-.theme-card-art::before { width: 170px; height: 170px; right: -36px; top: -82px; }
-.theme-card-art::after { width: 118px; height: 118px; right: 28px; top: 20px; border-style: dashed; }
-
-.theme-card-art span {
-  position: absolute;
-  left: 18px;
-  bottom: 12px;
-  color: rgba(255, 246, 204, .9);
-  font-family: var(--font-serif);
-  font-size: 3.1rem;
-  font-weight: 900;
-  line-height: 1;
-  text-shadow: 0 4px 20px rgba(0,0,0,.4);
-}
-
-.theme-hub-card[data-theme='love'] .theme-card-art { background: radial-gradient(circle at 76% 26%, rgba(255,218,225,.5), transparent 8%), linear-gradient(125deg, rgba(255,255,255,.1), transparent 44%), linear-gradient(135deg, #54213c, #1b1125); }
-.theme-hub-card[data-theme='work'] .theme-card-art { background: radial-gradient(circle at 76% 26%, rgba(218,235,255,.5), transparent 8%), linear-gradient(125deg, rgba(255,255,255,.1), transparent 44%), linear-gradient(135deg, #193c58, #101b31); }
-.theme-hub-card[data-theme='career'] .theme-card-art { background: radial-gradient(circle at 76% 26%, rgba(239,223,255,.5), transparent 8%), linear-gradient(125deg, rgba(255,255,255,.1), transparent 44%), linear-gradient(135deg, #3d2759, #171225); }
-.theme-hub-card[data-theme='wealth'] .theme-card-art { background: radial-gradient(circle at 76% 26%, rgba(255,239,185,.55), transparent 8%), linear-gradient(125deg, rgba(255,255,255,.1), transparent 44%), linear-gradient(135deg, #5a421d, #1c1812); }
-.theme-hub-card[data-theme='family'] .theme-card-art { background: radial-gradient(circle at 76% 26%, rgba(208,255,223,.48), transparent 8%), linear-gradient(125deg, rgba(255,255,255,.1), transparent 44%), linear-gradient(135deg, #1e5549, #10221e); }
-.theme-hub-card[data-theme='children'] .theme-card-art { background: radial-gradient(circle at 76% 26%, rgba(205,249,255,.5), transparent 8%), linear-gradient(125deg, rgba(255,255,255,.1), transparent 44%), linear-gradient(135deg, #1e5260, #0f212d); }
+.theme-hub-card[data-theme='love'] .theme-card-art { background-position: center, 0% 0%; }
+.theme-hub-card[data-theme='work'] .theme-card-art { background-position: center, 50% 0%; }
+.theme-hub-card[data-theme='career'] .theme-card-art { background-position: center, 100% 0%; }
+.theme-hub-card[data-theme='wealth'] .theme-card-art { background-position: center, 0% 100%; }
+.theme-hub-card[data-theme='family'] .theme-card-art { background-position: center, 50% 100%; }
+.theme-hub-card[data-theme='children'] .theme-card-art { background-position: center, 100% 100%; }
 
 .theme-hub-card:hover {
   transform: translateY(-3px);

@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.dataset.theme = theme.id;
 
       card.innerHTML = `
-        <div class="theme-card-art" aria-hidden="true"><span>${theme.name.slice(0, 1)}</span></div>
+        <div class="theme-card-art" aria-hidden="true"></div>
         <div class="theme-card-top">
           <div class="theme-icon-box" style="color:${theme.color};">
             <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${theme.icon}</svg>
