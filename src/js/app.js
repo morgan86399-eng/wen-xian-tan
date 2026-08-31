@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
       activeThemeId: null,
       currentStep: 1,
       totalSteps: 7,
+      isSubmitting: false,
       answers: {
         gender: 'female',
         genderCustom: '',
@@ -53,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const appViews = document.querySelectorAll('.app-view');
   const userTopBarBtn = document.getElementById('userTopBarBtn');
   const heroLiveCountEl = document.getElementById('heroLiveCount');
+  const heroStartBtn = document.getElementById('heroStartBtn');
 
   // Hub Grid
   const themesMatrixGrid = document.getElementById('themesMatrixGrid');
@@ -76,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Reading / Wizard Modal
   const readingModalBackdrop = document.getElementById('readingModalBackdrop');
   const readingModalCard = document.getElementById('readingModalCard');
+  const readingModalCloseBtn = document.getElementById('readingModalCloseBtn');
 
   // Stories View
   const storiesFilterGroup = document.getElementById('storiesFilterGroup');
@@ -83,6 +86,86 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // History Reports View
   const historyReportsGrid = document.getElementById('historyReportsGrid');
+  let modalReturnFocus = null;
+  let purchaseTransitionHasPlayed = false;
+
+  function prefersReducedMotion() {
+    return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  }
+
+  function bindKeyboardActivation(element, onActivate) {
+    element.addEventListener('keydown', (event) => {
+      if (event.target !== element) return;
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      onActivate();
+    });
+  }
+
+  function setModalLocked(isLocked) {
+    readingModalBackdrop.dataset.locked = isLocked ? 'true' : 'false';
+    if (readingModalCloseBtn) {
+      readingModalCloseBtn.disabled = isLocked;
+      readingModalCloseBtn.hidden = isLocked;
+    }
+  }
+
+  function focusModalContent(preferredSelector = '') {
+    window.requestAnimationFrame(() => {
+      const preferred = preferredSelector ? readingModalBackdrop.querySelector(preferredSelector) : null;
+      const firstFocusable = readingModalBackdrop.querySelector(
+        'button:not([disabled]):not([hidden]), input:not([disabled]), textarea:not([disabled]), [tabindex="0"]'
+      );
+      (preferred || firstFocusable)?.focus({ preventScroll: true });
+    });
+  }
+
+  function openReadingModal(preferredSelector = '') {
+    if (!readingModalBackdrop.classList.contains('show')) {
+      modalReturnFocus = document.activeElement;
+    }
+    setModalLocked(false);
+    readingModalBackdrop.classList.add('show');
+    document.body.classList.add('modal-open');
+    focusModalContent(preferredSelector);
+  }
+
+  function closeReadingModal() {
+    if (readingModalBackdrop.dataset.locked === 'true') return;
+    readingModalBackdrop.classList.remove('show');
+    document.body.classList.remove('modal-open');
+    const returnTarget = modalReturnFocus;
+    modalReturnFocus = null;
+    window.requestAnimationFrame(() => returnTarget?.focus?.({ preventScroll: true }));
+  }
+
+  readingModalCloseBtn?.addEventListener('click', closeReadingModal);
+  readingModalBackdrop?.addEventListener('click', (event) => {
+    if (event.target === readingModalBackdrop) closeReadingModal();
+  });
+  readingModalBackdrop?.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeReadingModal();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+
+    const focusable = Array.from(readingModalBackdrop.querySelectorAll(
+      'button:not([disabled]):not([hidden]), input:not([disabled]), textarea:not([disabled]), [tabindex="0"]'
+    )).filter((element) => element.getClientRects().length > 0);
+    if (!focusable.length) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
 
   // ============ 1. Live Online Simulation ============
   function updateLiveCount() {
@@ -95,10 +178,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ============ 1.5 Purchase Transition ============
   function startCelestialPurchaseTransition(onComplete) {
-    if (!celestialPurchaseTransition) {
+    if (!celestialPurchaseTransition || prefersReducedMotion() || purchaseTransitionHasPlayed) {
       onComplete();
       return;
     }
+
+    purchaseTransitionHasPlayed = true;
 
     const finishTransition = () => {
       if (!finishCelestialTransition) return;
@@ -110,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         celestialPurchaseTransition.classList.remove('is-leaving');
         celestialPurchaseTransition.setAttribute('aria-hidden', 'true');
         onComplete();
-      }, 900);
+      }, 520);
     };
 
     celestialPurchaseTransition.classList.remove('is-leaving');
@@ -118,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     celestialPurchaseTransition.setAttribute('aria-hidden', 'false');
     window.clearTimeout(celestialTransitionTimer);
     finishCelestialTransition = finishTransition;
-    celestialTransitionTimer = window.setTimeout(finishTransition, 4100);
+    celestialTransitionTimer = window.setTimeout(finishTransition, 2600);
   }
 
   celestialTransitionSkip?.addEventListener('click', () => finishCelestialTransition?.());
@@ -128,15 +213,23 @@ document.addEventListener('DOMContentLoaded', () => {
     state.currentTab = tabId;
 
     headerTabBtns.forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.tab === tabId);
+      const isActive = btn.dataset.tab === tabId;
+      btn.classList.toggle('active', isActive);
+      if (isActive) btn.setAttribute('aria-current', 'page');
+      else btn.removeAttribute('aria-current');
     });
 
     bottomTabBtns.forEach((btn) => {
-      btn.classList.toggle('active', btn.dataset.tab === tabId);
+      const isActive = btn.dataset.tab === tabId;
+      btn.classList.toggle('active', isActive);
+      if (isActive) btn.setAttribute('aria-current', 'page');
+      else btn.removeAttribute('aria-current');
     });
 
     appViews.forEach((view) => {
-      view.classList.toggle('active', view.id === `view-${tabId}`);
+      const isActive = view.id === `view-${tabId}`;
+      view.classList.toggle('active', isActive);
+      view.setAttribute('aria-hidden', isActive ? 'false' : 'true');
     });
 
     if (tabId === 'member') {
@@ -147,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderStoriesFeed();
     }
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   }
 
   headerTabBtns.forEach((btn) => {
@@ -160,6 +253,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('[data-goto-tab]').forEach((el) => {
     el.addEventListener('click', () => switchTab(el.dataset.gotoTab));
+    if (el.tagName !== 'BUTTON') {
+      el.tabIndex = 0;
+      el.setAttribute('role', 'button');
+      bindKeyboardActivation(el, () => switchTab(el.dataset.gotoTab));
+    }
+  });
+
+  heroStartBtn?.addEventListener('click', () => {
+    themesMatrixGrid?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
   });
 
   // ============ 3. Top Right Bar (Auth / Profile Button) ============
@@ -173,13 +275,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (user) {
       userTopBarBtn.innerHTML = `
         <span class="user-avatar-circle">${user.name.slice(0, 1)}</span>
-        <span>${user.name} ｜ 🪙 剩餘測算次數：<strong style="color:#FFF;">${totalPoints}</strong> 次</span>
+        <span class="user-topbar-copy">${user.name} ｜ 🪙 剩餘測算次數：<strong style="color:#FFF;">${totalPoints}</strong> 次</span>
+        <span class="user-topbar-compact" aria-hidden="true">🪙 ${totalPoints}</span>
       `;
+      userTopBarBtn.setAttribute('aria-label', `${user.name}，剩餘測算次數 ${totalPoints} 次，前往會員與次數`);
       userTopBarBtn.onclick = () => switchTab('member');
     } else {
       userTopBarBtn.innerHTML = `
         <span>👤 登入 / 註冊</span>
       `;
+      userTopBarBtn.setAttribute('aria-label', '登入或註冊');
       userTopBarBtn.onclick = () => openAuthModal();
     }
   }
@@ -231,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('authTabLogin').addEventListener('click', () => openAuthModal('login'));
     document.getElementById('authTabRegister').addEventListener('click', () => openAuthModal('register'));
     document.getElementById('authCancelBtn').addEventListener('click', () => {
-      readingModalBackdrop.classList.remove('show');
+      closeReadingModal();
     });
 
     document.getElementById('quickDemoLoginBtn').addEventListener('click', () => {
@@ -245,7 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       updateTopBarUserStatus();
       renderMemberCenter();
-      readingModalBackdrop.classList.remove('show');
+      closeReadingModal();
       switchTab('member');
     });
 
@@ -263,11 +368,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       updateTopBarUserStatus();
       renderMemberCenter();
-      readingModalBackdrop.classList.remove('show');
+      closeReadingModal();
       switchTab('member');
     });
 
-    readingModalBackdrop.classList.add('show');
+    openReadingModal(defaultMode === 'register' ? '#authNameInput' : '#authEmailInput');
   }
 
   // ============ 5. Render Member Dashboard & Wallet Center (白話化) ============
@@ -399,6 +504,9 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = 'theme-hub-card';
       card.dataset.id = theme.id;
       card.dataset.theme = theme.id;
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', `${theme.name}，${theme.title}，${quota > 0 ? `剩餘 ${quota} 次，開始測算` : '購買開通此項目'}`);
 
       card.innerHTML = `
         <div class="theme-card-art" aria-hidden="true"></div>
@@ -433,6 +541,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.addEventListener('click', () => {
         handleThemeClick(theme.id);
       });
+      bindKeyboardActivation(card, () => handleThemeClick(theme.id));
 
       themesMatrixGrid.appendChild(card);
     });
@@ -466,6 +575,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = `plan-card ${state.selectedPlanId === plan.id ? 'active' : ''}`;
       card.dataset.id = plan.id;
+      card.tabIndex = 0;
+      card.setAttribute('role', 'radio');
+      card.setAttribute('aria-checked', state.selectedPlanId === plan.id ? 'true' : 'false');
+      card.setAttribute('aria-label', `${plan.label}，NT$ ${plan.price}`);
 
       card.innerHTML = `
         ${plan.ribbon ? `<div class="plan-ribbon">${plan.ribbon}</div>` : ''}
@@ -487,7 +600,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
       `;
 
-      card.addEventListener('click', () => {
+      const selectPlan = () => {
         state.selectedPlanId = plan.id;
         if (plan.id === 'all') {
           THEMES.forEach((t) => state.customChosenThemes.add(t.id));
@@ -503,7 +616,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         renderPricingPlans();
         renderThemePicker();
-      });
+      };
+
+      card.addEventListener('click', selectPlan);
+      bindKeyboardActivation(card, selectPlan);
 
       pricingCardsGrid.appendChild(card);
     });
@@ -518,16 +634,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     THEMES.forEach((theme) => {
       const isChecked = state.customChosenThemes.has(theme.id);
-      const pill = document.createElement('div');
+      const pill = document.createElement('button');
+      pill.type = 'button';
       pill.className = `theme-check-pill ${isChecked ? 'checked' : ''}`;
+      pill.disabled = state.selectedPlanId === 'all';
+      pill.setAttribute('aria-pressed', isChecked ? 'true' : 'false');
+      pill.setAttribute('aria-label', `${theme.name}，${isChecked ? '已選取' : '尚未選取'}`);
       pill.innerHTML = `
-        <span>${isChecked ? '☑' : '☐'}</span>
+        <span aria-hidden="true">${isChecked ? '☑' : '☐'}</span>
         <span>${theme.name}</span>
       `;
 
       pill.addEventListener('click', () => {
-        if (state.selectedPlanId === 'all') return;
-
         if (state.selectedPlanId === 'single') {
           state.customChosenThemes.clear();
           state.customChosenThemes.add(theme.id);
@@ -571,6 +689,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (checkoutSummarySelected) {
+      checkoutSummarySelected.setAttribute('aria-live', 'polite');
       checkoutSummarySelected.textContent = names.length
         ? `所選項目（各獲 3 次測算機會）：${names.join('、')}`
         : '尚未選定欲購買的主題';
@@ -630,7 +749,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const isSelected = selectedValue === opt.id;
       if (opt.isCustom) {
         return `
-          <div class="wizard-option-card has-custom-input ${isSelected ? 'selected' : ''}" data-value="${opt.id}" data-is-custom="true" data-custom-field="${customFieldName}">
+          <div class="wizard-option-card has-custom-input ${isSelected ? 'selected' : ''}" data-value="${opt.id}" data-is-custom="true" data-custom-field="${customFieldName}" role="radio" aria-checked="${isSelected ? 'true' : 'false'}" tabindex="${isSelected ? '0' : '-1'}">
             <div class="wizard-option-card-top-row">
               <div class="wizard-option-card-left">
                 <span class="wizard-option-icon">${opt.icon}</span>
@@ -648,7 +767,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       }
       return `
-        <div class="wizard-option-card ${isSelected ? 'selected' : ''}" data-value="${opt.id}">
+        <div class="wizard-option-card ${isSelected ? 'selected' : ''}" data-value="${opt.id}" role="radio" aria-checked="${isSelected ? 'true' : 'false'}" tabindex="${isSelected ? '0' : '-1'}">
           <div class="wizard-option-card-left">
             <span class="wizard-option-icon">${opt.icon}</span>
             <div>
@@ -669,6 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
     state.wizard.activeThemeId = themeId;
     state.wizard.currentStep = 1;
     state.wizard.totalSteps = 7;
+    state.wizard.isSubmitting = false;
     state.wizard.answers = {
       gender: 'female',
       genderCustom: '',
@@ -685,7 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     renderWizardStep();
-    readingModalBackdrop.classList.add('show');
+    openReadingModal('.wizard-option-card.selected');
   }
 
   function renderWizardStep() {
@@ -909,6 +1029,34 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     bindWizardStepEvents(currentStep);
+    focusModalContent(
+      currentStep === 5
+        ? '#wizardQuestionTextarea'
+        : currentStep === 7
+          ? '#wizardOpenCameraBtn, #wizardSubmitBtn'
+          : '.wizard-option-card.selected'
+    );
+  }
+
+  function isCurrentWizardStepReady(currentStep) {
+    const { answers } = state.wizard;
+    const customRequirements = {
+      1: ['custom_gender', 'genderCustom', answers.gender],
+      2: ['custom_age', 'ageCustom', answers.age],
+      3: ['custom_relation', 'relationCustom', answers.relation],
+      4: ['custom_state', 'roleCustom', answers.role],
+      6: ['custom_goal', 'goalCustom', answers.goal]
+    };
+    const requirement = customRequirements[currentStep];
+    if (!requirement || requirement[2] !== requirement[0]) return true;
+    return Boolean((answers[requirement[1]] || '').trim());
+  }
+
+  function syncWizardNextState(currentStep) {
+    const nextBtn = document.getElementById('wizardNextBtn');
+    if (!nextBtn) return;
+    nextBtn.disabled = !isCurrentWizardStepReady(currentStep);
+    nextBtn.setAttribute('aria-disabled', nextBtn.disabled ? 'true' : 'false');
   }
 
   function bindWizardStepEvents(currentStep) {
@@ -926,19 +1074,27 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (currentStep === 4) answers.role = val;
         else if (currentStep === 6) answers.goal = val;
 
-        readingModalCard.querySelectorAll('.wizard-option-card').forEach((c) => c.classList.remove('selected'));
+        readingModalCard.querySelectorAll('.wizard-option-card').forEach((c) => {
+          c.classList.remove('selected');
+          c.setAttribute('aria-checked', 'false');
+          c.tabIndex = -1;
+        });
         card.classList.add('selected');
+        card.setAttribute('aria-checked', 'true');
+        card.tabIndex = 0;
 
         if (isCustom) {
           const input = card.querySelector('.wizard-custom-text-input');
           if (input && !isInput) {
             input.focus();
           }
-        } else {
-          setTimeout(() => {
-            advanceWizardStep(1);
-          }, 180);
         }
+        syncWizardNextState(currentStep);
+      });
+      card.addEventListener('keydown', (event) => {
+        if (event.target !== card || (event.key !== 'Enter' && event.key !== ' ')) return;
+        event.preventDefault();
+        card.click();
       });
     });
 
@@ -948,19 +1104,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fieldName && answers[fieldName] !== undefined) {
           answers[fieldName] = e.target.value;
         }
+        syncWizardNextState(currentStep);
       });
       input.addEventListener('click', (e) => {
         e.stopPropagation();
         const parentCard = input.closest('.wizard-option-card');
         if (parentCard) {
-          readingModalCard.querySelectorAll('.wizard-option-card').forEach((c) => c.classList.remove('selected'));
+          readingModalCard.querySelectorAll('.wizard-option-card').forEach((c) => {
+            c.classList.remove('selected');
+            c.setAttribute('aria-checked', 'false');
+            c.tabIndex = -1;
+          });
           parentCard.classList.add('selected');
+          parentCard.setAttribute('aria-checked', 'true');
+          parentCard.tabIndex = 0;
           const val = parentCard.dataset.value;
           if (currentStep === 1) answers.gender = val;
           else if (currentStep === 2) answers.age = val;
           else if (currentStep === 3) answers.relation = val;
           else if (currentStep === 4) answers.role = val;
           else if (currentStep === 6) answers.goal = val;
+          syncWizardNextState(currentStep);
         }
       });
     });
@@ -1036,7 +1200,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (backBtn) {
       backBtn.addEventListener('click', () => {
         if (currentStep === 1) {
-          readingModalBackdrop.classList.remove('show');
+          closeReadingModal();
         } else {
           advanceWizardStep(-1);
         }
@@ -1049,6 +1213,7 @@ document.addEventListener('DOMContentLoaded', () => {
         advanceWizardStep(1);
       });
     }
+    syncWizardNextState(currentStep);
   }
 
   function advanceWizardStep(direction) {

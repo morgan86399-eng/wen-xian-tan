@@ -136,6 +136,10 @@
             </div>
             <h1 class="hero-main-title">問仙壇 · 掌心解碼</h1>
             <p class="hero-description">不用排隊跑廟宇！手機拍照上傳手相，即可算出未來的正緣長相、跳槽加薪時機與發財年份。隨時為您指點迷津！</p>
+            <button type="button" class="btn btn-gold hero-primary-cta" id="heroStartBtn">
+              <span>開始測算</span>
+              <span aria-hidden="true">↓</span>
+            </button>
           </div>
           <div class="hero-art" role="img" aria-label="掌紋與星圖主視覺">
             <div class="hero-art__seal">掌<br>心<br>解<br>碼</div>
@@ -252,6 +256,7 @@
 
     <!-- Modal Host Container (Wizard, Reports & Auth) -->
     <div class="modal-backdrop" id="readingModalBackdrop" role="dialog" aria-modal="true">
+      <button type="button" class="modal-close-btn" id="readingModalCloseBtn" aria-label="關閉">×</button>
       <div class="reading-modal-card" id="readingModalCard"></div>
     </div>
 
