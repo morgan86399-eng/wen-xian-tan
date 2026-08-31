@@ -3,6 +3,8 @@ import {
   PLANS,
   GENDER_OPTIONS,
   AGE_OPTIONS,
+  THEME_RELATION_CONFIG,
+  THEME_ROLE_CONFIG,
   ROLE_OPTIONS,
   DESIRED_OUTCOMES,
   PORTRAIT_ASSETS,
@@ -22,17 +24,23 @@ document.addEventListener('DOMContentLoaded', () => {
     customChosenThemes: new Set(['love', 'career', 'wealth']), // 預設所選之 3 項
     selectedStoriesCategory: 'all',
 
-    // Multi-Step Guided Wizard State (6 步逐步問卷)
+    // Multi-Step Guided Wizard State (7 步逐步問卷：性別 -> 年齡 -> 關係稱謂 -> 狀態現況 -> 問題 -> 期望 -> 掌相)
     wizard: {
       activeThemeId: null,
       currentStep: 1,
-      totalSteps: 6,
+      totalSteps: 7,
       answers: {
         gender: 'female',
+        genderCustom: '',
         age: '25-34',
-        role: 'self',
+        ageCustom: '',
+        relation: 'self_love',
+        relationCustom: '',
+        role: 'single',
+        roleCustom: '',
         question: '',
         goal: 'timing',
+        goalCustom: '',
         palmDataUrl: null
       }
     }
@@ -306,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </button>
             ` : `
               <button type="button" class="btn btn-outline btn-sm" style="width:100%;" data-action="quick-recharge" data-theme-id="${theme.id}">
-                🛒 購買開通此項 ($199起)
+                🛒 購買開通此項目
               </button>
             `}
           </div>
@@ -373,7 +381,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         <div class="theme-card-actions">
           <button type="button" class="btn ${quota > 0 ? 'btn-primary' : 'btn-outline'} btn-sm" style="width:100%;" data-action="start-reading" data-theme-id="${theme.id}">
-            ${quota > 0 ? '⚡ 開始測算 (扣 1 次)' : '🛒 立即測算 ($199起)'}
+            ${quota > 0 ? '⚡ 開始測算 (扣 1 次)' : '🛒 購買開通此項目'}
           </button>
         </div>
       `;
@@ -588,16 +596,63 @@ document.addEventListener('DOMContentLoaded', () => {
     return scored.slice(0, 2).map((item) => item.story);
   }
 
-  // ============ 11. 6-Step Multi-Page Wizard Engine (白話逐步引導) ============
+  // ============ 11. 7-Step Multi-Page Wizard Engine (自適應 7 步問卷引導) ============
+  function renderOptionCards(options, selectedValue, customValue = '', customFieldName = '') {
+    return options.map((opt) => {
+      const isSelected = selectedValue === opt.id;
+      if (opt.isCustom) {
+        return `
+          <div class="wizard-option-card has-custom-input ${isSelected ? 'selected' : ''}" data-value="${opt.id}" data-is-custom="true" data-custom-field="${customFieldName}">
+            <div class="wizard-option-card-top-row">
+              <div class="wizard-option-card-left">
+                <span class="wizard-option-icon">${opt.icon}</span>
+                <div>
+                  <div class="wizard-option-text">${opt.label}</div>
+                  <div class="wizard-option-desc">${opt.desc}</div>
+                </div>
+              </div>
+              <div class="wizard-option-check">✓</div>
+            </div>
+            <div class="wizard-custom-input-box">
+              <input type="text" class="wizard-custom-text-input" placeholder="${opt.placeholder || '請在此輸入自訂內容...'}" value="${customValue || ''}" data-custom-input-for="${customFieldName}">
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="wizard-option-card ${isSelected ? 'selected' : ''}" data-value="${opt.id}">
+          <div class="wizard-option-card-left">
+            <span class="wizard-option-icon">${opt.icon}</span>
+            <div>
+              <div class="wizard-option-text">${opt.label}</div>
+              <div class="wizard-option-desc">${opt.desc}</div>
+            </div>
+          </div>
+          <div class="wizard-option-check">✓</div>
+        </div>
+      `;
+    }).join('');
+  }
+
   function startGuidedWizard(themeId) {
+    const relConf = THEME_RELATION_CONFIG[themeId] || THEME_RELATION_CONFIG.love;
+    const roleConf = THEME_ROLE_CONFIG[themeId] || THEME_ROLE_CONFIG.love;
+
     state.wizard.activeThemeId = themeId;
     state.wizard.currentStep = 1;
+    state.wizard.totalSteps = 7;
     state.wizard.answers = {
       gender: 'female',
+      genderCustom: '',
       age: '25-34',
-      role: 'self',
+      ageCustom: '',
+      relation: relConf.defaultRelation || relConf.options[0]?.id || 'self_love',
+      relationCustom: '',
+      role: roleConf.defaultRole || roleConf.options[0]?.id || 'single',
+      roleCustom: '',
       question: '',
       goal: 'timing',
+      goalCustom: '',
       palmDataUrl: null
     };
 
@@ -622,24 +677,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="wizard-question-sub">男女手相看法不同，選定後能更精準分析您的手相與命格</div>
           </div>
           <div class="wizard-options-grid">
-            ${GENDER_OPTIONS.map((opt) => `
-              <div class="wizard-option-card ${answers.gender === opt.id ? 'selected' : ''}" data-value="${opt.id}">
-                <div class="wizard-option-card-left">
-                  <span class="wizard-option-icon">${opt.icon}</span>
-                  <div>
-                    <div class="wizard-option-text">${opt.label}</div>
-                    <div class="wizard-option-desc">${opt.desc}</div>
-                  </div>
-                </div>
-                <div class="wizard-option-check">✓</div>
-              </div>
-            `).join('')}
+            ${renderOptionCards(GENDER_OPTIONS, answers.gender, answers.genderCustom, 'genderCustom')}
           </div>
         </div>
       `;
     }
 
-    // Step 2: 年齡 (Age)
+    // Step 2: 年齡階段 (Age)
     else if (currentStep === 2) {
       stepContentHtml = `
         <div class="wizard-step-body">
@@ -648,57 +692,64 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="wizard-question-sub">幫助精確算出您幾歲會轉運、幾歲遇到正緣或事業升遷</div>
           </div>
           <div class="wizard-options-grid">
-            ${AGE_OPTIONS.map((opt) => `
-              <div class="wizard-option-card ${answers.age === opt.id ? 'selected' : ''}" data-value="${opt.id}">
-                <div class="wizard-option-card-left">
-                  <span class="wizard-option-icon">${opt.icon}</span>
-                  <div>
-                    <div class="wizard-option-text">${opt.label}</div>
-                    <div class="wizard-option-desc">${opt.desc}</div>
-                  </div>
-                </div>
-                <div class="wizard-option-check">✓</div>
-              </div>
-            `).join('')}
+            ${renderOptionCards(AGE_OPTIONS, answers.age, answers.ageCustom, 'ageCustom')}
           </div>
         </div>
       `;
     }
 
-    // Step 3: 為誰求問 (Role)
+    // Step 3: 關係稱謂 (Relationship Title - 篇章自適應)
     else if (currentStep === 3) {
+      const relConf = THEME_RELATION_CONFIG[activeThemeId] || THEME_RELATION_CONFIG.love;
+      const relOptions = relConf.options || [];
+
+      if (!relOptions.some(opt => opt.id === answers.relation)) {
+        answers.relation = relConf.defaultRelation || relOptions[0]?.id || 'self_love';
+      }
+
       stepContentHtml = `
         <div class="wizard-step-body">
           <div>
-            <div class="wizard-question-title">3. 這次主要想為誰詢問？</div>
-            <div class="wizard-question-sub">您可以為自己測算，也可以為伴侶、家人或朋友求問指引</div>
+            <div class="wizard-question-title">${relConf.title}</div>
+            <div class="wizard-question-sub">${relConf.sub}</div>
           </div>
           <div class="wizard-options-grid cols-2">
-            ${ROLE_OPTIONS.map((opt) => `
-              <div class="wizard-option-card ${answers.role === opt.id ? 'selected' : ''}" data-value="${opt.id}">
-                <div class="wizard-option-card-left">
-                  <span class="wizard-option-icon">${opt.icon}</span>
-                  <div>
-                    <div class="wizard-option-text">${opt.label}</div>
-                    <div class="wizard-option-desc">${opt.desc}</div>
-                  </div>
-                </div>
-                <div class="wizard-option-check">✓</div>
-              </div>
-            `).join('')}
+            ${renderOptionCards(relOptions, answers.relation, answers.relationCustom, 'relationCustom')}
           </div>
         </div>
       `;
     }
 
-    // Step 4: 想詢問的問題 (Question Textarea - 填寫題)
+    // Step 4: 情境狀態 (Role / Contextual State - 篇章自適應)
     else if (currentStep === 4) {
+      const roleConf = THEME_ROLE_CONFIG[activeThemeId] || THEME_ROLE_CONFIG.love;
+      const roleOptions = roleConf.options || [];
+
+      if (!roleOptions.some(opt => opt.id === answers.role)) {
+        answers.role = roleConf.defaultRole || roleOptions[0]?.id || 'single';
+      }
+
+      stepContentHtml = `
+        <div class="wizard-step-body">
+          <div>
+            <div class="wizard-question-title">${roleConf.title}</div>
+            <div class="wizard-question-sub">${roleConf.sub}</div>
+          </div>
+          <div class="wizard-options-grid cols-2">
+            ${renderOptionCards(roleOptions, answers.role, answers.roleCustom, 'roleCustom')}
+          </div>
+        </div>
+      `;
+    }
+
+    // Step 5: 請示問題 (Question Textarea)
+    else if (currentStep === 5) {
       const promptPills = theme.promptPills || [];
       const currentLen = (answers.question || '').length;
       stepContentHtml = `
         <div class="wizard-step-body">
           <div>
-            <div class="wizard-question-title">4. 您目前遇到什麼煩惱或想了解什麼？</div>
+            <div class="wizard-question-title">5. 您目前遇到什麼煩惱或想了解什麼？</div>
             <div class="wizard-question-sub">描述越清楚，給您的建議與時機點就會越精準（建議詳盡填寫您的煩惱）</div>
           </div>
           <div>
@@ -721,38 +772,27 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }
 
-    // Step 5: 希望要有怎樣的結果？ (Desired Goal - 選項)
-    else if (currentStep === 5) {
+    // Step 6: 期望結果 (Desired Goal)
+    else if (currentStep === 6) {
       stepContentHtml = `
         <div class="wizard-step-body">
           <div>
-            <div class="wizard-question-title">5. 您最希望獲得怎樣的幫助與結果？</div>
+            <div class="wizard-question-title">6. 您最希望獲得怎樣的幫助與結果？</div>
             <div class="wizard-question-sub">報告中將針對您的核心期望，給予具體的行動方向與時機建議</div>
           </div>
           <div class="wizard-options-grid">
-            ${DESIRED_OUTCOMES.map((opt) => `
-              <div class="wizard-option-card ${answers.goal === opt.id ? 'selected' : ''}" data-value="${opt.id}">
-                <div class="wizard-option-card-left">
-                  <span class="wizard-option-icon">${opt.icon}</span>
-                  <div>
-                    <div class="wizard-option-text">${opt.label}</div>
-                    <div class="wizard-option-desc">${opt.desc}</div>
-                  </div>
-                </div>
-                <div class="wizard-option-check">✓</div>
-              </div>
-            `).join('')}
+            ${renderOptionCards(DESIRED_OUTCOMES, answers.goal, answers.goalCustom, 'goalCustom')}
           </div>
         </div>
       `;
     }
 
-    // Step 6: 手相拍照上傳（選填/可略過）(Palm Upload)
-    else if (currentStep === 6) {
+    // Step 7: 手相拍照上傳（選填/可略過）(Palm Upload)
+    else if (currentStep === 7) {
       stepContentHtml = `
         <div class="wizard-step-body">
           <div>
-            <div class="wizard-question-title">6. 拍照上傳手相照片（選填）</div>
+            <div class="wizard-question-title">7. 拍照上傳手相照片（選填）</div>
             <div class="wizard-question-sub">
               💡 提示：只要拍手掌，不用拍臉！有拍照會多為您分析感情線、智慧線、事業線，內容會更完整。若不方便拍照也可以直接略過！
             </div>
@@ -796,7 +836,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
 
         <div style="display:flex;gap:8px;">
-          ${currentStep === 6 ? `
+          ${currentStep === 7 ? `
             <button type="button" class="btn btn-outline btn-sm" id="wizardSkipPalmBtn">
               ⏩ 略過拍照，直接看報告（不建議）
             </button>
@@ -819,23 +859,57 @@ document.addEventListener('DOMContentLoaded', () => {
     const { answers } = state.wizard;
 
     readingModalCard.querySelectorAll('.wizard-option-card').forEach((card) => {
-      card.addEventListener('click', () => {
+      card.addEventListener('click', (e) => {
+        const isInput = e.target.classList.contains('wizard-custom-text-input');
         const val = card.dataset.value;
+        const isCustom = card.dataset.isCustom === 'true';
+
         if (currentStep === 1) answers.gender = val;
         else if (currentStep === 2) answers.age = val;
-        else if (currentStep === 3) answers.role = val;
-        else if (currentStep === 5) answers.goal = val;
+        else if (currentStep === 3) answers.relation = val;
+        else if (currentStep === 4) answers.role = val;
+        else if (currentStep === 6) answers.goal = val;
 
         readingModalCard.querySelectorAll('.wizard-option-card').forEach((c) => c.classList.remove('selected'));
         card.classList.add('selected');
 
-        setTimeout(() => {
-          advanceWizardStep(1);
-        }, 180);
+        if (isCustom) {
+          const input = card.querySelector('.wizard-custom-text-input');
+          if (input && !isInput) {
+            input.focus();
+          }
+        } else {
+          setTimeout(() => {
+            advanceWizardStep(1);
+          }, 180);
+        }
       });
     });
 
-    if (currentStep === 4) {
+    readingModalCard.querySelectorAll('.wizard-custom-text-input').forEach((input) => {
+      const fieldName = input.dataset.customInputFor;
+      input.addEventListener('input', (e) => {
+        if (fieldName && answers[fieldName] !== undefined) {
+          answers[fieldName] = e.target.value;
+        }
+      });
+      input.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const parentCard = input.closest('.wizard-option-card');
+        if (parentCard) {
+          readingModalCard.querySelectorAll('.wizard-option-card').forEach((c) => c.classList.remove('selected'));
+          parentCard.classList.add('selected');
+          const val = parentCard.dataset.value;
+          if (currentStep === 1) answers.gender = val;
+          else if (currentStep === 2) answers.age = val;
+          else if (currentStep === 3) answers.relation = val;
+          else if (currentStep === 4) answers.role = val;
+          else if (currentStep === 6) answers.goal = val;
+        }
+      });
+    });
+
+    if (currentStep === 5) {
       const textarea = document.getElementById('wizardQuestionTextarea');
       const counter = document.getElementById('wizardCharCounter');
 
@@ -867,7 +941,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    if (currentStep === 6) {
+    if (currentStep === 7) {
       const fileInput = document.getElementById('wizardPalmFileInput');
       if (fileInput) {
         fileInput.addEventListener('change', (e) => {
@@ -973,10 +1047,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const matchedStories = matchStoriesForReport(themeId, answers.question);
 
-    const genderLabel = GENDER_OPTIONS.find(g => g.id === answers.gender)?.label || '不透露';
-    const ageLabel = AGE_OPTIONS.find(a => a.id === answers.age)?.label || '25-34歲';
-    const roleLabel = ROLE_OPTIONS.find(r => r.id === answers.role)?.label || '問我自己';
-    const goalLabel = DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || '掌握時機指引';
+    const relConf = THEME_RELATION_CONFIG[themeId] || THEME_RELATION_CONFIG.love;
+    const roleConf = THEME_ROLE_CONFIG[themeId] || THEME_ROLE_CONFIG.love;
+
+    const genderLabel = (answers.gender === 'custom_gender' && answers.genderCustom)
+      ? answers.genderCustom
+      : (GENDER_OPTIONS.find(g => g.id === answers.gender)?.label || '不透露');
+
+    const ageLabel = (answers.age === 'custom_age' && answers.ageCustom)
+      ? `${answers.ageCustom}`
+      : (AGE_OPTIONS.find(a => a.id === answers.age)?.label || '25-34歲');
+
+    const relationLabel = (answers.relation === 'custom_relation' && answers.relationCustom)
+      ? answers.relationCustom
+      : (relConf.options.find(r => r.id === answers.relation)?.label || answers.relation || '本人自身');
+
+    const roleLabel = (answers.role === 'custom_state' && answers.roleCustom)
+      ? answers.roleCustom
+      : (roleConf.options.find(r => r.id === answers.role)?.label || answers.role || '一般狀態');
+
+    const goalLabel = (answers.goal === 'custom_goal' && answers.goalCustom)
+      ? answers.goalCustom
+      : (DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || '掌握時機指引');
 
     if (typeof confetti === 'function') {
       confetti({
@@ -993,11 +1085,12 @@ document.addEventListener('DOMContentLoaded', () => {
       portrait: randomPortrait,
       gender: genderLabel,
       age: ageLabel,
+      relation: relationLabel,
       role: roleLabel,
       goal: goalLabel,
       question: answers.question || '一般運勢與未來時機指引',
       score: 92 + Math.floor(Math.random() * 7),
-      advice: `【${theme.name}深度指引】：信士（${genderLabel} · ${ageLabel} · ${roleLabel}）目前整體運勢氣場聚集向上。針對您所詢問的「${answers.question || theme.title}」與期待「${goalLabel}」，在未來的關鍵月份（尤其是今年秋季至明年初）將迎來重要的轉折契機。建議您保持信心、把握身邊的貴人善緣，順應時機積極行動，必能迎刃而解、心想事成！`,
+      advice: `【${theme.name}深度指引】：信士（${genderLabel} · ${ageLabel} · 稱謂：${relationLabel} · 狀態：${roleLabel}）目前整體運勢氣場聚集向上。針對您所詢問的「${answers.question || theme.title}」與期待「${goalLabel}」，在未來的關鍵月份（尤其是今年秋季至明年初）將迎來重要的轉折契機。建議您保持信心、把握身邊的貴人善緣，順應時機積極行動，必能迎刃而解、心想事成！`,
       hasPalm: Boolean(answers.palmDataUrl),
       matchedStories
     };
@@ -1012,7 +1105,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </span>
           <h2 style="margin-top:10px;color:var(--gold-gradient);">${theme.name} · ${theme.title}</h2>
           <div style="font-size:0.8rem;color:var(--text-gold);margin-top:4px;">
-            ${reportData.gender} ｜ ${reportData.age} ｜ 詢問對象：${reportData.role} ｜ ${reportData.hasPalm ? '✋ 已包含手相分析' : '🔮 命理深度推演'}
+            ${reportData.gender} ｜ ${reportData.age} ｜ 稱謂：${reportData.relation} ｜ 狀態：${reportData.role} ｜ ${reportData.hasPalm ? '✋ 已包含手相分析' : '🔮 命理深度推演'}
           </div>
         </div>
 

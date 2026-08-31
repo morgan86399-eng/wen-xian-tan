@@ -151,24 +151,108 @@ export const PLANS = [
 
 // Step 1: 性別
 export const GENDER_OPTIONS = [
-  { id: "female", label: "女性", icon: "👩", desc: "女看右手主天賦後天，左手主先天命格" },
-  { id: "male", label: "男性", icon: "👨", desc: "男看左手主天賦後天，右手主先天命格" },
-  { id: "other", label: "保密", icon: "✨", desc: "雙手手相掌紋綜合解析" }
+  { id: "female", label: "女性 (坤造)", icon: "👩", desc: "女看右手主天賦後天，左手主先天命格" },
+  { id: "male", label: "男性 (乾造)", icon: "👨", desc: "男看左手主天賦後天，右手主先天命格" },
+  { id: "other", label: "保密 / 雙手照會", icon: "✨", desc: "雙手手相掌紋綜合解析" },
+  { id: "custom_gender", label: "其他 / 自訂性別", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入自訂性別或稱謂..." }
 ];
 
 // Step 2: 年齡階段
 export const AGE_OPTIONS = [
-  { id: "18-24", label: "18 ~ 24 歲", icon: "🐣", desc: "求學、剛入社會、探索興趣與天賦方向" },
-  { id: "25-34", label: "25 ~ 34 歲", icon: "🌿", desc: "適婚年齡、轉職跳槽、追求事業成家" },
-  { id: "35-44", label: "35 ~ 44 歲", icon: "🌲", desc: "事業衝刺、買房置產、承擔家庭支柱" },
-  { id: "45-54", label: "45 ~ 54 歲", icon: "🏔️", desc: "財富巔峰、資產穩健、開展人生新局" },
-  { id: "55+", label: "55 歲以上", icon: "🌅", desc: "退休生活、長輩安康、福氣庇佑子孫" }
+  { id: "18-24", label: "18 ~ 24 歲", icon: "🐣", desc: "青年啟蒙 · 探索天賦志向與掌紋流年起點" },
+  { id: "25-34", label: "25 ~ 34 歲", icon: "🌿", desc: "黃金轉折 · 適婚成家立業與智慧線交會" },
+  { id: "35-44", label: "35 ~ 44 歲", icon: "🌲", desc: "事業中流 · 承擔家庭支柱與事業線高峰" },
+  { id: "45-54", label: "45 ~ 54 歲", icon: "🏔️", desc: "人生巔峰 · 資產開闊穩健與財富水星丘" },
+  { id: "55+", label: "55 歲以上", icon: "🌅", desc: "智慧圓融 · 德澤福庇子孫與生命線圓滿" },
+  { id: "custom_age", label: "其他年齡 / 自訂歲數", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入具體歲數（例如：16歲、68歲）..." }
 ];
 
-// Step 3: 六大篇幅自適應角色／情境狀態設定 (Adaptive Theme Role Configurations)
+// Step 3: 六大篇幅自適應關係稱謂設定 (Adaptive Theme Relationship Title Configurations)
+export const THEME_RELATION_CONFIG = {
+  love: {
+    title: "3. 您與本次請示對象的關係稱謂是？",
+    sub: "請點選您與對象在情感中的稱謂關係，或直接自訂稱謂",
+    defaultRelation: "self_love",
+    options: [
+      { id: "self_love", label: "本人自身", icon: "👤", desc: "探究自我姻緣命盤與正緣磁場" },
+      { id: "couple", label: "情侶（男友／女友）", icon: "💍", desc: "男女朋友相處與交往互動" },
+      { id: "spouse_love", label: "夫妻（先生／太太）", icon: "💑", desc: "婚姻配偶、名分與長久相處" },
+      { id: "crush_target", label: "心儀對象 / 曖昧對象", icon: "💫", desc: "暗戀對象、正在相處了解者" },
+      { id: "ex_partner", label: "前任（前男友／前女友／前配偶）", icon: "🕊️", desc: "已分開或斷聯的舊情對象" },
+      { id: "custom_relation", label: "其他關係稱謂", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入自訂關係稱謂（例如：相親對象、紅粉知己、長跑未婚等）" }
+    ]
+  },
+  work: {
+    title: "3. 您在本次請示情境中的職場稱謂角色是？",
+    sub: "定位職場階層與互動稱謂，精準開拓職場人際與貴人格局",
+    defaultRelation: "self_work",
+    options: [
+      { id: "self_work", label: "本人自身（工作者）", icon: "💼", desc: "探詢個人天賦職缺與升遷運勢" },
+      { id: "subordinate", label: "部屬／下屬（面對主管）", icon: "🐣", desc: "向上管理、請教長官與考核應對" },
+      { id: "supervisor", label: "主管／長官（面對團隊部屬）", icon: "🚀", desc: "向下領導、團隊帶人與留才管理" },
+      { id: "colleague", label: "同儕同事／平級夥伴", icon: "🤝", desc: "跨部門合作、同組同事與人際和睦" },
+      { id: "client", label: "客戶／廠商／外部窗口", icon: "🏢", desc: "商業應對、合約履約與業務接洽" },
+      { id: "custom_relation", label: "其他職場稱謂", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入自訂職場稱謂（例如：面試考官、實習導師、外包合作方等）" }
+    ]
+  },
+  career: {
+    title: "3. 您在本次事業請示中的商業稱謂角色是？",
+    sub: "定位商業版圖中的身份稱謂，照會事業線與商業巔峰能量",
+    defaultRelation: "founder",
+    options: [
+      { id: "founder", label: "創辦人 / 企業主 / 老闆", icon: "👑", desc: "公司主理人、重大決策者" },
+      { id: "partner", label: "合夥人 / 共同創辦人", icon: "🤝", desc: "股權夥伴、營運合夥人" },
+      { id: "successor", label: "家族接班人 / 二代傳承者", icon: "🏛️", desc: "家族企業傳承、新舊世代接班" },
+      { id: "investor_title", label: "投資人 / 股東", icon: "📊", desc: "出資方、資金方與董事監察" },
+      { id: "executive", label: "核心高階幹部 / 業務總監", icon: "📈", desc: "掌管團隊營收與組織推動" },
+      { id: "custom_relation", label: "其他商業稱謂", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入自訂商業稱謂（例如：加盟主、專案負責人、代理商等）" }
+    ]
+  },
+  wealth: {
+    title: "3. 您在本次財運請示中的財務關係稱謂是？",
+    sub: "精準鎖定財庫因果往來對象，透視財帛紋與資金流向",
+    defaultRelation: "self_wealth",
+    options: [
+      { id: "self_wealth", label: "本人自身（個人財庫）", icon: "💰", desc: "先天財庫容量、正偏財積累與防漏財" },
+      { id: "couple_finance", label: "夫妻／伴侶（共同財務）", icon: "💑", desc: "家庭經濟分配、共同買房置產" },
+      { id: "debt_relation", label: "債務人／債權人（欠款與借貸）", icon: "💸", desc: "被拖欠款項、借還款對象與官司方" },
+      { id: "invest_relation", label: "投資合夥人 / 操盤窗口", icon: "📊", desc: "合資投資、理財經理人與標的方" },
+      { id: "family_funding", label: "家族長輩（贈與/繼承/資助）", icon: "👨‍👩‍👧", desc: "長輩金援、遺產規劃與家產配置" },
+      { id: "custom_relation", label: "其他財務稱謂", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入自訂財務稱謂（例如：房屋買家/賣家、合資股東等）" }
+    ]
+  },
+  family: {
+    title: "3. 您在本次家庭請示中的親屬稱謂角色是？",
+    sub: "定位家宅九宮親屬因果，照會金星丘家宅安泰福蔭",
+    defaultRelation: "parent_child",
+    options: [
+      { id: "parent_child", label: "母女／母子／父女／父子", icon: "👨‍👩‍👧", desc: "直系血親、父母與子女互動關懷" },
+      { id: "spouses", label: "夫妻（先生／太太）", icon: "💑", desc: "婚姻核心配偶、掌理家宅大計" },
+      { id: "in_laws", label: "婆媳／公媳／翁婿", icon: "🕊️", desc: "姻親相處、化解長年隔閡與生活默契" },
+      { id: "siblings", label: "兄弟姊妹（手足血親）", icon: "🫂", desc: "手足情深、分工照護長輩與家產協調" },
+      { id: "grand_relation", label: "祖孫（爺奶／公婆與孫子女）", icon: "👴", desc: "隔代教養關愛、家族福澤延續" },
+      { id: "custom_relation", label: "其他親屬稱謂", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入自訂親屬稱謂（例如：姑嫂、舅侄、家族長老、同住親友等）" }
+    ]
+  },
+  children: {
+    title: "3. 您與孩子的親屬稱謂關係是？",
+    sub: "照會掌心小指子女紋，定位天賦靈性與母子父子福緣",
+    defaultRelation: "mother_child",
+    options: [
+      { id: "mother_child", label: "母親（媽媽與孩子：母子／母女）", icon: "👩", desc: "母親連心、懷胎生育與溫柔守護" },
+      { id: "father_child", label: "父親（爸爸與孩子：父子／父女）", icon: "👨", desc: "父愛如山、品格榜樣與教育指引" },
+      { id: "parents_together", label: "準父母夫妻（備孕／待產雙方）", icon: "🌸", desc: "夫妻同心求子、期盼健康寶寶誕生" },
+      { id: "grandparents", label: "祖父母／外祖父母（阿公阿嬤）", icon: "👵", desc: "為金孫祈求開智慧、隔代關愛" },
+      { id: "guardian", label: "法定監護人／主要照顧者", icon: "🍼", desc: "叔舅姑姨或受託主要撫養照顧者" },
+      { id: "custom_relation", label: "其他親屬稱謂", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入自訂親屬稱謂（例如：乾爹乾媽、導師教練、長輩親戚等）" }
+    ]
+  }
+};
+
+// Step 4: 六大篇幅自適應角色／情境狀態設定 (Adaptive Theme Role/Context Configurations)
 export const THEME_ROLE_CONFIG = {
   love: {
-    title: "3. 您目前的感情狀態／關係角色是？",
+    title: "4. 您目前的感情狀態／關係現況是？",
     sub: "定位情感磁場與因果牽引，精準解析正緣軌跡與相處磨合契機",
     defaultRole: "single",
     options: [
@@ -178,11 +262,12 @@ export const THEME_ROLE_CONFIG = {
       { id: "married", label: "已婚配偶（先生／太太）", icon: "💑", desc: "夫妻同心同德、家宅和睦與消弭長年生活隔閡" },
       { id: "conflict", label: "爭執冷戰 / 感情危機", icon: "💔", desc: "尋求溝通突破口、化解心結與停止情感內耗" },
       { id: "breakup", label: "分手斷聯 / 尋求復合", icon: "🕊️", desc: "探測緣分是否已盡，或能否放下執念重續善緣" },
-      { id: "divorced", label: "離婚 / 恢復單身", icon: "🌅", desc: "療癒過往情感傷痛、重塑自我並迎接第二春正緣" }
+      { id: "divorced", label: "離婚 / 恢復單身", icon: "🌅", desc: "療癒過往情感傷痛、重塑自我並迎接第二春正緣" },
+      { id: "custom_state", label: "其他特定感情狀態", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入您的特定感情狀態..." }
     ]
   },
   work: {
-    title: "3. 您目前在職場中的狀態／定位是？",
+    title: "4. 您目前在職場中的定位與階段是？",
     sub: "照會掌心智慧線與天賦星宿，開拓適配職缺與升遷轉職黃金期",
     defaultRole: "job_seeking",
     options: [
@@ -191,11 +276,12 @@ export const THEME_ROLE_CONFIG = {
       { id: "manager", label: "中高階主管 / 團隊領袖", icon: "🚀", desc: "帶領團隊向心力、跨部門協調與向上管理策略" },
       { id: "job_hopping", label: "考慮離職 / 跳槽猶豫中", icon: "🔄", desc: "評估轉職風險、最佳離職月份與薪資談判利基" },
       { id: "burnout", label: "職場倦怠 / 人際瓶頸", icon: "⚡", desc: "化解職場小人阻礙、排解內耗壓力與重尋工作熱情" },
-      { id: "freelance", label: "自由工作者 / 接案斜槓", icon: "🎨", desc: "拓展案源客戶、打造個人品牌與建立多元收入管道" }
+      { id: "freelance", label: "自由工作者 / 接案斜槓", icon: "🎨", desc: "拓展案源客戶、打造個人品牌與建立多元收入管道" },
+      { id: "custom_state", label: "其他特定職場狀態", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入您的特定職場狀態..." }
     ]
   },
   career: {
-    title: "3. 您在事業版圖中的角色／現況是？",
+    title: "4. 您在事業版圖中的現況與發展是？",
     sub: "透視掌心事業命運線，解碼商業巔峰年、合夥體質與突圍契機",
     defaultRole: "founder",
     options: [
@@ -204,11 +290,12 @@ export const THEME_ROLE_CONFIG = {
       { id: "planning_startup", label: "籌備創業中 / 尋找方向", icon: "💡", desc: "評估天生老闆體質、起步黃金時機與商業模式" },
       { id: "successor", label: "家族企業接班 / 傳承人", icon: "🏛️", desc: "二代接班傳承、考照突破與新舊世代經營默契" },
       { id: "sales_leader", label: "業務主管 / 核心骨幹", icon: "📈", desc: "衝刺業績目標、激發團隊戰力與組織版圖擴張" },
-      { id: "turnaround", label: "遭遇瓶頸 / 轉型求生", icon: "🛡️", desc: "營運虧損止血、化解合約紛爭與逆境破局突圍" }
+      { id: "turnaround", label: "遭遇瓶頸 / 轉型求生", icon: "🛡️", desc: "營運虧損止血、化解合約紛爭與逆境破局突圍" },
+      { id: "custom_state", label: "其他特定事業現況", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入您的特定事業狀態..." }
     ]
   },
   wealth: {
-    title: "3. 您目前的財務關注面向／角色是？",
+    title: "4. 您目前的財務關注面向是？",
     sub: "透視水星丘財帛紋與先天財庫，精算正偏財比例與漏財防線",
     defaultRole: "saver",
     options: [
@@ -217,11 +304,12 @@ export const THEME_ROLE_CONFIG = {
       { id: "property_buyer", label: "實業/資產買家（買房/店面）", icon: "🏢", desc: "大筆資金投入決策、置產時機與資產保值增值" },
       { id: "debt_recovery", label: "追討欠款 / 債務處理人", icon: "💸", desc: "被拖欠款項拿回時機、債務重整談判與官司化解" },
       { id: "tight_budget", label: "突發破財 / 財務吃緊", icon: "⚡", desc: "止住漏財黑洞、化解破耗凶相與經濟逆轉生機" },
-      { id: "side_wealth", label: "偏財副業 / 開拓第二財源", icon: "🎰", desc: "探詢副業財路、意外之財機運與幸運貴人引路" }
+      { id: "side_wealth", label: "偏財副業 / 開拓第二財源", icon: "🎰", desc: "探詢副業財路、意外之財機運與幸運貴人引路" },
+      { id: "custom_state", label: "其他特定財務狀態", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入您的特定財務狀態..." }
     ]
   },
   family: {
-    title: "3. 您在家庭關係中的角色／關注核心是？",
+    title: "4. 您在家庭關係中的關注核心是？",
     sub: "照會金星丘家宅磁場與九宮羅盤，祈保全宅安泰與和睦福蔭",
     defaultRole: "householder",
     options: [
@@ -230,11 +318,12 @@ export const THEME_ROLE_CONFIG = {
       { id: "home_buyer", label: "購屋置產 / 換屋規劃者", icon: "🏠", desc: "首購換屋最佳年份、家宅風水磁場挑選與置產安居" },
       { id: "filial_child", label: "孝親子女（為長輩祈福）", icon: "👨‍👩‍👧", desc: "長輩身體健康、老運安康與孝親照護祈求福壽" },
       { id: "elder", label: "家族長輩（關懷兒孫）", icon: "👵", desc: "祈求子孫孝順成材、家族興旺延續與家產傳承" },
-      { id: "family_peace", label: "化解家族心結 / 婆媳協調", icon: "🕊️", desc: "化解親族矛盾糾葛、婆媳相處智慧與化解冷戰" }
+      { id: "family_peace", label: "化解家族心結 / 婆媳協調", icon: "🕊️", desc: "化解親族矛盾糾葛、婆媳相處智慧與化解冷戰" },
+      { id: "custom_state", label: "其他特定家庭情境", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入您的特定家庭情境..." }
     ]
   },
   children: {
-    title: "3. 您目前的育兒階段／請示角色是？",
+    title: "4. 您目前的育兒階段／請示面向是？",
     sub: "照會掌心子女紋與小指水星丘，啟發天賦靈性與母子福緣",
     defaultRole: "pre_pregnancy",
     options: [
@@ -243,7 +332,8 @@ export const THEME_ROLE_CONFIG = {
       { id: "toddler_parent", label: "嬰幼兒父母（0～6 歲）", icon: "🍼", desc: "安神定心、化解哭鬧受驚、體質調養與平安成長" },
       { id: "school_parent", label: "學齡期父母（7～18 歲）", icon: "🎒", desc: "學業考運提升、天賦科系啟蒙與專長領域培育" },
       { id: "teen_parent", label: "青春期 / 叛逆期父母", icon: "🌱", desc: "親子雙向溝通、性格磨合引導與建立深層信任" },
-      { id: "grandparent", label: "代為祈福的祖父母/長輩", icon: "👶", desc: "為金孫祈求開智慧、健康強壯與學業福祿雙全" }
+      { id: "grandparent", label: "代為祈福的祖父母/長輩", icon: "👶", desc: "為金孫祈求開智慧、健康強壯與學業福祿雙全" },
+      { id: "custom_state", label: "其他特定育兒階段", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入您的特定育兒階段..." }
     ]
   }
 };
@@ -251,13 +341,14 @@ export const THEME_ROLE_CONFIG = {
 // 通用預設選項（相容用）
 export const ROLE_OPTIONS = THEME_ROLE_CONFIG.love.options;
 
-// Step 5: 希望要有怎樣的結果
+// Step 6: 希望要有怎樣的結果
 export const DESIRED_OUTCOMES = [
   { id: "timing", label: "算出精準的「年齡數字」與「轉運時機」", icon: "⏳", desc: "例如：幾歲會遇到正緣、何時跳槽加薪、何時發跡" },
   { id: "guidance", label: "獲得明確的「行動指南」與「貴人方位」", icon: "🧭", desc: "清楚知道下一步該怎麼做，避免走冤枉路" },
   { id: "avoid_danger", label: "幫我「趨吉避凶」，避開破財或爛桃花", icon: "🛡️", desc: "提早防範問題，大事化小小事化無" },
   { id: "breakthrough", label: "突破瓶頸，讓「事業或收入」翻倍成長", icon: "📈", desc: "打破目前的僵局，迎來更好的發展" },
-  { id: "peace", label: "解開心結，讓「內心平靜安定」", icon: "🕊️", desc: "放下長年的焦慮與煩惱，找回安心與自在" }
+  { id: "peace", label: "解開心結，讓「內心平靜安定」", icon: "🕊️", desc: "放下長年的焦慮與煩惱，找回安心與自在" },
+  { id: "custom_goal", label: "其他自訂期望結果", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入您最希望獲得的指引或成果..." }
 ];
 
 // 正緣肖像圖庫
