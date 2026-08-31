@@ -1202,11 +1202,49 @@
         return scored.slice(0, 2).map(function(item) { return item.story; });
       }
 
-      // ============ 6-Step Multi-Page Wizard Engine (白話) ============
+      // ============ 7-Step Multi-Page Wizard Engine (自適應 7 步問卷引導) ============
+      function renderOptionCards(options, selectedValue, customValue, customFieldName) {
+        return options.map(function(opt) {
+          var isSelected = selectedValue === opt.id;
+          if (opt.isCustom) {
+            return '<div class="wizard-option-card has-custom-input ' + (isSelected ? 'selected' : '') + '" data-value="' + opt.id + '" data-is-custom="true" data-custom-field="' + customFieldName + '">' +
+              '<div class="wizard-option-card-top-row">' +
+                '<div class="wizard-option-card-left"><span class="wizard-option-icon">' + opt.icon + '</span><div><div class="wizard-option-text">' + opt.label + '</div><div class="wizard-option-desc">' + opt.desc + '</div></div></div>' +
+                '<div class="wizard-option-check">✓</div>' +
+              '</div>' +
+              '<div class="wizard-custom-input-box">' +
+                '<input type="text" class="wizard-custom-text-input" placeholder="' + (opt.placeholder || '請在此輸入自訂內容...') + '" value="' + (customValue || '') + '" data-custom-input-for="' + customFieldName + '">' +
+              '</div>' +
+            '</div>';
+          }
+          return '<div class="wizard-option-card ' + (isSelected ? 'selected' : '') + '" data-value="' + opt.id + '">' +
+            '<div class="wizard-option-card-left"><span class="wizard-option-icon">' + opt.icon + '</span><div><div class="wizard-option-text">' + opt.label + '</div><div class="wizard-option-desc">' + opt.desc + '</div></div></div>' +
+            '<div class="wizard-option-check">✓</div>' +
+          '</div>';
+        }).join('');
+      }
+
       function startGuidedWizard(themeId) {
+        var relConf = THEME_RELATION_CONFIG[themeId] || THEME_RELATION_CONFIG.love;
+        var roleConf = THEME_ROLE_CONFIG[themeId] || THEME_ROLE_CONFIG.love;
+
         state.wizard.activeThemeId = themeId;
         state.wizard.currentStep = 1;
-        state.wizard.answers = { gender: 'female', age: '25-34', role: 'self', question: '', goal: 'timing', palmDataUrl: null };
+        state.wizard.totalSteps = 7;
+        state.wizard.answers = {
+          gender: 'female',
+          genderCustom: '',
+          age: '25-34',
+          ageCustom: '',
+          relation: relConf.defaultRelation || relConf.options[0].id || 'self_love',
+          relationCustom: '',
+          role: roleConf.defaultRole || roleConf.options[0].id || 'single',
+          roleCustom: '',
+          question: '',
+          goal: 'timing',
+          goalCustom: '',
+          palmDataUrl: null
+        };
         renderWizardStep();
         readingModalBackdrop.classList.add('show');
       }
@@ -1223,12 +1261,7 @@
             '<div class="wizard-step-body">' +
               '<div><div class="wizard-question-title">1. 請選擇您的性別</div><div class="wizard-question-sub">男女手相看法不同，選定後能更精準分析您的手相與命格</div></div>' +
               '<div class="wizard-options-grid">' +
-                GENDER_OPTIONS.map(function(opt) {
-                  return '<div class="wizard-option-card ' + (wiz.answers.gender === opt.id ? 'selected' : '') + '" data-value="' + opt.id + '">' +
-                    '<div class="wizard-option-card-left"><span class="wizard-option-icon">' + opt.icon + '</span><div><div class="wizard-option-text">' + opt.label + '</div><div class="wizard-option-desc">' + opt.desc + '</div></div></div>' +
-                    '<div class="wizard-option-check">✓</div>' +
-                  '</div>';
-                }).join('') +
+                renderOptionCards(GENDER_OPTIONS, wiz.answers.gender, wiz.answers.genderCustom, 'genderCustom') +
               '</div>' +
             '</div>';
         } else if (wiz.currentStep === 2) {
@@ -1236,33 +1269,41 @@
             '<div class="wizard-step-body">' +
               '<div><div class="wizard-question-title">2. 請選擇您的年齡階段</div><div class="wizard-question-sub">幫助精確算出您幾歲會轉運、幾歲遇到正緣或事業升遷</div></div>' +
               '<div class="wizard-options-grid">' +
-                AGE_OPTIONS.map(function(opt) {
-                  return '<div class="wizard-option-card ' + (wiz.answers.age === opt.id ? 'selected' : '') + '" data-value="' + opt.id + '">' +
-                    '<div class="wizard-option-card-left"><span class="wizard-option-icon">' + opt.icon + '</span><div><div class="wizard-option-text">' + opt.label + '</div><div class="wizard-option-desc">' + opt.desc + '</div></div></div>' +
-                    '<div class="wizard-option-check">✓</div>' +
-                  '</div>';
-                }).join('') +
+                renderOptionCards(AGE_OPTIONS, wiz.answers.age, wiz.answers.ageCustom, 'ageCustom') +
               '</div>' +
             '</div>';
         } else if (wiz.currentStep === 3) {
+          var relConf = THEME_RELATION_CONFIG[wiz.activeThemeId] || THEME_RELATION_CONFIG.love;
+          var relOptions = relConf.options || [];
+          if (!relOptions.some(function(opt) { return opt.id === wiz.answers.relation; })) {
+            wiz.answers.relation = relConf.defaultRelation || relOptions[0].id || 'self_love';
+          }
           stepContentHtml =
             '<div class="wizard-step-body">' +
-              '<div><div class="wizard-question-title">3. 這次主要想為誰詢問？</div><div class="wizard-question-sub">您可以為自己測算，也可以為伴侶、家人或朋友求問指引</div></div>' +
+              '<div><div class="wizard-question-title">' + relConf.title + '</div><div class="wizard-question-sub">' + relConf.sub + '</div></div>' +
               '<div class="wizard-options-grid cols-2">' +
-                ROLE_OPTIONS.map(function(opt) {
-                  return '<div class="wizard-option-card ' + (wiz.answers.role === opt.id ? 'selected' : '') + '" data-value="' + opt.id + '">' +
-                    '<div class="wizard-option-card-left"><span class="wizard-option-icon">' + opt.icon + '</span><div><div class="wizard-option-text">' + opt.label + '</div><div class="wizard-option-desc">' + opt.desc + '</div></div></div>' +
-                    '<div class="wizard-option-check">✓</div>' +
-                  '</div>';
-                }).join('') +
+                renderOptionCards(relOptions, wiz.answers.relation, wiz.answers.relationCustom, 'relationCustom') +
               '</div>' +
             '</div>';
         } else if (wiz.currentStep === 4) {
+          var roleConf = THEME_ROLE_CONFIG[wiz.activeThemeId] || THEME_ROLE_CONFIG.love;
+          var roleOptions = roleConf.options || [];
+          if (!roleOptions.some(function(opt) { return opt.id === wiz.answers.role; })) {
+            wiz.answers.role = roleConf.defaultRole || roleOptions[0].id || 'single';
+          }
+          stepContentHtml =
+            '<div class="wizard-step-body">' +
+              '<div><div class="wizard-question-title">' + roleConf.title + '</div><div class="wizard-question-sub">' + roleConf.sub + '</div></div>' +
+              '<div class="wizard-options-grid cols-2">' +
+                renderOptionCards(roleOptions, wiz.answers.role, wiz.answers.roleCustom, 'roleCustom') +
+              '</div>' +
+            '</div>';
+        } else if (wiz.currentStep === 5) {
           var promptPills = theme.promptPills || [];
           var currentLen = (wiz.answers.question || '').length;
           stepContentHtml =
             '<div class="wizard-step-body">' +
-              '<div><div class="wizard-question-title">4. 您目前遇到什麼煩惱或想了解什麼？</div><div class="wizard-question-sub">描述越清楚，給您的建議與時機點就會越精準（建議詳盡填寫您的煩惱）</div></div>' +
+              '<div><div class="wizard-question-title">5. 您目前遇到什麼煩惱或想了解什麼？</div><div class="wizard-question-sub">描述越清楚，給您的建議與時機點就會越精準（建議詳盡填寫您的煩惱）</div></div>' +
               '<div>' +
                 '<textarea id="wizardQuestionTextarea" class="app-textarea" rows="4" maxlength="500" placeholder="例如：想了解近期換工作跳槽的最佳月份、或與伴侶之間的未來相處...">' + wiz.answers.question + '</textarea>' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">' +
@@ -1276,23 +1317,18 @@
                 '</div>' +
               '</div>' +
             '</div>';
-        } else if (wiz.currentStep === 5) {
-          stepContentHtml =
-            '<div class="wizard-step-body">' +
-              '<div><div class="wizard-question-title">5. 您最希望獲得怎樣的幫助與結果？</div><div class="wizard-question-sub">報告中將針對您的核心期望，給予具體的行動方向與時機建議</div></div>' +
-              '<div class="wizard-options-grid">' +
-                DESIRED_OUTCOMES.map(function(opt) {
-                  return '<div class="wizard-option-card ' + (wiz.answers.goal === opt.id ? 'selected' : '') + '" data-value="' + opt.id + '">' +
-                    '<div class="wizard-option-card-left"><span class="wizard-option-icon">' + opt.icon + '</span><div><div class="wizard-option-text">' + opt.label + '</div><div class="wizard-option-desc">' + opt.desc + '</div></div></div>' +
-                    '<div class="wizard-option-check">✓</div>' +
-                  '</div>';
-                }).join('') +
-              '</div>' +
-            '</div>';
         } else if (wiz.currentStep === 6) {
           stepContentHtml =
             '<div class="wizard-step-body">' +
-              '<div><div class="wizard-question-title">6. 拍照上傳手相照片（選填）</div><div class="wizard-question-sub">💡 提示：只要拍手掌，不用拍臉！有拍照會多為您分析感情線、智慧線、事業線，內容會更完整。若不方便拍照也可以直接略過！</div></div>' +
+              '<div><div class="wizard-question-title">6. 您最希望獲得怎樣的幫助與結果？</div><div class="wizard-question-sub">報告中將針對您的核心期望，給予具體的行動方向與時機建議</div></div>' +
+              '<div class="wizard-options-grid">' +
+                renderOptionCards(DESIRED_OUTCOMES, wiz.answers.goal, wiz.answers.goalCustom, 'goalCustom') +
+              '</div>' +
+            '</div>';
+        } else if (wiz.currentStep === 7) {
+          stepContentHtml =
+            '<div class="wizard-step-body">' +
+              '<div><div class="wizard-question-title">7. 拍照上傳手相照片（選填）</div><div class="wizard-question-sub">💡 提示：只要拍手掌，不用拍臉！有拍照會多為您分析感情線、智慧線、事業線，內容會更完整。若不方便拍照也可以直接略過！</div></div>' +
               '<label class="wizard-upload-box" for="wizardPalmFileInput">' +
                 '<div style="font-size:2rem;margin-bottom:6px;">✋</div>' +
                 '<div style="font-weight:700;color:var(--gold-bright);">點擊拍照 / 上傳手掌照片</div>' +
@@ -1316,7 +1352,7 @@
           '<div class="wizard-footer">' +
             '<button type="button" class="btn btn-outline btn-sm" id="wizardBackBtn">' + (wiz.currentStep === 1 ? '取消' : '← 上一步') + '</button>' +
             '<div style="display:flex;gap:8px;">' +
-              (wiz.currentStep === 6 ?
+              (wiz.currentStep === 7 ?
                 '<button type="button" class="btn btn-outline btn-sm" id="wizardSkipPalmBtn">⏩ 略過拍照，直接看報告（不建議）</button><button type="button" class="btn btn-gold btn-sm" id="wizardSubmitBtn">⚡ 產生完整解析報告 (扣 1 次)</button>' :
                 '<button type="button" class="btn btn-gold btn-sm" id="wizardNextBtn">下一步 →</button>') +
             '</div>' +
@@ -1328,21 +1364,55 @@
       function bindWizardStepEvents(currentStep) {
         var wiz = state.wizard;
         readingModalCard.querySelectorAll('.wizard-option-card').forEach(function(card) {
-          card.addEventListener('click', function() {
+          card.addEventListener('click', function(e) {
+            var isInput = e.target.classList.contains('wizard-custom-text-input');
             var val = card.dataset.value;
+            var isCustom = card.dataset.isCustom === 'true';
+
             if (currentStep === 1) wiz.answers.gender = val;
             else if (currentStep === 2) wiz.answers.age = val;
-            else if (currentStep === 3) wiz.answers.role = val;
-            else if (currentStep === 5) wiz.answers.goal = val;
+            else if (currentStep === 3) wiz.answers.relation = val;
+            else if (currentStep === 4) wiz.answers.role = val;
+            else if (currentStep === 6) wiz.answers.goal = val;
 
             readingModalCard.querySelectorAll('.wizard-option-card').forEach(function(c) { c.classList.remove('selected'); });
             card.classList.add('selected');
 
-            setTimeout(function() { advanceWizardStep(1); }, 180);
+            if (isCustom) {
+              var input = card.querySelector('.wizard-custom-text-input');
+              if (input && !isInput) {
+                input.focus();
+              }
+            } else {
+              setTimeout(function() { advanceWizardStep(1); }, 180);
+            }
           });
         });
 
-        if (currentStep === 4) {
+        readingModalCard.querySelectorAll('.wizard-custom-text-input').forEach(function(input) {
+          var fieldName = input.dataset.customInputFor;
+          input.addEventListener('input', function(e) {
+            if (fieldName && wiz.answers[fieldName] !== undefined) {
+              wiz.answers[fieldName] = e.target.value;
+            }
+          });
+          input.addEventListener('click', function(e) {
+            e.stopPropagation();
+            var parentCard = input.closest('.wizard-option-card');
+            if (parentCard) {
+              readingModalCard.querySelectorAll('.wizard-option-card').forEach(function(c) { c.classList.remove('selected'); });
+              parentCard.classList.add('selected');
+              var val = parentCard.dataset.value;
+              if (currentStep === 1) wiz.answers.gender = val;
+              else if (currentStep === 2) wiz.answers.age = val;
+              else if (currentStep === 3) wiz.answers.relation = val;
+              else if (currentStep === 4) wiz.answers.role = val;
+              else if (currentStep === 6) wiz.answers.goal = val;
+            }
+          });
+        });
+
+        if (currentStep === 5) {
           var textarea = document.getElementById('wizardQuestionTextarea');
           var counter = document.getElementById('wizardCharCounter');
 
@@ -1373,7 +1443,7 @@
           });
         }
 
-        if (currentStep === 6) {
+        if (currentStep === 7) {
           var fileInput = document.getElementById('wizardPalmFileInput');
           if (fileInput) {
             fileInput.addEventListener('change', function(e) {
@@ -1462,10 +1532,28 @@
         var randomPortrait = PORTRAITS[Math.floor(Math.random() * PORTRAITS.length)];
         var matchedStories = matchStoriesForReport(themeId, answers.question);
 
-        var genderLabel = (GENDER_OPTIONS.filter(function(g) { return g.id === answers.gender; })[0] || {}).label || '不透露';
-        var ageLabel = (AGE_OPTIONS.filter(function(a) { return a.id === answers.age; })[0] || {}).label || '25-34歲';
-        var roleLabel = (ROLE_OPTIONS.filter(function(r) { return r.id === answers.role; })[0] || {}).label || '問我自己';
-        var goalLabel = (DESIRED_OUTCOMES.filter(function(g) { return g.id === answers.goal; })[0] || {}).label || '掌握時機指引';
+        var relConf = THEME_RELATION_CONFIG[themeId] || THEME_RELATION_CONFIG.love;
+        var roleConf = THEME_ROLE_CONFIG[themeId] || THEME_ROLE_CONFIG.love;
+
+        var genderLabel = (answers.gender === 'custom_gender' && answers.genderCustom)
+          ? answers.genderCustom
+          : ((GENDER_OPTIONS.filter(function(g) { return g.id === answers.gender; })[0] || {}).label || '不透露');
+
+        var ageLabel = (answers.age === 'custom_age' && answers.ageCustom)
+          ? answers.ageCustom
+          : ((AGE_OPTIONS.filter(function(a) { return a.id === answers.age; })[0] || {}).label || '25-34歲');
+
+        var relationLabel = (answers.relation === 'custom_relation' && answers.relationCustom)
+          ? answers.relationCustom
+          : ((relConf.options.filter(function(r) { return r.id === answers.relation; })[0] || {}).label || answers.relation || '本人自身');
+
+        var roleLabel = (answers.role === 'custom_state' && answers.roleCustom)
+          ? answers.roleCustom
+          : ((roleConf.options.filter(function(r) { return r.id === answers.role; })[0] || {}).label || answers.role || '一般狀態');
+
+        var goalLabel = (answers.goal === 'custom_goal' && answers.goalCustom)
+          ? answers.goalCustom
+          : ((DESIRED_OUTCOMES.filter(function(g) { return g.id === answers.goal; })[0] || {}).label || '掌握時機指引');
 
         if (typeof confetti === 'function') {
           confetti({ particleCount: 80, spread: 60, origin: { y: 0.5 } });
@@ -1478,11 +1566,12 @@
           portrait: randomPortrait,
           gender: genderLabel,
           age: ageLabel,
+          relation: relationLabel,
           role: roleLabel,
           goal: goalLabel,
           question: answers.question || '一般運勢與未來時機指引',
           score: 92 + Math.floor(Math.random() * 7),
-          advice: '【' + theme.name + '深度指引】：信士（' + genderLabel + ' · ' + ageLabel + ' · ' + roleLabel + '）目前整體運勢氣場聚集向上。針對您所詢問的「' + (answers.question || theme.title) + '」與期待「' + goalLabel + '」，在未來的關鍵月份（尤其是今年秋季至明年初）將迎來重要的轉折契機。建議您保持信心、把握身邊的貴人善緣，順應時機積極行動，必能迎刃而解、心想事成！',
+          advice: '【' + theme.name + '深度指引】：信士（' + genderLabel + ' · ' + ageLabel + ' · 稱謂：' + relationLabel + ' · 狀態：' + roleLabel + '）目前整體運勢氣場聚集向上。針對您所詢問的「' + (answers.question || theme.title) + '」與期待「' + goalLabel + '」，在未來的關鍵月份（尤其是今年秋季至明年初）將迎來重要的轉折契機。建議您保持信心、把握身邊的貴人善緣，順應時機積極行動，必能迎刃而解、心想事成！',
           hasPalm: Boolean(answers.palmDataUrl),
           matchedStories: matchedStories
         };
@@ -1495,7 +1584,7 @@
               '<span style="font-size:0.75rem;font-weight:800;color:var(--gold-bright);border:1px solid var(--border-gold);padding:3px 10px;border-radius:999px;">✦ 專屬深度解析報告已產出 ✦</span>' +
               '<h2 style="margin-top:10px;">' + theme.name + ' · ' + theme.title + '</h2>' +
               '<div style="font-size:0.8rem;color:var(--text-gold);margin-top:4px;">' +
-                reportData.gender + ' ｜ ' + reportData.age + ' ｜ 詢問對象：' + reportData.role + ' ｜ ' + (reportData.hasPalm ? '✋ 已包含手相分析' : '🔮 命理深度推演') +
+                reportData.gender + ' ｜ ' + reportData.age + ' ｜ 稱謂：' + reportData.relation + ' ｜ 狀態：' + reportData.role + ' ｜ ' + (reportData.hasPalm ? '✋ 已包含手相分析' : '🔮 命理深度推演') +
               '</div>' +
             '</div>' +
             '<div class="report-portrait-container">' +
