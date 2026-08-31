@@ -397,8 +397,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = 'theme-hub-card';
       card.dataset.id = theme.id;
+      card.dataset.theme = theme.id;
 
       card.innerHTML = `
+        <div class="theme-card-art" aria-hidden="true"><span>${theme.name.slice(0, 1)}</span></div>
         <div class="theme-card-top">
           <div class="theme-icon-box" style="color:${theme.color};">
             <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">${theme.icon}</svg>
@@ -582,28 +584,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ============ 9. Confirm Purchase Action ============
+  // ============ 9. Payment preparation notice ============
   if (confirmPurchaseBtn) {
     confirmPurchaseBtn.addEventListener('click', () => {
       const plan = PLANS.find((p) => p.id === state.selectedPlanId);
       if (!plan) return;
 
       const chosenArray = Array.from(state.customChosenThemes);
-      WalletManager.addPointsToThemes(chosenArray, plan.pointsReward);
-
-      if (typeof confetti === 'function') {
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-      }
-
-      alert(`🎉 恭喜開通成功！\n已成功為【${chosenArray.map(id => THEMES.find(t=>t.id===id).name).join('、')}】各增加 ${plan.pointsReward} 次測算機會！`);
-
-      renderThemesHub();
-      renderMemberCenter();
-      updateTopBarUserStatus();
+      const selectedNames = chosenArray.map(id => THEMES.find(t => t.id === id)?.name).filter(Boolean).join('、');
+      alert(`已選擇「${plan.label}」\n涵蓋：${selectedNames}\n\nVisa 付款、付款驗證與額度核發將在金流帳號完成設定後啟用。現階段不會扣款，也不會增加額度。`);
     });
   }
 
