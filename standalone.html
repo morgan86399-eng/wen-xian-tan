@@ -320,6 +320,38 @@
       background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border); color: #FFF;
       padding: 10px 14px; border-radius: var(--radius-sm); font-size: 0.95rem; width: 100%;
     }
+
+    /* Camera Dialog Styles */
+    .camera-dialog {
+      width: min(680px, calc(100% - 28px)); margin: auto; padding: 0; border: 1.5px solid rgba(245, 158, 11, 0.5);
+      border-radius: var(--radius-lg); color: var(--text-main); background: #0C0818; box-shadow: 0 28px 90px rgba(0, 0, 0, 0.75), 0 0 40px rgba(245, 158, 11, 0.25); overflow: hidden;
+    }
+    .camera-dialog::backdrop { background: rgba(4, 4, 16, 0.85); backdrop-filter: blur(8px); }
+    .camera-dialog-inner { padding: clamp(16px, 3vw, 24px); background: radial-gradient(circle at 50% 8%, rgba(139, 92, 246, 0.2), transparent 45%), #0C0818; }
+    .camera-dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+    .camera-dialog-heading h2 { margin: 0; color: #FFF; font-family: var(--font-serif); font-size: 1.35rem; font-weight: 800; background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .camera-close { display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid rgba(245, 158, 11, 0.4); color: #FFF; background: rgba(255, 255, 255, 0.06); cursor: pointer; font-size: 22px; line-height: 1; border-radius: 10px; transition: all 0.18s ease; }
+    .camera-close:hover { color: var(--gold-bright); border-color: var(--border-gold); background: rgba(245, 158, 11, 0.18); }
+    .camera-frame { position: relative; aspect-ratio: 4 / 3; overflow: hidden; border: 1.5px solid rgba(245, 158, 11, 0.35); background: #060412; border-radius: 16px; box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8); }
+    .camera-frame video { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .camera-guides { position: absolute; inset: 4%; display: grid; place-items: center; pointer-events: none; }
+    .palm-guide { position: absolute; top: 2%; left: 50%; width: auto; height: 96%; overflow: visible; filter: drop-shadow(0 0 14px rgba(7, 6, 20, 0.7)); transform: translateX(-50%); transition: transform 0.25s ease; }
+    .camera-guides.is-mirrored .palm-guide { transform: translateX(-50%) scaleX(-1); }
+    .palm-guide-outline { fill: rgba(168, 85, 247, 0.08); stroke: rgba(252, 211, 77, 0.9); stroke-width: 14; stroke-linecap: round; stroke-linejoin: round; transition: fill 0.25s ease, stroke 0.25s ease, filter 0.25s ease; }
+    .camera-guides.is-positioned .palm-guide-outline { fill: rgba(245, 158, 11, 0.18); stroke: #F59E0B; filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.85)); }
+    .camera-guides.is-ready .palm-guide-outline { fill: rgba(16, 185, 129, 0.25); stroke: #10B981; filter: drop-shadow(0 0 24px rgba(16, 185, 129, 0.95)); }
+    .camera-guide-label { position: absolute; bottom: 5%; max-width: calc(100% - 24px); padding: 8px 16px; color: #FFF; border: 1px solid rgba(245, 158, 11, 0.5); background: rgba(7, 6, 20, 0.78); backdrop-filter: blur(8px); font-size: 0.82rem; font-weight: 700; line-height: 1.4; letter-spacing: 0.05em; text-align: center; border-radius: var(--radius-pill); box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5); }
+    .camera-focus-countdown { position: absolute; top: 42%; left: 50%; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; transform: translate(-50%, -50%); color: #FFF; text-shadow: 0 2px 14px rgba(0, 0, 0, 0.88), 0 0 24px rgba(245, 158, 11, 0.6); }
+    .camera-focus-countdown[hidden] { display: none !important; }
+    .camera-focus-countdown strong { font-size: clamp(64px, 20vw, 100px); font-weight: 900; line-height: 0.9; font-variant-numeric: tabular-nums; background: var(--gold-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .camera-focus-countdown small { color: #FDE68A; font-size: 0.9rem; font-weight: 800; letter-spacing: 0.14em; }
+    .camera-error { min-height: 22px; margin: 12px 0 16px; color: #FCD34D; font-size: 0.82rem; line-height: 1.5; text-align: center; }
+    .camera-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+    .camera-actions .primary-button, .camera-actions .secondary-button { min-height: 42px; padding: 0 20px; border-radius: var(--radius-sm); cursor: pointer; font-weight: 800; font-size: 0.92rem; transition: all 0.18s ease; display: inline-flex; align-items: center; justify-content: center; }
+    .camera-actions .primary-button { border: none; color: #FFF; background: var(--cta-gradient); box-shadow: var(--shadow-gold); }
+    .camera-actions .primary-button:disabled { opacity: 0.45; cursor: not-allowed; filter: grayscale(0.6); }
+    .camera-actions .secondary-button { border: 1px solid var(--border); color: #FFF; background: rgba(255, 255, 255, 0.08); }
+    .camera-actions .secondary-button:hover { border-color: var(--border-gold); color: var(--gold-bright); }
   </style>
 </head>
 <body>
@@ -1202,6 +1234,380 @@
         return scored.slice(0, 2).map(function(item) { return item.story; });
       }
 
+      // ============ 掌心相機辨識與對焦拍照引擎 (Camera & Palm Contour Engine) ============
+      var camState = {
+        cameraStream: null,
+        cameraHand: 'left',
+        cameraDetector: 0,
+        cameraRequestId: 0,
+        cameraCapturePending: false,
+        cameraPositionLockedStreak: 0,
+        cameraPositionLockTime: 0,
+        cameraFrameSignature: null
+      };
+
+      var CAMERA_MOTION_THRESHOLD = 18;
+
+      var DIALOG_HTML =
+        '<dialog id="camera-dialog" class="camera-dialog" aria-labelledby="camera-title">' +
+          '<div class="camera-dialog-inner">' +
+            '<div class="camera-dialog-heading">' +
+              '<div><h2 id="camera-title">請拍左手</h2></div>' +
+              '<button type="button" class="camera-close" data-camera-close aria-label="關閉相機">×</button>' +
+            '</div>' +
+            '<div class="camera-frame">' +
+              '<video id="camera-preview" autoplay muted playsinline aria-label="相機即時預覽"></video>' +
+              '<div class="camera-guides" aria-hidden="true">' +
+                '<svg class="palm-guide" viewBox="0 0 1050 1200" preserveAspectRatio="xMidYMid meet">' +
+                  '<path class="palm-guide-outline" d="M360 1190C350 1110 300 1010 230 920L75 750C40 710 45 650 90 625C125 605 170 615 200 650L340 790C325 710 310 640 305 550L285 205C282 145 320 110 365 112C410 114 436 150 440 207L455 500C457 535 480 551 501 526L495 95C494 35 535 5 580 16C620 25 637 65 635 117L620 505C619 540 646 556 668 526L700 190C706 135 745 108 785 120C825 132 844 172 836 225L790 555C785 592 814 608 839 578L885 355C897 302 938 278 976 296C1015 314 1027 356 1013 405L948 660C930 760 900 850 835 930C800 973 770 1025 760 1190Z"/>' +
+                '</svg>' +
+                '<span class="camera-focus-countdown" data-camera-focus-countdown hidden>' +
+                  '<strong data-camera-focus-seconds></strong><small>秒後拍照</small>' +
+                '</span>' +
+                '<span class="camera-guide-label" data-camera-guide-label>手掌靠近鏡頭，填滿輪廓</span>' +
+              '</div>' +
+            '</div>' +
+            '<p id="camera-error" class="camera-error" role="alert">正在開啟相機…</p>' +
+            '<div class="camera-actions">' +
+              '<button type="button" class="secondary-button" data-camera-gallery>改從相簿選擇</button>' +
+              '<button type="button" class="primary-button" data-camera-shutter disabled>拍下這張</button>' +
+            '</div>' +
+          '</div>' +
+        '</dialog>';
+
+      function ensurePalmCaptureDom() {
+        if (!document.getElementById('camera-dialog')) {
+          var wrap = document.createElement('div');
+          wrap.innerHTML = DIALOG_HTML;
+          if (wrap.firstElementChild) document.body.appendChild(wrap.firstElementChild);
+          setupCameraDialog();
+        }
+      }
+
+      function setupCameraDialog() {
+        var dialog = document.getElementById('camera-dialog');
+        if (!dialog) return;
+        var closeBtn = dialog.querySelector('[data-camera-close]');
+        if (closeBtn) closeBtn.addEventListener('click', closeCameraDialog);
+        var shutterBtn = dialog.querySelector('[data-camera-shutter]');
+        if (shutterBtn) shutterBtn.addEventListener('click', function() { captureCameraPhoto(false); });
+        var galleryBtn = dialog.querySelector('[data-camera-gallery]');
+        if (galleryBtn) galleryBtn.addEventListener('click', function() {
+          var h = camState.cameraHand || 'left';
+          closeCameraDialog();
+          openFilePicker(h);
+        });
+      }
+
+      function stopCamera() {
+        camState.cameraRequestId += 1;
+        if (camState.cameraDetector) window.clearInterval(camState.cameraDetector);
+        camState.cameraDetector = 0;
+        camState.cameraPositionLockedStreak = 0;
+        camState.cameraPositionLockTime = 0;
+        camState.cameraFrameSignature = null;
+        camState.cameraCapturePending = false;
+        if (camState.cameraStream) {
+          camState.cameraStream.getTracks().forEach(function(t) { t.stop(); });
+        }
+        camState.cameraStream = null;
+        var num = document.querySelector('[data-camera-focus-countdown]');
+        if (num) num.hidden = true;
+        var video = document.getElementById('camera-preview');
+        if (video) video.srcObject = null;
+      }
+
+      function closeCameraDialog() {
+        var dialog = document.getElementById('camera-dialog');
+        stopCamera();
+        camState.cameraHand = '';
+        if (dialog && dialog.open) dialog.close();
+      }
+
+      function openFilePicker(hand) {
+        var input = document.getElementById(hand + '-file');
+        if (!input) {
+          input = document.createElement('input');
+          input.type = 'file';
+          input.id = hand + '-file';
+          input.accept = 'image/*';
+          input.style.display = 'none';
+          document.body.appendChild(input);
+          input.addEventListener('change', function() {
+            var file = input.files && input.files[0];
+            if (file) handleFile(hand, file);
+          });
+        }
+        input.value = '';
+        input.click();
+      }
+
+      function handleFile(hand, file) {
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+          state.wizard.answers.palmDataUrl = evt.target.result;
+          renderWizardStep();
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function analyzePalmPixels(data, width, height) {
+        var skin = 0, centerSkin = 0, centerPixels = 0, usableLight = 0, topSkin = 0, topPixels = 0, bottomSkin = 0, bottomPixels = 0;
+        var upperSkinByColumn = new Uint16Array(width);
+        var upperRows = Math.max(1, Math.floor(height * 0.32));
+        var edgeTotal = 0, edgeCount = 0;
+        var gray = new Uint8Array(width * height);
+
+        for (var index = 0; index < width * height; index += 1) {
+          var offset = index * 4;
+          var r = data[offset], g = data[offset + 1], b = data[offset + 2];
+          var y = 0.299 * r + 0.587 * g + 0.114 * b;
+          var cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+          var cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+          var colorSeparation = r - g > 7 && r - b > 11;
+          var darkerSkin = y < 155 && cr > 132 && cb < 140 && r > g * 0.94 && r > b * 0.94;
+          var isSkin = y > 34 && cb > 65 && cb < 148 && cr > 125 && cr < 190 && (colorSeparation || darkerSkin);
+          var x = index % width, row = Math.floor(index / width);
+          var inCenter = x > width * 0.18 && x < width * 0.82 && row > height * 0.06 && row < height * 0.94;
+          var inTop = row < height * 0.22, inBottom = row > height * 0.78;
+
+          if (isSkin) skin += 1;
+          if (inCenter) { centerPixels += 1; if (isSkin) centerSkin += 1; }
+          if (inTop) { topPixels += 1; if (isSkin) topSkin += 1; }
+          if (inBottom) { bottomPixels += 1; if (isSkin) bottomSkin += 1; }
+          if (isSkin && row < upperRows) upperSkinByColumn[x] += 1;
+          if (y > 46 && y < 245) usableLight += 1;
+          gray[index] = y;
+        }
+
+        for (var row = 1; row < height; row += 1) {
+          for (var x = 1; x < width; x += 1) {
+            var idx = row * width + x;
+            if (x > width * 0.14 && x < width * 0.86 && row > height * 0.08 && row < height * 0.94) {
+              edgeTotal += Math.abs(gray[idx] - gray[idx - 1]) + Math.abs(gray[idx] - gray[idx - width]);
+              edgeCount += 2;
+            }
+          }
+        }
+
+        var skinRatio = skin / (width * height);
+        var centerSkinRatio = centerSkin / centerPixels;
+        var lightRatio = usableLight / (width * height);
+        var sharpness = edgeCount ? edgeTotal / edgeCount : 0;
+        var topSkinRatio = topSkin / topPixels;
+        var bottomSkinRatio = bottomSkin / bottomPixels;
+        var fingerRuns = 0, runWidth = 0;
+
+        for (var x = 0; x <= width; x += 1) {
+          var active = x < width && upperSkinByColumn[x] / upperRows > 0.18;
+          if (active) runWidth += 1;
+          else {
+            if (runWidth >= Math.max(2, width * 0.035)) fingerRuns += 1;
+            runWidth = 0;
+          }
+        }
+
+        var palmPresent = skinRatio > 0.08 && centerSkinRatio > 0.18;
+        var shapeAligned = fingerRuns >= 2 && fingerRuns <= 6 && topSkinRatio > 0.03 && bottomSkinRatio > 0.08;
+        var fillAligned = skinRatio > 0.15 && centerSkinRatio > 0.32 && bottomSkinRatio > 0.10 && lightRatio > 0.38 && sharpness >= 3.2;
+        var isPositioned = palmPresent && centerSkinRatio >= 0.30 && (shapeAligned || fillAligned);
+
+        return { palmPresent: palmPresent, isPositioned: isPositioned, centerSkinRatio: centerSkinRatio, bottomSkinRatio: bottomSkinRatio, topSkinRatio: topSkinRatio, fingerRuns: fingerRuns, sharpness: sharpness };
+      }
+
+      function analyzePalmFrame(video) {
+        var canvas = document.createElement('canvas');
+        canvas.width = 96; canvas.height = 96;
+        var context = canvas.getContext('2d');
+        var frame = document.querySelector('.camera-frame');
+        var targetAspect = (frame ? frame.clientWidth : 320) / (frame ? frame.clientHeight : 240);
+        var sourceWidth = video.videoWidth, sourceHeight = video.videoHeight;
+        var sourceAspect = sourceWidth / sourceHeight;
+        var cropX = 0, cropY = 0, cropW = sourceWidth, cropH = sourceHeight;
+        if (sourceAspect > targetAspect) { cropW = sourceHeight * targetAspect; cropX = (sourceWidth - cropW) / 2; }
+        else { cropH = sourceWidth / targetAspect; cropY = (sourceHeight - cropH) / 2; }
+
+        context.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+        var pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        var signature = new Uint8Array(144);
+        for (var row = 0; row < 12; row += 1) {
+          for (var column = 0; column < 12; column += 1) {
+            var x = Math.min(canvas.width - 1, Math.floor((column + 0.5) * canvas.width / 12));
+            var y = Math.min(canvas.height - 1, Math.floor((row + 0.5) * canvas.height / 12));
+            var offset = (y * canvas.width + x) * 4;
+            signature[row * 12 + column] = Math.round(0.299 * pixels[offset] + 0.587 * pixels[offset + 1] + 0.114 * pixels[offset + 2]);
+          }
+        }
+        var res = analyzePalmPixels(pixels, canvas.width, canvas.height);
+        res.signature = signature;
+        return res;
+      }
+
+      function startPalmDetector(video) {
+        var guides = document.querySelector('.camera-guides');
+        var label = document.querySelector('[data-camera-guide-label]');
+        var countdownEl = document.querySelector('[data-camera-focus-countdown]');
+        var countdownSec = document.querySelector('[data-camera-focus-seconds]');
+
+        camState.cameraDetector = window.setInterval(function() {
+          if (!camState.cameraStream || camState.cameraCapturePending || video.readyState < 2) return;
+          var result = analyzePalmFrame(video);
+
+          if (!result.palmPresent) {
+            camState.cameraPositionLockedStreak = 0;
+            camState.cameraPositionLockTime = 0;
+            camState.cameraFrameSignature = null;
+            if (guides) { guides.classList.remove('is-positioned', 'is-ready'); }
+            if (countdownEl) countdownEl.hidden = true;
+            if (label) label.textContent = '請將掌心移至中央引導輪廓內';
+            return;
+          }
+
+          if (!result.isPositioned) {
+            camState.cameraPositionLockedStreak = 0;
+            camState.cameraPositionLockTime = 0;
+            if (guides) { guides.classList.remove('is-positioned', 'is-ready'); }
+            if (countdownEl) countdownEl.hidden = true;
+            if (label) {
+              if (result.centerSkinRatio < 0.30) label.textContent = '掌心偏離，請對準中央引導框';
+              else if (result.bottomSkinRatio < 0.08) label.textContent = '手掌請稍微上移，對齊手腕底線';
+              else if (result.topSkinRatio < 0.03 && result.fingerRuns < 2) label.textContent = '請張開手掌，指尖對齊上方框線';
+              else if (result.sharpness < 3.2) label.textContent = '請保持光線充足，避免模糊';
+              else label.textContent = '掌心調整中，請對齊引導輪廓...';
+            }
+            return;
+          }
+
+          var motion = 0;
+          if (camState.cameraFrameSignature) {
+            for (var i = 0; i < result.signature.length; i++) motion += Math.abs(result.signature[i] - camState.cameraFrameSignature[i]);
+            motion = motion / result.signature.length;
+          }
+          camState.cameraFrameSignature = result.signature;
+          if (motion > CAMERA_MOTION_THRESHOLD) {
+            camState.cameraPositionLockedStreak = 0;
+            camState.cameraPositionLockTime = 0;
+            if (guides) guides.classList.remove('is-positioned', 'is-ready');
+            if (countdownEl) countdownEl.hidden = true;
+            if (label) label.textContent = '掌心定位中，請保持平穩不動';
+            return;
+          }
+
+          camState.cameraPositionLockedStreak += 1;
+          if (camState.cameraPositionLockedStreak < 2) {
+            if (guides) guides.classList.remove('is-positioned', 'is-ready');
+            if (countdownEl) countdownEl.hidden = true;
+            if (label) label.textContent = '正在鎖定掌心位置與對焦...';
+            return;
+          }
+
+          if (guides) guides.classList.add('is-positioned');
+          var now = Date.now();
+          if (!camState.cameraPositionLockTime) camState.cameraPositionLockTime = now;
+          var elapsed = now - camState.cameraPositionLockTime;
+          var remainingMs = Math.max(0, 3000 - elapsed);
+          var seconds = Math.ceil(remainingMs / 1000);
+
+          if (remainingMs > 0) {
+            if (label) label.textContent = '✨ 掌心已精準定位，請保持不動 (' + seconds + 's)';
+            if (countdownEl && countdownSec) {
+              countdownSec.textContent = seconds;
+              countdownEl.hidden = false;
+            }
+            return;
+          }
+
+          if (countdownEl) countdownEl.hidden = true;
+          if (guides) guides.classList.add('is-ready');
+          if (label) label.textContent = '📸 定位完成，正在拍攝掌心';
+          captureCameraPhoto(true);
+        }, 220);
+      }
+
+      function openCamera(hand) {
+        ensurePalmCaptureDom();
+        var dialog = document.getElementById('camera-dialog');
+        var video = document.getElementById('camera-preview');
+        var error = document.getElementById('camera-error');
+        var shutter = dialog ? dialog.querySelector('[data-camera-shutter]') : null;
+
+        if (!dialog || !dialog.showModal || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          openFilePicker(hand);
+          return;
+        }
+
+        stopCamera();
+        var requestId = ++camState.cameraRequestId;
+        camState.cameraHand = hand;
+
+        var titleEl = document.getElementById('camera-title');
+        if (titleEl) titleEl.textContent = hand === 'right' ? '請拍右手' : '請拍左手';
+
+        var guides = dialog.querySelector('.camera-guides');
+        if (guides) {
+          guides.classList.toggle('is-mirrored', hand === 'right');
+          guides.classList.remove('is-ready', 'is-positioned');
+        }
+
+        var label = dialog.querySelector('[data-camera-guide-label]');
+        if (label) label.textContent = '手掌靠近鏡頭，填滿輪廓';
+        if (error) error.textContent = '正在開啟相機…';
+        if (shutter) shutter.disabled = true;
+
+        dialog.showModal();
+
+        navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+          audio: false
+        }).then(function(stream) {
+          if (!dialog.open || camState.cameraHand !== hand || camState.cameraRequestId !== requestId) {
+            stream.getTracks().forEach(function(t) { t.stop(); });
+            return;
+          }
+          camState.cameraStream = stream;
+          video.srcObject = stream;
+          video.play().then(function() {
+            if (error) error.textContent = '掌心放進輪廓內即可。';
+            if (shutter) shutter.disabled = false;
+            startPalmDetector(video);
+          });
+        }).catch(function(err) {
+          if (camState.cameraRequestId !== requestId) return;
+          if (error) error.innerHTML = '<strong>目前無法啟動相機</strong><br><small style="opacity:0.85">請改用下方「從相簿選擇」上傳一張清晰的掌心照片。</small>';
+        });
+      }
+
+      function captureCameraPhoto(automatic) {
+        var video = document.getElementById('camera-preview');
+        var dialog = document.getElementById('camera-dialog');
+        var error = document.getElementById('camera-error');
+        if (camState.cameraCapturePending || !camState.cameraHand || !video || !video.videoWidth || !video.videoHeight) return;
+
+        camState.cameraCapturePending = true;
+        var requestId = camState.cameraRequestId;
+        var hand = camState.cameraHand;
+        var frame = document.querySelector('.camera-frame');
+        var targetAspect = (frame ? frame.clientWidth : 320) / (frame ? frame.clientHeight : 240);
+
+        var sourceWidth = video.videoWidth, sourceHeight = video.videoHeight;
+        var sourceAspect = sourceWidth / sourceHeight;
+        var cropX = 0, cropY = 0, cropW = sourceWidth, cropH = sourceHeight;
+        if (sourceAspect > targetAspect) { cropW = sourceHeight * targetAspect; cropX = (sourceWidth - cropW) / 2; }
+        else { cropH = sourceWidth / targetAspect; cropY = (sourceHeight - cropH) / 2; }
+
+        var canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(cropW));
+        canvas.height = Math.max(1, Math.round(cropH));
+        canvas.getContext('2d').drawImage(video, cropX, cropY, cropW, cropH, 0, 0, canvas.width, canvas.height);
+
+        var dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        if (camState.cameraRequestId !== requestId || !dialog || !dialog.open) return;
+        state.wizard.answers.palmDataUrl = dataUrl;
+        renderWizardStep();
+        closeCameraDialog();
+      }
+
       // ============ 7-Step Multi-Page Wizard Engine (自適應 7 步問卷引導) ============
       function renderOptionCards(options, selectedValue, customValue, customFieldName) {
         return options.map(function(opt) {
@@ -1326,16 +1732,30 @@
               '</div>' +
             '</div>';
         } else if (wiz.currentStep === 7) {
+          var targetHand = wiz.answers.gender === 'female' ? 'right' : 'left';
+          var handText = targetHand === 'right' ? '右手（女性看右手天賦）' : '左手（男性看左手天賦）';
+
           stepContentHtml =
             '<div class="wizard-step-body">' +
-              '<div><div class="wizard-question-title">7. 拍照上傳手相照片（選填）</div><div class="wizard-question-sub">💡 提示：只要拍手掌，不用拍臉！有拍照會多為您分析感情線、智慧線、事業線，內容會更完整。若不方便拍照也可以直接略過！</div></div>' +
-              '<label class="wizard-upload-box" for="wizardPalmFileInput">' +
-                '<div style="font-size:2rem;margin-bottom:6px;">✋</div>' +
-                '<div style="font-weight:700;color:var(--gold-bright);">點擊拍照 / 上傳手掌照片</div>' +
-                '<div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">僅分析手相紋路特徵，照片不留存雲端，保護隱私</div>' +
-                '<input type="file" id="wizardPalmFileInput" accept="image/*" style="display:none;">' +
-                (wiz.answers.palmDataUrl ? ('<img src="' + wiz.answers.palmDataUrl + '" class="wizard-upload-preview" alt="手相預覽">') : '') +
-              '</label>' +
+              '<div><div class="wizard-question-title">7. 拍照上傳手相照片（選填）</div><div class="wizard-question-sub">💡 提示：只要拍手掌，不用拍臉！建議拍攝' + handText + '。有拍照會多為您分析感情線、智慧線、事業線，內容會更完整。若不方便拍照也可以直接略過！</div></div>' +
+              '<div class="wizard-upload-box" id="wizardPalmTriggerBox">' +
+                (wiz.answers.palmDataUrl ?
+                  ('<div style="display:flex;flex-direction:column;align-items:center;gap:10px;">' +
+                    '<img src="' + wiz.answers.palmDataUrl + '" class="wizard-upload-preview" alt="手相預覽">' +
+                    '<div style="font-size:0.86rem;color:#34D399;font-weight:800;display:flex;align-items:center;gap:6px;"><span>✓</span> 掌心照片已辨識就緒（只拍掌心，不存雲端）</div>' +
+                    '<div style="display:flex;gap:8px;margin-top:4px;">' +
+                      '<button type="button" class="btn btn-outline btn-sm" id="wizardRetakePalmBtn">📷 重新啟動相機</button>' +
+                      '<button type="button" class="btn btn-outline btn-sm" id="wizardChangeAlbumBtn">🖼️ 從相簿重選</button>' +
+                    '</div>' +
+                  '</div>') :
+                  ('<div style="font-size:2.6rem;margin-bottom:8px;">✋</div>' +
+                   '<div style="font-weight:800;color:var(--gold-bright);font-size:1.1rem;">點擊開啟相機 · 掌心輪廓對齊辨識</div>' +
+                   '<div style="font-size:0.82rem;color:var(--text-muted);margin-top:6px;max-width:400px;margin-left:auto;margin-right:auto;">開啟鏡頭將掌心放入金色引導輪廓內，系統將自動對焦並拍照辨識</div>' +
+                   '<div style="display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap;">' +
+                     '<button type="button" class="btn btn-gold btn-sm" id="wizardOpenCameraBtn">📷 啟動相機拍攝</button>' +
+                     '<button type="button" class="btn btn-outline btn-sm" id="wizardOpenAlbumBtn">🖼️ 從相簿選擇照片</button>' +
+                   '</div>')) +
+              '</div>' +
             '</div>';
         }
 
@@ -1444,20 +1864,19 @@
         }
 
         if (currentStep === 7) {
-          var fileInput = document.getElementById('wizardPalmFileInput');
-          if (fileInput) {
-            fileInput.addEventListener('change', function(e) {
-              var file = e.target.files[0];
-              if (file) {
-                var reader = new FileReader();
-                reader.onload = function(evt) {
-                  wiz.answers.palmDataUrl = evt.target.result;
-                  renderWizardStep();
-                };
-                reader.readAsDataURL(file);
-              }
-            });
-          }
+          var targetHand = wiz.answers.gender === 'female' ? 'right' : 'left';
+
+          var openCamBtn = document.getElementById('wizardOpenCameraBtn');
+          if (openCamBtn) openCamBtn.addEventListener('click', function() { openCamera(targetHand); });
+
+          var openAlbumBtn = document.getElementById('wizardOpenAlbumBtn');
+          if (openAlbumBtn) openAlbumBtn.addEventListener('click', function() { openFilePicker(targetHand); });
+
+          var retakeBtn = document.getElementById('wizardRetakePalmBtn');
+          if (retakeBtn) retakeBtn.addEventListener('click', function() { openCamera(targetHand); });
+
+          var changeAlbumBtn = document.getElementById('wizardChangeAlbumBtn');
+          if (changeAlbumBtn) changeAlbumBtn.addEventListener('click', function() { openFilePicker(targetHand); });
 
           var skipBtn = document.getElementById('wizardSkipPalmBtn');
           if (skipBtn) {
@@ -1680,7 +2099,7 @@
               '</div>' +
             '</div>' +
             '<h4 style="font-size:1.05rem;color:#FFFFFF;margin-top:4px;">' + s.title + '</h4>' +
-            '<p style="font-size:0.86rem;color:var(--text-secondary);">${s.summary}</p>' +
+            '<p style="font-size:0.86rem;color:var(--text-secondary);">' + s.summary + '</p>' +
             '<div style="display:inline-flex;align-self:flex-start;font-size:0.76rem;color:#34D399;font-weight:800;background:rgba(16,185,129,0.15);padding:3px 8px;border-radius:4px;">✓ ' + s.result + '</div>' +
             '<details class="story-full-details" style="margin-top:6px;"><summary>閱讀完整見證始末</summary><p>' + s.full + '</p></details>';
           storiesGrid.appendChild(card);
@@ -1700,6 +2119,7 @@
 
       renderThemesHub();
       updateTopBarUserStatus();
+      ensurePalmCaptureDom();
     })();
   </script>
 </body>

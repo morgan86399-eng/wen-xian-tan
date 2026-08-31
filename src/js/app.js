@@ -12,6 +12,7 @@ import {
 } from './data.js';
 import { WalletManager } from './wallet.js';
 import { MemberManager } from './member.js';
+import { openCamera, openFilePicker, ensurePalmCaptureDom } from './palm_capture.js';
 
 /**
  * 問仙壇 · 掌心解碼 App - 核心應用邏輯與白話問卷引導引擎
@@ -816,22 +817,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Step 7: 手相拍照上傳（選填/可略過）(Palm Upload)
     else if (currentStep === 7) {
+      const targetHand = answers.gender === 'female' ? 'right' : 'left';
+      const handText = targetHand === 'right' ? '右手（女性看右手天賦）' : '左手（男性看左手天賦）';
+
       stepContentHtml = `
         <div class="wizard-step-body">
           <div>
             <div class="wizard-question-title">7. 拍照上傳手相照片（選填）</div>
             <div class="wizard-question-sub">
-              💡 提示：只要拍手掌，不用拍臉！有拍照會多為您分析感情線、智慧線、事業線，內容會更完整。若不方便拍照也可以直接略過！
+              💡 提示：只要拍手掌，不用拍臉！建議拍攝${handText}。有拍照會多為您分析感情線、智慧線、事業線，內容會更完整。若不方便拍照也可以直接略過！
             </div>
           </div>
           
-          <label class="wizard-upload-box" for="wizardPalmFileInput">
-            <div style="font-size:2rem;margin-bottom:6px;">✋</div>
-            <div style="font-weight:700;color:var(--gold-bright);">點擊拍照 / 上傳手掌照片</div>
-            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">僅分析手相紋路特徵，照片不留存雲端，保護隱私</div>
-            <input type="file" id="wizardPalmFileInput" accept="image/*" style="display:none;">
-            ${answers.palmDataUrl ? `<img src="${answers.palmDataUrl}" class="wizard-upload-preview" alt="手相預覽">` : ''}
-          </label>
+          <div class="wizard-upload-box" id="wizardPalmTriggerBox">
+            ${answers.palmDataUrl ? `
+              <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+                <img src="${answers.palmDataUrl}" class="wizard-upload-preview" alt="手相預覽">
+                <div style="font-size:0.86rem;color:#34D399;font-weight:800;display:flex;align-items:center;gap:6px;">
+                  <span>✓</span> 掌心照片已辨識就緒（只拍掌心，不存雲端）
+                </div>
+                <div style="display:flex;gap:8px;margin-top:4px;">
+                  <button type="button" class="btn btn-outline btn-sm" id="wizardRetakePalmBtn">
+                    📷 重新啟動相機
+                  </button>
+                  <button type="button" class="btn btn-outline btn-sm" id="wizardChangeAlbumBtn">
+                    🖼️ 從相簿重選
+                  </button>
+                </div>
+              </div>
+            ` : `
+              <div style="font-size:2.6rem;margin-bottom:8px;">✋</div>
+              <div style="font-weight:800;color:var(--gold-bright);font-size:1.1rem;">點擊開啟相機 · 掌心輪廓對齊辨識</div>
+              <div style="font-size:0.82rem;color:var(--text-muted);margin-top:6px;max-width:400px;margin-left:auto;margin-right:auto;">
+                開啟鏡頭將掌心放入金色引導輪廓內，系統將自動對焦並拍照辨識
+              </div>
+              <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-gold btn-sm" id="wizardOpenCameraBtn">
+                  📷 啟動相機拍攝
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" id="wizardOpenAlbumBtn">
+                  🖼️ 從相簿選擇照片
+                </button>
+              </div>
+            `}
+          </div>
         </div>
       `;
     }
@@ -969,20 +998,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (currentStep === 7) {
-      const fileInput = document.getElementById('wizardPalmFileInput');
-      if (fileInput) {
-        fileInput.addEventListener('change', (e) => {
-          const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-              answers.palmDataUrl = evt.target.result;
-              renderWizardStep();
-            };
-            reader.readAsDataURL(file);
-          }
-        });
-      }
+      const targetHand = answers.gender === 'female' ? 'right' : 'left';
+
+      document.getElementById('wizardOpenCameraBtn')?.addEventListener('click', () => {
+        openCamera(targetHand);
+      });
+
+      document.getElementById('wizardOpenAlbumBtn')?.addEventListener('click', () => {
+        openFilePicker(targetHand);
+      });
+
+      document.getElementById('wizardRetakePalmBtn')?.addEventListener('click', () => {
+        openCamera(targetHand);
+      });
+
+      document.getElementById('wizardChangeAlbumBtn')?.addEventListener('click', () => {
+        openFilePicker(targetHand);
+      });
 
       const skipBtn = document.getElementById('wizardSkipPalmBtn');
       if (skipBtn) {
@@ -1302,7 +1334,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ============ Palm Camera Event Listeners ============
+  document.addEventListener('kaiyun-palm-captured', (e) => {
+    if (e.detail && e.detail.previewUrl) {
+      state.wizard.answers.palmDataUrl = e.detail.previewUrl;
+      if (readingModalBackdrop.classList.contains('show') && state.wizard.currentStep === 7) {
+        renderWizardStep();
+      }
+    }
+  });
+
+  document.addEventListener('kaiyun-palm-cleared', () => {
+    state.wizard.answers.palmDataUrl = null;
+    if (readingModalBackdrop.classList.contains('show') && state.wizard.currentStep === 7) {
+      renderWizardStep();
+    }
+  });
+
   // ============ Initialization ============
   renderThemesHub();
   updateTopBarUserStatus();
+  ensurePalmCaptureDom();
 });
