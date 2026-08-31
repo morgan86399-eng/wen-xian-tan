@@ -92,6 +92,208 @@ body {
   color: #000;
 }
 
+/* 購買前儀式過場 */
+.celestial-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 4.5rem clamp(1rem, 6vw, 5rem) 2rem;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(242, 196, 94, .28), transparent 23rem),
+    radial-gradient(circle at 50% 100%, rgba(71, 30, 85, .52), transparent 42rem),
+    #060514;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity .8s ease, visibility 0s linear .8s;
+}
+
+.celestial-transition::before,
+.celestial-transition::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.celestial-transition::before {
+  z-index: -2;
+  background:
+    radial-gradient(circle at 14% 20%, rgba(255, 231, 149, .88) 0 1px, transparent 2px),
+    radial-gradient(circle at 82% 12%, rgba(255, 231, 149, .68) 0 1px, transparent 2px),
+    radial-gradient(circle at 92% 66%, rgba(255, 231, 149, .75) 0 1px, transparent 2px),
+    radial-gradient(circle at 8% 78%, rgba(255, 231, 149, .55) 0 1px, transparent 2px);
+  background-size: 210px 170px, 280px 235px, 170px 220px, 320px 280px;
+  opacity: .82;
+}
+
+.celestial-transition::after {
+  z-index: 3;
+  background: radial-gradient(ellipse at center, transparent 36%, rgba(2, 2, 12, .68) 100%);
+}
+
+.celestial-transition.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transition: opacity .8s ease, visibility 0s;
+}
+
+.celestial-transition.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .9s ease;
+}
+
+.celestial-transition__mist {
+  position: absolute;
+  z-index: 1;
+  width: 74vw;
+  height: 18vw;
+  min-height: 90px;
+  border-radius: 50%;
+  filter: blur(30px);
+  background: radial-gradient(ellipse, rgba(228, 218, 255, .31), transparent 68%);
+  animation: celestialMist 6s ease-in-out infinite alternate;
+}
+
+.celestial-transition__mist--one { bottom: 4%; left: -10%; }
+.celestial-transition__mist--two { right: -13%; bottom: 16%; animation-delay: -3s; opacity: .65; }
+
+.celestial-figure {
+  position: relative;
+  z-index: 2;
+  width: min(58vw, 500px);
+  min-width: 280px;
+  transform: translateY(42px) scale(.88);
+  opacity: 0;
+  filter: drop-shadow(0 0 28px rgba(247, 201, 93, .25));
+}
+
+.celestial-figure svg { display: block; width: 100%; height: auto; }
+
+.celestial-figure__aureole {
+  position: absolute;
+  top: 4%;
+  left: 50%;
+  width: 65%;
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 234, 161, .55);
+  border-radius: 50%;
+  box-shadow: 0 0 22px 8px rgba(255, 202, 79, .21), inset 0 0 32px rgba(255, 235, 174, .18);
+}
+
+.celestial-figure__aureole::before,
+.celestial-figure__aureole::after {
+  content: '';
+  position: absolute;
+  inset: 9%;
+  border: 1px dashed rgba(255, 228, 140, .45);
+  border-radius: inherit;
+}
+
+.celestial-figure__aureole::after { inset: 22%; border-style: solid; opacity: .7; }
+
+.celestial-transition.is-visible .celestial-figure { animation: celestialReveal 3.15s cubic-bezier(.16, .82, .28, 1) forwards; }
+.celestial-transition.is-visible .celestial-figure__aureole { animation: celestialHalo 6s linear infinite; }
+.celestial-transition.is-visible .celestial-figure__crown { transform-origin: 270px 180px; animation: celestialCrown 3.3s ease-out forwards; }
+.celestial-transition.is-visible .celestial-figure__clouds { animation: celestialClouds 5s ease-in-out infinite alternate; }
+
+.celestial-couplet {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  margin: 0;
+  padding: .9rem .45rem;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  font-family: var(--font-serif);
+  font-size: clamp(1rem, 2.35vw, 1.65rem);
+  font-weight: 900;
+  line-height: 1.55;
+  letter-spacing: .16em;
+  color: #ffefbb;
+  background: linear-gradient(180deg, rgba(116, 19, 32, .94), rgba(64, 8, 20, .9));
+  border: 1px solid rgba(252, 210, 114, .8);
+  box-shadow: 0 0 24px rgba(247, 181, 57, .28), inset 0 0 12px rgba(255, 226, 151, .2);
+  opacity: 0;
+}
+
+.celestial-couplet--right { right: clamp(.8rem, 6vw, 6rem); transform: translateY(-43%) translateX(24px); }
+.celestial-couplet--left { left: clamp(.8rem, 6vw, 6rem); transform: translateY(-43%) translateX(-24px); }
+.celestial-transition.is-visible .celestial-couplet--right { animation: celestialCoupletRight 1s .85s ease-out forwards; }
+.celestial-transition.is-visible .celestial-couplet--left { animation: celestialCoupletLeft 1s 1.05s ease-out forwards; }
+
+.celestial-transition__blessing {
+  position: absolute;
+  z-index: 4;
+  bottom: clamp(3.4rem, 9vh, 6rem);
+  left: 50%;
+  margin: 0;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  transform: translateX(-50%) translateY(16px);
+  font-family: var(--font-serif);
+  font-size: clamp(1.35rem, 3.2vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: .15em;
+  color: #fff0bd;
+  text-shadow: 0 0 16px rgba(247, 194, 67, .8), 0 2px 4px #2b0715;
+  opacity: 0;
+}
+
+.celestial-transition.is-visible .celestial-transition__blessing { animation: celestialBlessing .9s 2.2s ease-out forwards; }
+
+.celestial-transition__skip {
+  position: absolute;
+  z-index: 5;
+  right: 1rem;
+  bottom: 1rem;
+  border: 1px solid rgba(255, 240, 187, .48);
+  border-radius: var(--radius-pill);
+  padding: .38rem .85rem;
+  color: rgba(255, 240, 187, .88);
+  background: rgba(13, 9, 30, .54);
+  font: inherit;
+  font-size: .78rem;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.celestial-transition.is-visible .celestial-transition__skip { animation: celestialBlessing .6s 1.3s ease-out forwards; }
+
+@keyframes celestialReveal { to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes celestialHalo { to { transform: translateX(-50%) rotate(360deg); } }
+@keyframes celestialCrown { 0% { opacity: 0; transform: translateY(-12px); } 45% { opacity: 1; transform: translateY(0); } 100% { opacity: 1; } }
+@keyframes celestialClouds { to { transform: translateX(10px); opacity: .9; } }
+@keyframes celestialMist { to { transform: translateX(8vw) translateY(-14px) scale(1.08); } }
+@keyframes celestialCoupletRight { to { opacity: 1; transform: translateY(-43%) translateX(0); } }
+@keyframes celestialCoupletLeft { to { opacity: 1; transform: translateY(-43%) translateX(0); } }
+@keyframes celestialBlessing { to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+@media (max-width: 620px) {
+  .celestial-transition { padding-inline: .3rem; }
+  .celestial-figure { width: min(86vw, 410px); }
+  .celestial-couplet { font-size: .92rem; letter-spacing: .08em; padding: .65rem .28rem; }
+  .celestial-couplet--right { right: .45rem; }
+  .celestial-couplet--left { left: .45rem; }
+  .celestial-transition__blessing { bottom: 4.4rem; font-size: 1.28rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celestial-transition, .celestial-transition.is-leaving { transition-duration: .18s; }
+  .celestial-transition.is-visible .celestial-figure,
+  .celestial-transition.is-visible .celestial-couplet--right,
+  .celestial-transition.is-visible .celestial-couplet--left,
+  .celestial-transition.is-visible .celestial-transition__blessing,
+  .celestial-transition.is-visible .celestial-transition__skip { animation-duration: .18s; animation-delay: 0s; }
+}
+
 /* Ambient Cosmic Glows */
 .cosmic-glow {
   position: fixed;

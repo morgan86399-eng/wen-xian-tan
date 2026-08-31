@@ -67,6 +67,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const checkoutSummaryPrice = document.getElementById('checkoutSummaryPrice');
   const checkoutSummarySelected = document.getElementById('checkoutSummarySelected');
   const confirmPurchaseBtn = document.getElementById('confirmPurchaseBtn');
+  const celestialPurchaseTransition = document.getElementById('celestialPurchaseTransition');
+  const celestialTransitionSkip = document.getElementById('celestialTransitionSkip');
+  let celestialTransitionTimer = null;
+  let finishCelestialTransition = null;
 
   // Reading / Wizard Modal
   const readingModalBackdrop = document.getElementById('readingModalBackdrop');
@@ -87,6 +91,36 @@ document.addEventListener('DOMContentLoaded', () => {
     heroLiveCountEl.textContent = Math.max(68, base + delta);
   }
   setInterval(updateLiveCount, 4000);
+
+  // ============ 1.5 Purchase Transition ============
+  function startCelestialPurchaseTransition(onComplete) {
+    if (!celestialPurchaseTransition) {
+      onComplete();
+      return;
+    }
+
+    const finishTransition = () => {
+      if (!finishCelestialTransition) return;
+      finishCelestialTransition = null;
+      window.clearTimeout(celestialTransitionTimer);
+      celestialPurchaseTransition.classList.remove('is-visible');
+      celestialPurchaseTransition.classList.add('is-leaving');
+      window.setTimeout(() => {
+        celestialPurchaseTransition.classList.remove('is-leaving');
+        celestialPurchaseTransition.setAttribute('aria-hidden', 'true');
+        onComplete();
+      }, 900);
+    };
+
+    celestialPurchaseTransition.classList.remove('is-leaving');
+    celestialPurchaseTransition.classList.add('is-visible');
+    celestialPurchaseTransition.setAttribute('aria-hidden', 'false');
+    window.clearTimeout(celestialTransitionTimer);
+    finishCelestialTransition = finishTransition;
+    celestialTransitionTimer = window.setTimeout(finishTransition, 4100);
+  }
+
+  celestialTransitionSkip?.addEventListener('click', () => finishCelestialTransition?.());
 
   // ============ 2. App Tab Switching ============
   function switchTab(tabId) {
@@ -330,12 +364,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const quickRechargeBtn = card.querySelector('[data-action="quick-recharge"]');
         if (quickRechargeBtn) {
           quickRechargeBtn.addEventListener('click', () => {
-            state.customChosenThemes.clear();
-            state.customChosenThemes.add(theme.id);
-            state.selectedPlanId = 'single';
-            renderPricingPlans();
-            renderThemePicker();
-            document.getElementById('pricingSectionAnchor')?.scrollIntoView({ behavior: 'smooth' });
+            startCelestialPurchaseTransition(() => {
+              state.customChosenThemes.clear();
+              state.customChosenThemes.add(theme.id);
+              state.selectedPlanId = 'single';
+              renderPricingPlans();
+              renderThemePicker();
+              document.getElementById('pricingSectionAnchor')?.scrollIntoView({ behavior: 'smooth' });
+            });
           });
         }
 
@@ -406,13 +442,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (quota > 0) {
       startGuidedWizard(themeId);
     } else {
-      state.customChosenThemes.clear();
-      state.customChosenThemes.add(themeId);
-      state.selectedPlanId = 'single';
-      switchTab('member');
-      setTimeout(() => {
-        document.getElementById('pricingSectionAnchor')?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+      startCelestialPurchaseTransition(() => {
+        state.customChosenThemes.clear();
+        state.customChosenThemes.add(themeId);
+        state.selectedPlanId = 'single';
+        switchTab('member');
+        setTimeout(() => {
+          document.getElementById('pricingSectionAnchor')?.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      });
     }
   }
 
