@@ -125,6 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
       modalReturnFocus = document.activeElement;
     }
     setModalLocked(false);
+    readingModalBackdrop.inert = false;
+    readingModalBackdrop.setAttribute('aria-hidden', 'false');
     readingModalBackdrop.classList.add('show');
     document.body.classList.add('modal-open');
     focusModalContent(preferredSelector);
@@ -133,6 +135,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeReadingModal() {
     if (readingModalBackdrop.dataset.locked === 'true') return;
     readingModalBackdrop.classList.remove('show');
+    readingModalBackdrop.setAttribute('aria-hidden', 'true');
+    readingModalBackdrop.inert = true;
     document.body.classList.remove('modal-open');
     const returnTarget = modalReturnFocus;
     modalReturnFocus = null;
@@ -1226,9 +1230,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ============ 12. Execute Decoding & Show Report (白話溫暖) ============
   function executeDecodingFlow() {
+    if (state.wizard.isSubmitting) return;
+    state.wizard.isSubmitting = true;
+    setModalLocked(true);
+
     const { activeThemeId, answers } = state.wizard;
     const consumeRes = WalletManager.consumePoint(activeThemeId, 1);
     if (!consumeRes.success) {
+      state.wizard.isSubmitting = false;
+      setModalLocked(false);
       alert('您的測算次數不足，請先至會員中心購買該主題方案！');
       return;
     }
@@ -1264,6 +1274,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function showDecodedReport(themeId, answers) {
+    state.wizard.isSubmitting = false;
+    setModalLocked(false);
+
     const theme = THEMES.find((t) => t.id === themeId);
     const genderKey = answers.gender === 'male' ? 'male' : 'female';
     const portraitsPool = PORTRAIT_ASSETS[genderKey] || PORTRAIT_ASSETS.female;
@@ -1400,13 +1413,15 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     document.getElementById('closeReportBtn').addEventListener('click', () => {
-      readingModalBackdrop.classList.remove('show');
+      closeReadingModal();
     });
 
     document.getElementById('viewAllReportsBtn').addEventListener('click', () => {
-      readingModalBackdrop.classList.remove('show');
+      closeReadingModal();
       switchTab('history');
     });
+
+    focusModalContent('#closeReportBtn');
   }
 
   // ============ 13. Render History Reports ============
@@ -1416,13 +1431,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const list = WalletManager.getReports();
     if (list.length === 0) {
-      historyReportsGrid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);grid-column:1/-1;">尚無測算紀錄，快去首頁開始您的第一次測算吧！</div>';
+      historyReportsGrid.innerHTML = `
+        <div class="history-empty-state">
+          <div>尚無測算紀錄，快去首頁開始您的第一次測算吧！</div>
+          <button type="button" class="btn btn-gold btn-sm" id="historyStartBtn">六大篇章</button>
+        </div>
+      `;
+      document.getElementById('historyStartBtn')?.addEventListener('click', () => switchTab('hub'));
       return;
     }
 
     list.forEach((item) => {
       const card = document.createElement('div');
-      card.className = 'theme-hub-card';
+      card.className = 'theme-hub-card history-report-card';
       card.innerHTML = `
         <div style="display:flex;gap:12px;align-items:center;">
           <img src="${item.portrait}" style="width:60px;height:60px;border-radius:var(--radius-sm);object-fit:cover;border:1px solid var(--border-gold);" alt="報告縮圖">
@@ -1455,7 +1476,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     filtered.forEach((s) => {
       const card = document.createElement('div');
-      card.className = 'theme-hub-card';
+      card.className = 'theme-hub-card story-feed-card';
       card.innerHTML = `
         <div style="display:flex;align-items:center;justify-content:space-between;">
           <div style="display:flex;align-items:center;gap:10px;">
@@ -1519,5 +1540,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============ Initialization ============
   renderThemesHub();
   updateTopBarUserStatus();
+  switchTab('hub');
   ensurePalmCaptureDom();
 });
