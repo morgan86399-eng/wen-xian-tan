@@ -24,6 +24,35 @@
   <link rel="stylesheet" href="src/css/style.css">
 </head>
 <body>
+  <!-- 購買前的儀式過場：以網頁文字呈現春聯，避免圖像中文字失真 -->
+  <section class="celestial-transition" id="celestialPurchaseTransition" aria-hidden="true" aria-label="購買前儀式過場">
+    <div class="celestial-transition__mist celestial-transition__mist--one"></div>
+    <div class="celestial-transition__mist celestial-transition__mist--two"></div>
+    <div class="celestial-transition__stars" aria-hidden="true"></div>
+    <p class="celestial-couplet celestial-couplet--right">天公疼憨人誠心改變</p>
+    <p class="celestial-couplet celestial-couplet--left">老祖惜善者渡化一切</p>
+    <div class="celestial-figure" aria-hidden="true">
+      <div class="celestial-figure__aureole"></div>
+      <svg viewBox="0 0 540 680" focusable="false" aria-hidden="true">
+        <defs>
+          <linearGradient id="celestialGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff7cf"/><stop offset=".42" stop-color="#f7c95d"/><stop offset="1" stop-color="#a95e18"/></linearGradient>
+          <linearGradient id="celestialJade" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d7f0de"/><stop offset=".5" stop-color="#69b7a0"/><stop offset="1" stop-color="#1a4d4c"/></linearGradient>
+          <linearGradient id="celestialRobe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7e3d23"/><stop offset=".45" stop-color="#3f1d35"/><stop offset="1" stop-color="#160e2c"/></linearGradient>
+          <filter id="celestialGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <g fill="none" stroke="url(#celestialGold)" stroke-linecap="round" stroke-linejoin="round"><path d="M92 561C131 523 158 498 190 485M448 561C409 523 382 498 350 485" stroke-width="9" opacity=".62"/><path d="M101 569C118 540 138 523 165 510M439 569C422 540 402 523 375 510" stroke-width="3" opacity=".75"/></g>
+        <g class="celestial-figure__crown" filter="url(#celestialGlow)"><path d="M177 219L191 140L221 176L270 88L319 176L349 140L363 219Z" fill="url(#celestialGold)" stroke="#fff1ad" stroke-width="4"/><path d="M188 213H352V244H188Z" fill="#5a2635" stroke="url(#celestialGold)" stroke-width="5"/><circle cx="270" cy="187" r="17" fill="url(#celestialJade)" stroke="#fff1ad" stroke-width="4"/><path d="M218 139V92M270 88V39M322 139V92" stroke="url(#celestialGold)" stroke-width="7"/><path d="M218 92L206 70M322 92L334 70" stroke="url(#celestialGold)" stroke-width="4"/></g>
+        <path d="M202 225C202 185 338 185 338 225V291C338 342 311 371 270 371C229 371 202 342 202 291Z" fill="#d99d78" stroke="url(#celestialGold)" stroke-width="4"/><path d="M207 240C216 217 235 205 270 205C305 205 324 217 333 240" fill="#1d1630" stroke="url(#celestialGold)" stroke-width="5"/>
+        <g fill="none" stroke="#4b2630" stroke-linecap="round"><path d="M229 282C239 275 248 275 257 282M283 282C292 275 301 275 310 282" stroke-width="5"/><path d="M251 326C263 334 277 334 289 326" stroke-width="4"/></g><path d="M236 303C243 307 250 307 257 303M283 303C290 307 297 307 304 303" stroke="url(#celestialGold)" stroke-width="3"/>
+        <path d="M181 425C196 371 228 350 270 350C312 350 344 371 359 425L451 585H89Z" fill="url(#celestialRobe)" stroke="url(#celestialGold)" stroke-width="6"/><path d="M270 356C251 391 249 447 270 561C291 447 289 391 270 356Z" fill="#6f3340" stroke="url(#celestialGold)" stroke-width="3"/><path d="M128 565C182 523 218 513 270 513C322 513 358 523 412 565" fill="none" stroke="url(#celestialGold)" stroke-width="5"/><path d="M180 424C151 442 136 475 130 526M360 424C389 442 404 475 410 526" fill="none" stroke="url(#celestialGold)" stroke-width="4"/>
+        <g filter="url(#celestialGlow)"><path d="M246 413H294L308 461H232Z" fill="url(#celestialJade)" stroke="#fff1ad" stroke-width="4"/><path d="M246 413L270 395L294 413" fill="none" stroke="url(#celestialGold)" stroke-width="4"/></g>
+        <g fill="none" stroke="url(#celestialGold)" stroke-width="3" opacity=".88"><path d="M188 460C216 448 232 451 248 471M352 460C324 448 308 451 292 471"/><path d="M184 491C215 481 235 490 253 508M356 491C325 481 305 490 287 508"/><path d="M168 533C211 510 236 523 262 548M372 533C329 510 304 523 278 548"/></g>
+        <g class="celestial-figure__clouds" fill="#dedcff" opacity=".72"><path d="M64 598C91 561 129 560 153 590C169 558 220 560 235 599C206 626 103 632 64 598Z"/><path d="M305 602C333 562 381 561 397 590C425 556 462 572 477 603C441 630 339 632 305 602Z"/></g>
+      </svg>
+    </div>
+    <p class="celestial-transition__blessing">你就是這位有緣人</p>
+    <button type="button" class="celestial-transition__skip" id="celestialTransitionSkip">略過</button>
+  </section>
 
   <!-- Ambient Glow Effects -->
   <div class="cosmic-glow glow-1"></div>
