@@ -98,5 +98,38 @@ export const WalletManager = {
     } catch (e) {
       return [];
     }
+  },
+
+  // ============ 綠界訂單交易紀錄與防重複核發 ============
+  hasProcessedOrder(tradeNo) {
+    if (!tradeNo) return false;
+    const orders = this.getOrderHistory();
+    return orders.some((o) => o.tradeNo === tradeNo);
+  },
+
+  recordOrder(orderInfo) {
+    try {
+      const orders = this.getOrderHistory();
+      const record = {
+        id: 'ord_' + Date.now(),
+        date: new Date().toISOString(),
+        ...orderInfo
+      };
+      orders.unshift(record);
+      localStorage.setItem('wenxiantan_orders_v1', JSON.stringify(orders));
+      return record;
+    } catch (e) {
+      console.error('Failed to save order record', e);
+      return null;
+    }
+  },
+
+  getOrderHistory() {
+    try {
+      const saved = localStorage.getItem('wenxiantan_orders_v1');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
   }
 };

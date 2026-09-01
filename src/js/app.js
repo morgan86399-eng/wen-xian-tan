@@ -13,6 +13,7 @@ import {
 import { WalletManager } from './wallet.js';
 import { MemberManager } from './member.js';
 import { openCamera, openFilePicker, ensurePalmCaptureDom } from './palm_capture.js';
+import { showLegalModal } from './legal.js';
 
 /**
  * 問仙壇 · 掌心解碼 App - 核心應用邏輯與白話問卷引導引擎
@@ -580,20 +581,92 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirmPurchaseBtn) {
       confirmPurchaseBtn.disabled = !isValid;
       confirmPurchaseBtn.textContent = isValid
-        ? `確認結緣儲值 NT$ ${plan.price}`
+        ? `前往綠界安全支付 NT$ ${plan.price} →`
         : `請先選滿 ${plan.requiredCount} 個主題（目前已選 ${state.customChosenThemes.size} 項）`;
     }
   }
 
-  // ============ 9. Payment preparation notice ============
+  // ============ 9. 綠界科技 (ECPay) 金流發起與確認 ============
+  function showCheckoutConfirmModal(plan, chosenThemes) {
+    const backdrop = document.getElementById('readingModalBackdrop');
+    const card = document.getElementById('readingModalCard');
+    if (!backdrop || !card) return;
+
+    const themeTitles = chosenThemes
+      .map((id) => THEMES.find((t) => t.id === id)?.name || id)
+      .join('、');
+
+    card.innerHTML = `
+      <div class="wizard-header" style="border-bottom:1px solid var(--border-gold);padding-bottom:14px;margin-bottom:16px;">
+        <div class="wizard-title-row">
+          <h3 style="display:flex;align-items:center;gap:8px;color:var(--gold-bright);font-size:1.2rem;">
+            <span>💳</span> 綠界科技 · 安全結帳確認
+          </h3>
+          <button type="button" class="btn btn-outline btn-sm" id="closeCheckoutModalBtn" style="padding:4px 10px;">✕ 取消</button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px;font-size:0.9rem;">
+        <div style="background:rgba(212,168,83,0.06);border:1px solid rgba(212,168,83,0.3);border-radius:var(--radius-md);padding:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="color:var(--text-muted);">結算方案</span>
+            <span style="font-weight:700;color:#FFFFFF;">${plan.label}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="color:var(--text-muted);">結算金額</span>
+            <span style="font-size:1.35rem;font-weight:900;color:var(--gold-bright);">NT$ ${plan.price}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+            <span style="color:var(--text-muted);white-space:nowrap;">開通篇章</span>
+            <span style="text-align:right;color:var(--text-secondary);font-size:0.85rem;">${themeTitles}（各享 ${plan.pointsReward} 次測算）</span>
+          </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);padding:12px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6;">
+          <div style="font-weight:700;color:var(--gold-bright);margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+            <span>🔒</span> 綠界科技 (ECPay) 256-bit SSL 加密收銀台
+          </div>
+          點擊確認後，將前往綠界安全收銀台，支援 <strong>信用卡 / Apple Pay / LINE Pay / 超商代碼 / ATM 虛擬帳號</strong>。<br>
+          付款完成後自動返回問仙壇並即刻存入點數。
+        </div>
+
+        <form id="realEcpaySubmitForm" method="POST" action="/api/ecpay/create" style="margin-top:6px;">
+          <input type="hidden" name="planId" value="${plan.id}" />
+          <input type="hidden" name="themes" value="${chosenThemes.join(',')}" />
+          <button type="submit" class="btn btn-gold" id="startEcpayBtn" style="width:100%;font-size:1.05rem;padding:12px;box-shadow:0 0 20px rgba(212,168,83,0.4);">
+            ⚡ 確認前往綠界安全付款 (NT$ ${plan.price})
+          </button>
+        </form>
+      </div>
+    `;
+
+    const close = () => {
+      backdrop.classList.remove('active');
+    };
+
+    card.querySelector('#closeCheckoutModalBtn')?.addEventListener('click', close);
+    backdrop.classList.add('active');
+  }
+
   if (confirmPurchaseBtn) {
     confirmPurchaseBtn.addEventListener('click', () => {
+      const agreeCheckbox = document.getElementById('agreeTermsCheckbox');
+      if (agreeCheckbox && !agreeCheckbox.checked) {
+        alert('請先閱讀並勾選同意《服務條款》與《隱私權政策》');
+        agreeCheckbox.focus();
+        return;
+      }
+
       const plan = PLANS.find((p) => p.id === state.selectedPlanId);
       if (!plan) return;
 
       const chosenArray = Array.from(state.customChosenThemes);
-      const selectedNames = chosenArray.map(id => THEMES.find(t => t.id === id)?.name).filter(Boolean).join('、');
-      alert(`已選擇「${plan.label}」\n涵蓋：${selectedNames}\n\nVisa 付款、付款驗證與額度核發將在金流帳號完成設定後啟用。現階段不會扣款，也不會增加額度。`);
+      if (chosenArray.length !== plan.requiredCount) {
+        alert(`請先選滿 ${plan.requiredCount} 個主題（目前已選 ${chosenArray.length} 項）`);
+        return;
+      }
+
+      showCheckoutConfirmModal(plan, chosenArray);
     });
   }
 
@@ -1351,8 +1424,118 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ============ 11. 綠界支付回導與點數即時入帳處理 ============
+  function handlePaymentReturnFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get('payment');
+    if (!paymentStatus) return;
+
+    if (paymentStatus === 'success') {
+      const tradeNo = urlParams.get('tradeNo');
+      const planId = urlParams.get('plan');
+      const themesStr = urlParams.get('themes');
+      const amount = urlParams.get('amount');
+
+      if (tradeNo && WalletManager.hasProcessedOrder(tradeNo)) {
+        console.log('[ECPay] 該筆訂單已核發過點數，防止重複充值');
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+
+      const plan = PLANS.find((p) => p.id === planId) || { label: '供養方案', pointsReward: 3, price: amount };
+      const themeIds = themesStr ? themesStr.split(',').filter(Boolean) : [];
+
+      if (themeIds.length > 0) {
+        // 1. 錢包充值點數
+        WalletManager.addPointsToThemes(themeIds, plan.pointsReward || 3);
+        
+        // 2. 寫入訂單紀錄
+        WalletManager.recordOrder({
+          tradeNo,
+          planId,
+          themes: themeIds,
+          amount: amount || plan.price,
+          status: 'paid',
+          date: new Date().toISOString()
+        });
+
+        // 3. 畫面即時重新渲染
+        renderThemesHub();
+        renderMemberCenter();
+
+        // 4. 慶祝彩帶
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        }
+
+        // 5. 感謝結緣彈窗
+        const backdrop = document.getElementById('readingModalBackdrop');
+        const card = document.getElementById('readingModalCard');
+        if (backdrop && card) {
+          const themeTitles = themeIds
+            .map((id) => THEMES.find((t) => t.id === id)?.name || id)
+            .join('、');
+
+          card.innerHTML = `
+            <div class="wizard-header" style="border-bottom:1px solid var(--border-gold);padding-bottom:14px;margin-bottom:16px;">
+              <div class="wizard-title-row">
+                <h3 style="display:flex;align-items:center;gap:8px;color:#34D399;font-size:1.25rem;">
+                  <span>🎉</span> 結緣供養成功！
+                </h3>
+                <button type="button" class="btn btn-outline btn-sm" id="closeSuccessModalBtn" style="padding:4px 10px;">✕ 關閉</button>
+              </div>
+            </div>
+
+            <div style="text-align:center;padding:10px 0 20px;">
+              <div style="font-size:3.2rem;margin-bottom:10px;">🧧</div>
+              <h4 style="color:var(--gold-bright);font-size:1.25rem;margin-bottom:8px;">誠心叩問，福澤圓滿</h4>
+              <p style="color:var(--text-secondary);font-size:0.92rem;line-height:1.6;max-width:440px;margin:0 auto 16px;">
+                感謝您的結緣支持！系統已成功開通 <strong>${themeTitles}</strong>，所選篇章各自存入 <strong>${plan.pointsReward || 3} 次</strong> 深度命理與掌紋解析次數！
+              </p>
+              <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);padding:10px 16px;font-size:0.8rem;color:var(--text-muted);display:inline-block;">
+                綠界交易單號：<span style="color:#FFFFFF;font-family:monospace;">${tradeNo || '已完成'}</span> ｜ 結算金額：<span style="color:var(--gold-bright);font-weight:700;">NT$ ${amount || plan.price}</span>
+              </div>
+              <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;">
+                <button type="button" class="btn btn-gold btn-lg" id="startReadingNowBtn" style="box-shadow:0 0 20px rgba(212,168,83,0.4);">🔮 立即前往測算</button>
+              </div>
+            </div>
+          `;
+
+          const closeSuccess = () => {
+            backdrop.classList.remove('active');
+          };
+
+          card.querySelector('#closeSuccessModalBtn')?.addEventListener('click', closeSuccess);
+          card.querySelector('#startReadingNowBtn')?.addEventListener('click', () => {
+            closeSuccess();
+            switchTab('hub');
+          });
+
+          backdrop.classList.add('active');
+        }
+      }
+
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (paymentStatus === 'failed' || paymentStatus === 'error') {
+      const msg = urlParams.get('msg') || '交易未完成或使用者取消';
+      alert(`⚠️ 綠界扣款未完成：${decodeURIComponent(msg)}\n如扣款有異常，請隨時聯繫客服信箱 service@wen-xian-tan.com`);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
+
+  // ============ 12. 全站條款彈窗點擊事件委派 ============
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('.legal-link');
+    if (link) {
+      e.preventDefault();
+      const docType = link.dataset.doc || 'terms';
+      showLegalModal(docType);
+    }
+  });
+
   // ============ Initialization ============
   renderThemesHub();
   updateTopBarUserStatus();
   ensurePalmCaptureDom();
+  handlePaymentReturnFromUrl();
 });
