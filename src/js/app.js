@@ -43,7 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
         goal: 'timing',
         goalCustom: '',
         palmDataUrl: null
-      }
+      },
+      isSubmitting: false,
+      decodeToken: 0
     }
   };
 
@@ -64,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Pricing & Checkout inside Member View
   const pricingCardsGrid = document.getElementById('pricingCardsGrid');
   const pickerCheckboxesList = document.getElementById('pickerCheckboxesList');
+  const themePickerCountEl = document.getElementById('themePickerCount');
   const checkoutSummaryPlan = document.getElementById('checkoutSummaryPlan');
   const checkoutSummaryPrice = document.getElementById('checkoutSummaryPrice');
   const checkoutSummarySelected = document.getElementById('checkoutSummarySelected');
@@ -76,6 +79,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Reading / Wizard Modal
   const readingModalBackdrop = document.getElementById('readingModalBackdrop');
   const readingModalCard = document.getElementById('readingModalCard');
+  const modalCloseFixedBtn = document.getElementById('modalCloseFixedBtn');
+  modalCloseFixedBtn?.addEventListener('click', () => {
+    state.wizard.decodeToken += 1; // 讓還沒跑完的解析報告 timeout 失效，不再覆蓋關閉後的彈窗內容
+    readingModalBackdrop.classList.remove('show');
+  });
 
   // Stories View
   const storiesFilterGroup = document.getElementById('storiesFilterGroup');
