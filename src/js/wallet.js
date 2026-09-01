@@ -72,14 +72,34 @@ export const WalletManager = {
     return { success: true, remaining: wallet[themeId] };
   },
 
-  // 儲存已產生的解讀報告與顯化案例
+  // 報告與歷史紀錄只保留見證文字，不保留任何圖片來源。
+  sanitizeReport(reportData) {
+    if (!reportData || typeof reportData !== 'object') return reportData;
+
+    const { matchedStories, ...report } = reportData;
+    const textOnlyStories = Array.isArray(matchedStories)
+      ? matchedStories.map((story) => ({
+        themeId: story?.themeId,
+        title: story?.title,
+        name: story?.name,
+        category: story?.category,
+        summary: story?.summary,
+        result: story?.result,
+        full: story?.full
+      }))
+      : [];
+
+    return { ...report, matchedStories: textOnlyStories };
+  },
+
+  // 儲存已產生的解讀報告與文字見證
   saveReport(reportData) {
     try {
       const list = this.getReports();
       const record = {
         id: 'rep_' + Date.now(),
         date: new Date().toISOString(),
-        ...reportData
+        ...this.sanitizeReport(reportData)
       };
       list.unshift(record);
       localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(list));
@@ -94,7 +114,15 @@ export const WalletManager = {
   getReports() {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_HISTORY);
-      return saved ? JSON.parse(saved) : [];
+      const records = saved ? JSON.parse(saved) : [];
+      if (!Array.isArray(records)) return [];
+
+      // 舊紀錄曾包含 imageUrl；使用者再次開啟網站時同步移除。
+      const sanitized = records.map((record) => this.sanitizeReport(record));
+      if (JSON.stringify(records) !== JSON.stringify(sanitized)) {
+        localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(sanitized));
+      }
+      return sanitized;
     } catch (e) {
       return [];
     }

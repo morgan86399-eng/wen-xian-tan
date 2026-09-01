@@ -1451,15 +1451,8 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
 
           <div class="manifestation-cards-list">
-            ${matchedStories.map((story) => `
+            ${reportData.matchedStories.map((story) => `
               <div class="manifestation-story-card">
-                ${story.imageUrl ? `
-                  <div class="story-card-banner">
-                    <img src="${story.imageUrl}" alt="${story.title}" loading="lazy" onerror="this.parentElement.style.display='none'">
-                    <span class="story-banner-tag">✦ 五路祈福金 ✦</span>
-                    <span class="story-banner-label">顯化印證</span>
-                  </div>
-                ` : ''}
                 <div class="story-card-meta">
                   <span class="story-card-title">${story.title}</span>
                   <span class="story-card-user">${story.name} · ${story.category}</span>
