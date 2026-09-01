@@ -164,46 +164,6 @@ body {
 .celestial-transition__mist--one { bottom: 4%; left: -10%; }
 .celestial-transition__mist--two { right: -13%; bottom: 16%; animation-delay: -3s; opacity: .65; }
 
-.celestial-figure {
-  position: relative;
-  z-index: 2;
-  width: min(58vw, 500px);
-  min-width: 280px;
-  transform: translateY(42px) scale(.88);
-  opacity: 0;
-  filter: drop-shadow(0 0 28px rgba(247, 201, 93, .25));
-}
-
-.celestial-figure svg { display: block; width: 100%; height: auto; }
-
-.celestial-figure__aureole {
-  position: absolute;
-  top: 4%;
-  left: 50%;
-  width: 65%;
-  aspect-ratio: 1;
-  transform: translateX(-50%);
-  border: 1px solid rgba(255, 234, 161, .55);
-  border-radius: 50%;
-  box-shadow: 0 0 22px 8px rgba(255, 202, 79, .21), inset 0 0 32px rgba(255, 235, 174, .18);
-}
-
-.celestial-figure__aureole::before,
-.celestial-figure__aureole::after {
-  content: '';
-  position: absolute;
-  inset: 9%;
-  border: 1px dashed rgba(255, 228, 140, .45);
-  border-radius: inherit;
-}
-
-.celestial-figure__aureole::after { inset: 22%; border-style: solid; opacity: .7; }
-
-.celestial-transition.is-visible .celestial-figure { animation: celestialReveal 3.15s cubic-bezier(.16, .82, .28, 1) forwards; }
-.celestial-transition.is-visible .celestial-figure__aureole { animation: celestialHalo 6s linear infinite; }
-.celestial-transition.is-visible .celestial-figure__crown { transform-origin: 270px 180px; animation: celestialCrown 3.3s ease-out forwards; }
-.celestial-transition.is-visible .celestial-figure__clouds { animation: celestialClouds 5s ease-in-out infinite alternate; }
-
 .celestial-couplet {
   position: absolute;
   z-index: 4;
@@ -267,10 +227,6 @@ body {
 
 .celestial-transition.is-visible .celestial-transition__skip { animation: celestialBlessing .6s 1.3s ease-out forwards; }
 
-@keyframes celestialReveal { to { opacity: 1; transform: translateY(0) scale(1); } }
-@keyframes celestialHalo { to { transform: translateX(-50%) rotate(360deg); } }
-@keyframes celestialCrown { 0% { opacity: 0; transform: translateY(-12px); } 45% { opacity: 1; transform: translateY(0); } 100% { opacity: 1; } }
-@keyframes celestialClouds { to { transform: translateX(10px); opacity: .9; } }
 @keyframes celestialMist { to { transform: translateX(8vw) translateY(-14px) scale(1.08); } }
 @keyframes celestialCoupletRight { to { opacity: 1; transform: translateY(-43%) translateX(0); } }
 @keyframes celestialCoupletLeft { to { opacity: 1; transform: translateY(-43%) translateX(0); } }
@@ -295,7 +251,6 @@ body {
   .hero-description { line-height: 1.75; }
 
   .celestial-transition { padding-inline: .3rem; }
-  .celestial-figure { width: min(86vw, 410px); }
   .celestial-couplet { font-size: .92rem; letter-spacing: .08em; padding: .65rem .28rem; }
   .celestial-couplet--right { right: .45rem; }
   .celestial-couplet--left { left: .45rem; }
@@ -304,7 +259,6 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .celestial-transition, .celestial-transition.is-leaving { transition-duration: .18s; }
-  .celestial-transition.is-visible .celestial-figure,
   .celestial-transition.is-visible .celestial-couplet--right,
   .celestial-transition.is-visible .celestial-couplet--left,
   .celestial-transition.is-visible .celestial-transition__blessing,
@@ -705,8 +659,8 @@ p {
   border: 1px solid rgba(253, 230, 138, .28);
   border-radius: 160px 160px 30px 30px;
   background:
-    linear-gradient(180deg, rgba(10, 8, 18, .12), rgba(10, 8, 18, .88)),
-    url('../../assets/generated/hero-wenxian-v1.png') center / cover;
+    radial-gradient(circle at 50% 22%, rgba(247, 201, 93, .3), transparent 34%),
+    linear-gradient(180deg, #2c1d46, #110d25 72%);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .04), 0 22px 48px rgba(0, 0, 0, .36);
 }
 
@@ -824,11 +778,10 @@ p {
   margin: 0 -20px 4px;
   overflow: hidden;
   border-radius: var(--radius-md) var(--radius-md) 24px 24px;
-  background-image:
-    linear-gradient(180deg, rgba(7, 8, 18, .04), rgba(7, 8, 18, .35)),
-    url('../../assets/generated/theme-atlas-wenxian-v1.png');
-  background-size: 100% 100%, 300% 200%;
-  background-position: center, 0% 0%;
+  background:
+    radial-gradient(circle at 18% 28%, rgba(247, 201, 93, .34), transparent 30%),
+    radial-gradient(circle at 78% 62%, rgba(116, 167, 215, .3), transparent 38%),
+    linear-gradient(135deg, #201537, #0d152d);
 }
 
 .theme-card-art::before,
@@ -836,10 +789,6 @@ p {
   display: none;
 }
 
-.theme-hub-card[data-theme='love'] .theme-card-art { background-position: center, 0% 0%; }
-.theme-hub-card[data-theme='work'] .theme-card-art { background-position: center, 50% 0%; }
-.theme-hub-card[data-theme='career'] .theme-card-art { background-position: center, 100% 0%; }
-.theme-hub-card[data-theme='wealth'] .theme-card-art { background-position: center, 0% 100%; }
 .theme-hub-card[data-theme='family'] .theme-card-art { background-position: center, 50% 100%; }
 .theme-hub-card[data-theme='children'] .theme-card-art { background-position: center, 100% 100%; }
 
@@ -2167,4 +2116,3 @@ p {
   border-color: var(--border-gold);
   color: var(--gold-bright);
 }
-
