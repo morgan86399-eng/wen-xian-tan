@@ -581,6 +581,14 @@
       var STORAGE_KEY_HISTORY = 'wenxiantan_reports_history_v2';
       var STORAGE_KEY_SESSION = 'wenxiantan_user_session_v2';
 
+      var TEST_USER_ACCOUNT = {
+        id: 'usr_test_user',
+        name: '測試體驗員 (user)',
+        email: 'user',
+        tier: '至尊測試信士 (全篇章各1000點)',
+        joinedAt: '2026-09-01'
+      };
+
       var MemberManager = {
         getCurrentUser: function() {
           try {
@@ -597,6 +605,18 @@
             else localStorage.removeItem(STORAGE_KEY_SESSION);
           } catch(e) {}
         },
+        login: function(account, password) {
+          var cleanAcc = (account || '').trim().toLowerCase();
+          var cleanPwd = (password || '').trim();
+          if ((cleanAcc === 'user' || cleanAcc === 'user@example.com') && cleanPwd === 'user123') {
+            this.setCurrentUser(TEST_USER_ACCOUNT);
+            WalletManager.ensureTestPoints();
+            return { success: true, user: TEST_USER_ACCOUNT };
+          }
+          var customUser = { id: 'usr_' + Date.now(), name: (account || '信士'), email: account, tier: '結緣信士', joinedAt: '2026-09-01' };
+          this.setCurrentUser(customUser);
+          return { success: true, user: customUser };
+        },
         logout: function() { this.setCurrentUser(null); }
       };
 
@@ -604,15 +624,43 @@
         getDefaultWallet: function() {
           return { love: 1, work: 0, career: 0, wealth: 0, family: 0, children: 0 };
         },
+        getTestUserWallet: function() {
+          return { love: 1000, work: 1000, career: 1000, wealth: 1000, family: 1000, children: 1000 };
+        },
+        ensureTestPoints: function() {
+          var testWallet = this.getTestUserWallet();
+          this.savePoints(testWallet);
+          return testWallet;
+        },
         getPoints: function() {
           try {
+            var session = localStorage.getItem(STORAGE_KEY_SESSION);
+            var isTestUser = false;
+            if (session) {
+              try {
+                var u = JSON.parse(session);
+                if (u && (u.email === 'user' || u.id === 'usr_test_user')) isTestUser = true;
+              } catch(e) {}
+            }
             var saved = localStorage.getItem(STORAGE_KEY_POINTS);
             if (!saved) {
-              var initial = this.getDefaultWallet();
+              var initial = isTestUser ? this.getTestUserWallet() : this.getDefaultWallet();
               this.savePoints(initial);
               return initial;
             }
-            return Object.assign({}, this.getDefaultWallet(), JSON.parse(saved));
+            var parsed = JSON.parse(saved);
+            if (isTestUser) {
+              var modified = false;
+              ['love', 'work', 'career', 'wealth', 'family', 'children'].forEach(function(k) {
+                if (typeof parsed[k] !== 'number' || parsed[k] < 1) {
+                  parsed[k] = 1000;
+                  modified = true;
+                }
+              });
+              if (modified) this.savePoints(parsed);
+              return parsed;
+            }
+            return Object.assign({}, this.getDefaultWallet(), parsed);
           } catch(e) { return this.getDefaultWallet(); }
         },
         getThemePoints: function(themeId) {
@@ -982,14 +1030,25 @@
         readingModalCard.innerHTML =
           '<div style="max-width:400px;margin:0 auto;text-align:center;">' +
             '<h3 style="color:var(--gold-bright);margin-bottom:8px;">信士快速登入</h3>' +
-            '<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">登入後可查看個人資料、各篇剩餘次數與測算紀錄</p>' +
-            '<button type="button" class="btn btn-gold" style="width:100%;margin-bottom:8px;" id="authQuickLoginBtn">⚡ 一鍵免密碼體驗登入 (陳信士)</button>' +
+            '<p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:14px;">登入後可查看個人資料、各篇剩餘次數與測算紀錄</p>' +
+            '<button type="button" class="btn btn-gold" style="width:100%;margin-bottom:10px;background:linear-gradient(135deg,#D4AF37,#B8860B);color:#0A0814;font-weight:900;border:none;box-shadow:0 0 15px rgba(212,175,55,0.4);" id="authTestUserLoginBtn">⚡ 快捷登入測試帳號 (user / user123 · 各篇章1000點)</button>' +
+            '<button type="button" class="btn btn-outline btn-sm" style="width:100%;margin-bottom:8px;" id="authQuickLoginBtn">一鍵訪客登入 (預設陳信士)</button>' +
             '<button type="button" class="btn btn-outline btn-sm" id="authCloseModalBtn" style="width:100%;">取消</button>' +
           '</div>';
 
+        document.getElementById('authTestUserLoginBtn').addEventListener('click', function() {
+          MemberManager.login('user', 'user123');
+          updateTopBarUserStatus();
+          renderMemberCenter();
+          renderThemesMatrix();
+          readingModalBackdrop.classList.remove('show');
+          switchTab('member');
+        });
         document.getElementById('authQuickLoginBtn').addEventListener('click', function() {
           MemberManager.setCurrentUser({ id: 'usr_demo', name: '陳信士', email: 'chen.blessed@example.com', tier: '有緣信士', joinedAt: '2026-08-31' });
           updateTopBarUserStatus();
+          renderMemberCenter();
+          renderThemesMatrix();
           readingModalBackdrop.classList.remove('show');
           switchTab('member');
         });

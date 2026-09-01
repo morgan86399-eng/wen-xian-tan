@@ -211,13 +211,13 @@ document.addEventListener('DOMContentLoaded', () => {
           ` : ''}
 
           <div class="auth-form-group">
-            <label class="auth-form-label">電子信箱或手機：</label>
-            <input type="email" id="authEmailInput" class="auth-form-input" placeholder="name@example.com" required value="chen.blessed@example.com">
+            <label class="auth-form-label">帳號或電子信箱：</label>
+            <input type="text" id="authEmailInput" class="auth-form-input" placeholder="請輸入帳號或信箱（測試可輸入 user）" required value="user">
           </div>
 
           <div class="auth-form-group">
             <label class="auth-form-label">密碼：</label>
-            <input type="password" id="authPasswordInput" class="auth-form-input" placeholder="請輸入密碼" required value="123456">
+            <input type="password" id="authPasswordInput" class="auth-form-input" placeholder="請輸入密碼（測試密碼：user123）" required value="user123">
           </div>
 
           <div style="display:flex;gap:10px;margin-top:10px;">
@@ -226,8 +226,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
           </div>
 
-          <button type="button" class="btn btn-outline btn-sm" id="quickDemoLoginBtn" style="margin-top:6px;">
-            ⚡ 一鍵免密碼體驗登入 (預設陳信士)
+          <button type="button" class="btn btn-gold btn-sm" id="quickTestUserLoginBtn" style="margin-top:8px;background:linear-gradient(135deg,#D4AF37,#B8860B);color:#0A0814;font-weight:900;border:none;box-shadow:0 0 15px rgba(212,175,55,0.4);">
+            ⚡ 快捷登入測試帳號 (user / user123 · 各篇章各1000點)
+          </button>
+
+          <button type="button" class="btn btn-outline btn-sm" id="quickDemoLoginBtn" style="margin-top:4px;">
+            一鍵體驗訪客登入 (預設陳信士)
           </button>
 
           <button type="button" class="btn btn-outline btn-sm" id="authCancelBtn" style="margin-top:4px;">
@@ -243,6 +247,16 @@ document.addEventListener('DOMContentLoaded', () => {
       readingModalBackdrop.classList.remove('show');
     });
 
+    document.getElementById('quickTestUserLoginBtn').addEventListener('click', () => {
+      MemberManager.login('user', 'user123');
+      WalletManager.ensureTestPoints();
+      updateTopBarUserStatus();
+      renderMemberCenter();
+      renderThemesMatrix();
+      readingModalBackdrop.classList.remove('show');
+      switchTab('member');
+    });
+
     document.getElementById('quickDemoLoginBtn').addEventListener('click', () => {
       MemberManager.setCurrentUser({
         id: 'usr_demo',
@@ -254,6 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       updateTopBarUserStatus();
       renderMemberCenter();
+      renderThemesMatrix();
       readingModalBackdrop.classList.remove('show');
       switchTab('member');
     });
@@ -265,6 +280,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (defaultMode === 'login') {
         MemberManager.login(email, pwd);
+        if (email.toLowerCase() === 'user' && pwd === 'user123') {
+          WalletManager.ensureTestPoints();
+        }
       } else {
         const name = document.getElementById('authNameInput').value.trim();
         MemberManager.register(email, name, pwd);
@@ -272,6 +290,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       updateTopBarUserStatus();
       renderMemberCenter();
+      renderThemesMatrix();
       readingModalBackdrop.classList.remove('show');
       switchTab('member');
     });
