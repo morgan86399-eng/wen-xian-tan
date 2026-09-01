@@ -935,6 +935,10 @@
 
       var readingModalBackdrop = document.getElementById('readingModalBackdrop');
       var readingModalCard = document.getElementById('readingModalCard');
+      var modalCloseFixedBtn = document.getElementById('modalCloseFixedBtn');
+      modalCloseFixedBtn && modalCloseFixedBtn.addEventListener('click', function() {
+        readingModalBackdrop.classList.remove('show');
+      });
       var storiesGrid = document.getElementById('storiesGrid');
       var storiesFilterGroup = document.getElementById('storiesFilterGroup');
       var historyReportsGrid = document.getElementById('historyReportsGrid');
