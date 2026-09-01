@@ -287,7 +287,10 @@
 
     <!-- Modal Host Container (Wizard, Reports & Auth) -->
     <div class="modal-backdrop" id="readingModalBackdrop" role="dialog" aria-modal="true">
-      <div class="reading-modal-card" id="readingModalCard"></div>
+      <div class="reading-modal-shell">
+        <button type="button" class="modal-close-fixed" id="modalCloseFixedBtn" aria-label="關閉">×</button>
+        <div class="reading-modal-card" id="readingModalCard"></div>
+      </div>
     </div>
 
   </div>

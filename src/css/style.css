@@ -397,6 +397,21 @@ p {
   gap: 16px;
 }
 
+@media (max-width: 430px) {
+  .app-header-inner {
+    gap: 8px;
+  }
+
+  .user-topbar-btn > span:not(.user-avatar-circle) {
+    display: inline-block;
+    max-width: 34vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+}
+
 .brand-wrap {
   display: flex;
   align-items: center;
@@ -482,6 +497,7 @@ p {
   font-weight: 700;
   font-size: clamp(0.78rem, 1.1vw, 0.88rem);
   padding: 6px clamp(10px, 1.2vw, 14px);
+  min-height: 44px;
   border-radius: var(--radius-pill);
   cursor: pointer;
   display: flex;
@@ -512,6 +528,7 @@ p {
   border: 1.5px solid var(--border-gold);
   color: var(--gold-bright);
   padding: 6px 14px;
+  min-height: 44px;
   border-radius: var(--radius-pill);
   font-size: clamp(0.78rem, 1.1vw, 0.84rem);
   font-weight: 700;
@@ -1193,6 +1210,7 @@ p {
   background: var(--bg-card);
   border: 1px solid var(--border);
   padding: 6px 10px;
+  min-height: 44px;
   border-radius: var(--radius-sm);
   font-size: 0.82rem;
   cursor: pointer;
@@ -1206,6 +1224,38 @@ p {
 }
 
 /* Guided Wizard Styles */
+.reading-modal-shell {
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  max-height: 92vh;
+}
+
+.modal-close-fixed {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #FFF;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+  border-radius: 10px;
+  transition: all 0.18s ease;
+  z-index: 10;
+}
+
+.modal-close-fixed:hover {
+  color: var(--gold-bright);
+  border-color: var(--border-gold);
+  background: rgba(245, 158, 11, 0.18);
+}
+
 .reading-modal-card {
   background: #0F0B1E;
   color: #FFF;
@@ -1231,6 +1281,7 @@ p {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  padding-right: 52px; /* 讓路給固定在 .reading-modal-shell 右上角的關閉鍵，避免蓋住剩餘次數 pill */
 }
 
 .wizard-stepper-meta {
@@ -1403,6 +1454,9 @@ p {
   color: var(--text-secondary);
   font-size: 0.78rem;
   padding: 4px 10px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   border-radius: var(--radius-pill);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -1459,6 +1513,9 @@ p {
   font-weight: 800;
   font-size: 0.95rem;
   padding: 8px 16px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   cursor: pointer;
   position: relative;
 }
@@ -1921,6 +1978,8 @@ p {
   display: grid;
   width: 36px;
   height: 36px;
+  min-width: 44px;
+  min-height: 44px;
   place-items: center;
   border: 1px solid rgba(245, 158, 11, 0.4);
   color: #FFF;
