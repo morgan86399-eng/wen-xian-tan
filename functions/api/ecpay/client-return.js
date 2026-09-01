@@ -13,8 +13,7 @@ export async function onRequestPost(context) {
     const params = Object.fromEntries(formData.entries());
 
     const config = getEcpayConfig(env);
-    const requestUrl = new URL(request.url);
-    const origin = env.SITE_URL || requestUrl.origin;
+    const origin = env.SITE_URL || (config.isProduction ? 'https://wen-xian-tan.taoyuanyangxintuina.shop' : requestUrl.origin);
 
     // 驗證 CheckMacValue
     const isValid = await verifyCheckMacValue(params, config.hashKey, config.hashIV);

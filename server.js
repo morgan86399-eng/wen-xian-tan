@@ -18,7 +18,24 @@ const MIME = {
   '.ico': 'image/x-icon'
 };
 
-// 綠界金流 Stage 測試環境預設值
+// 自動讀取同目錄下的 .env 檔案
+const envPath = path.join(ROOT, '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf8');
+  envContent.split('\n').forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#') && trimmed.includes('=')) {
+      const idx = trimmed.indexOf('=');
+      const key = trimmed.slice(0, idx).trim();
+      const val = trimmed.slice(idx + 1).trim();
+      if (!process.env[key]) {
+        process.env[key] = val;
+      }
+    }
+  });
+}
+
+// 綠界金流環境設定（自動優先採用 .env）
 const ECPAY_CONFIG = {
   isProduction: process.env.ECPAY_IS_PRODUCTION === 'true',
   merchantId: process.env.ECPAY_MERCHANT_ID || '3002607',
@@ -153,7 +170,7 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
-      const origin = `http://${req.headers.host || `localhost:${PORT}`}`;
+      const origin = process.env.SITE_URL || (ECPAY_CONFIG.isProduction ? 'https://wen-xian-tan.taoyuanyangxintuina.shop' : `http://${req.headers.host || `localhost:${PORT}`}`);
       const tradeNo = generateTradeNo();
       const tradeDate = formatTaiwanDateTime();
       const selectedThemeTitles = chosenThemes.map((id) => THEME_NAMES[id] || id).join('、');
@@ -316,5 +333,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`問仙壇 Server running at http://localhost:${PORT}/ (ECPay Stage Mode: ${!ECPAY_CONFIG.isProduction})`);
+  console.log(`問仙壇 Server running at http://localhost:${PORT}/ (ECPay Mode: ${ECPAY_CONFIG.isProduction ? '正式營運 (Production - 特店代號: ' + ECPAY_CONFIG.merchantId + ')' : '測試模擬 (Stage)'})`);
 });
