@@ -630,7 +630,7 @@ document.addEventListener('DOMContentLoaded', () => {
           付款完成後自動返回問仙壇並即刻存入點數。
         </div>
 
-        <form id="realEcpaySubmitForm" method="POST" action="/api/ecpay/create" style="margin-top:6px;">
+        <form id="realEcpaySubmitForm" style="margin-top:6px;">
           <input type="hidden" name="planId" value="${plan.id}" />
           <input type="hidden" name="themes" value="${chosenThemes.join(',')}" />
           <button type="submit" class="btn btn-gold" id="startEcpayBtn" style="width:100%;font-size:1.05rem;padding:12px;box-shadow:0 0 20px rgba(212,168,83,0.4);">
@@ -645,7 +645,132 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     card.querySelector('#closeCheckoutModalBtn')?.addEventListener('click', close);
+
+    const form = card.querySelector('#realEcpaySubmitForm');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const startBtn = document.getElementById('startEcpayBtn');
+        if (startBtn) {
+          startBtn.disabled = true;
+          startBtn.textContent = '⏳ 正在為您連線綠界安全收銀台...';
+        }
+
+        let useClientFallback = false;
+        try {
+          const res = await fetch('/api/ecpay/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              planId: plan.id,
+              themes: chosenThemes
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && data.actionUrl && data.params) {
+              submitDynamicEcpayForm(data.actionUrl, data.params);
+              return;
+            }
+          }
+          useClientFallback = true;
+        } catch (err) {
+          useClientFallback = true;
+        }
+
+        if (useClientFallback) {
+          await submitClientSideEcpayOrder(plan, chosenThemes);
+        }
+      });
+    }
+
     backdrop.classList.add('active');
+  }
+
+  function submitDynamicEcpayForm(actionUrl, params) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = actionUrl;
+    form.style.display = 'none';
+
+    Object.entries(params).forEach(([k, v]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = k;
+      input.value = v;
+      form.appendChild(input);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  async function submitClientSideEcpayOrder(plan, chosenThemes) {
+    const origin = window.location.origin;
+    const now = new Date();
+    const pad = (n, len = 2) => String(n).padStart(len, '0');
+    const twTime = new Date(now.getTime() + (8 * 60 + now.getTimezoneOffset()) * 60000);
+    const yy = String(twTime.getFullYear()).slice(-2);
+    const mm = pad(twTime.getMonth() + 1);
+    const dd = pad(twTime.getDate());
+    const hh = pad(twTime.getHours());
+    const mi = pad(twTime.getMinutes());
+    const ss = pad(twTime.getSeconds());
+    const rand = Math.random().toString(36).substring(2, 5).toUpperCase();
+    const tradeNo = `WXT${yy}${mm}${dd}${hh}${mi}${ss}${rand}`;
+    const tradeDate = `${twTime.getFullYear()}/${mm}/${dd} ${hh}:${mi}:${ss}`;
+
+    const themeTitles = chosenThemes.map((id) => THEMES.find((t) => t.id === id)?.name || id).join('、');
+    const itemName = `問仙壇-${plan.label}#包含：${themeTitles}`;
+
+    const merchantId = '3002607';
+    const hashKey = 'pwFHCqoQZGmho4w6';
+    const hashIV = 'EkRm7iFT261dpevs';
+    const actionUrl = 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5';
+
+    const clientReturnUrl = `${origin}/?payment=success&tradeNo=${encodeURIComponent(tradeNo)}&plan=${encodeURIComponent(plan.id)}&themes=${encodeURIComponent(chosenThemes.join(','))}&amount=${encodeURIComponent(plan.price)}`;
+
+    const ecpayParams = {
+      MerchantID: merchantId,
+      MerchantTradeNo: tradeNo,
+      MerchantTradeDate: tradeDate,
+      PaymentType: 'aio',
+      TotalAmount: String(plan.price),
+      TradeDesc: '問仙壇命理文化測算與掌心解碼',
+      ItemName: itemName,
+      ReturnURL: `${origin}/api/ecpay/callback`,
+      ClientBackURL: clientReturnUrl,
+      OrderResultURL: clientReturnUrl,
+      ChoosePayment: 'ALL',
+      EncryptType: '1',
+      CustomField1: plan.id,
+      CustomField2: chosenThemes.join(',')
+    };
+
+    const sortedKeys = Object.keys(ecpayParams).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    const rawPairs = sortedKeys.map((k) => `${k}=${ecpayParams[k]}`);
+    const combined = `HashKey=${hashKey}&${rawPairs.join('&')}&HashIV=${hashIV}`;
+    const encoded = encodeURIComponent(combined)
+      .replace(/%20/g, '+')
+      .replace(/%2d/gi, '-')
+      .replace(/%5f/gi, '_')
+      .replace(/%2e/gi, '.')
+      .replace(/%21/gi, '!')
+      .replace(/%2a/gi, '*')
+      .replace(/%28/gi, '(')
+      .replace(/%29/gi, ')');
+
+    const encoder = new TextEncoder();
+    const data = encoder.encode(encoded.toLowerCase());
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    ecpayParams.CheckMacValue = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+
+    submitDynamicEcpayForm(actionUrl, ecpayParams);
   }
 
   if (confirmPurchaseBtn) {
