@@ -1555,7 +1555,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div style="width:36px;height:36px;border-radius:50%;background:var(--gold-gradient);color:#000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.9rem;flex-shrink:0;">
-              ${s.name.slice(0, 1)}
+              ${s.name.slice(0, 1).toUpperCase()}
             </div>
             <div>
               <div style="font-weight:700;font-size:0.95rem;">${s.name}</div>
