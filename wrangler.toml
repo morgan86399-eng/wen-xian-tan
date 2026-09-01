@@ -1,0 +1,4 @@
+name = "wen-xian-tan-morgan86399"
+pages_build_output_dir = "./dist"
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
