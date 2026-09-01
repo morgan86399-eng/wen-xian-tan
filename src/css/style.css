@@ -577,6 +577,14 @@ p {
   transform: scale(0.98);
 }
 
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.3);
+  box-shadow: none;
+  transform: none;
+}
+
 .btn-primary {
   background: var(--cta-gradient);
   color: #FFFFFF;
@@ -612,7 +620,7 @@ p {
   filter: brightness(1.08);
 }
 
-.btn-sm { padding: 6px 12px; font-size: 0.82rem; }
+.btn-sm { padding: 6px 12px; font-size: 0.82rem; min-height: 44px; }
 .btn-lg { padding: 14px 28px; font-size: 1.05rem; }
 
 /* Hero Banner */

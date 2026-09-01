@@ -587,9 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isValid = state.customChosenThemes.size === plan.requiredCount;
     if (confirmPurchaseBtn) {
-      confirmPurchaseBtn.disabled = false;
-      confirmPurchaseBtn.style.opacity = isValid ? '1' : '0.85';
-      confirmPurchaseBtn.style.cursor = 'pointer';
+      confirmPurchaseBtn.disabled = !isValid;
       confirmPurchaseBtn.textContent = isValid
         ? `前往綠界安全支付 NT$ ${plan.price} →`
         : `請先選滿 ${plan.requiredCount} 個主題（目前已選 ${state.customChosenThemes.size} 項）`;
@@ -1128,8 +1126,35 @@ document.addEventListener('DOMContentLoaded', () => {
     bindWizardStepEvents(currentStep);
   }
 
+  function isCurrentStepAnswered(currentStep) {
+    const { answers, activeThemeId } = state.wizard;
+    const relConf = THEME_RELATION_CONFIG[activeThemeId] || THEME_RELATION_CONFIG.love;
+    const roleConf = THEME_ROLE_CONFIG[activeThemeId] || THEME_ROLE_CONFIG.love;
+
+    const stepConfig = {
+      1: { options: GENDER_OPTIONS, value: answers.gender, custom: answers.genderCustom },
+      2: { options: AGE_OPTIONS, value: answers.age, custom: answers.ageCustom },
+      3: { options: relConf.options || [], value: answers.relation, custom: answers.relationCustom },
+      4: { options: roleConf.options || [], value: answers.role, custom: answers.roleCustom },
+      6: { options: DESIRED_OUTCOMES, value: answers.goal, custom: answers.goalCustom }
+    }[currentStep];
+
+    if (!stepConfig) return true;
+
+    const selectedOpt = stepConfig.options.find((o) => o.id === stepConfig.value);
+    if (selectedOpt && selectedOpt.isCustom) {
+      return (stepConfig.custom || '').trim().length > 0;
+    }
+    return true;
+  }
+
   function bindWizardStepEvents(currentStep) {
     const { answers } = state.wizard;
+
+    const updateNextBtnState = () => {
+      const btn = document.getElementById('wizardNextBtn');
+      if (btn) btn.disabled = !isCurrentStepAnswered(currentStep);
+    };
 
     readingModalCard.querySelectorAll('.wizard-option-card').forEach((card) => {
       card.addEventListener('click', (e) => {
@@ -1151,7 +1176,9 @@ document.addEventListener('DOMContentLoaded', () => {
           if (input && !isInput) {
             input.focus();
           }
+          updateNextBtnState();
         } else {
+          updateNextBtnState();
           setTimeout(() => {
             advanceWizardStep(1);
           }, 180);
@@ -1165,6 +1192,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (fieldName && answers[fieldName] !== undefined) {
           answers[fieldName] = e.target.value;
         }
+        updateNextBtnState();
       });
       input.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1179,6 +1207,7 @@ document.addEventListener('DOMContentLoaded', () => {
           else if (currentStep === 4) answers.role = val;
           else if (currentStep === 6) answers.goal = val;
         }
+        updateNextBtnState();
       });
     });
 
@@ -1262,7 +1291,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const nextBtn = document.getElementById('wizardNextBtn');
     if (nextBtn) {
+      updateNextBtnState();
       nextBtn.addEventListener('click', () => {
+        if (!isCurrentStepAnswered(currentStep)) {
+          const emptyInput = readingModalCard.querySelector('.wizard-custom-text-input');
+          if (emptyInput) emptyInput.focus();
+          return;
+        }
         advanceWizardStep(1);
       });
     }
