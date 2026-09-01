@@ -194,6 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ============ 4. Auth Modal (登入/註冊彈窗 - 白話) ============
   function openAuthModal(defaultMode = 'login') {
+    state.wizard.decodeToken += 1; // 蓋掉這個彈窗前，讓任何還沒跑完的解析報告 timeout 失效
     readingModalCard.innerHTML = `
       <div style="max-width:440px;margin:0 auto;">
         <div class="auth-tabs-row">
@@ -590,6 +591,10 @@ document.addEventListener('DOMContentLoaded', () => {
       confirmPurchaseBtn.textContent = isValid
         ? `前往綠界安全支付 NT$ ${plan.price} →`
         : `請先選滿 ${plan.requiredCount} 個主題（目前已選 ${state.customChosenThemes.size} 項）`;
+    }
+
+    if (themePickerCountEl) {
+      themePickerCountEl.textContent = `（已選 ${state.customChosenThemes.size} 項／需要 ${plan.requiredCount} 項）`;
     }
   }
 
@@ -1266,44 +1271,80 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ============ 12. Execute Decoding & Show Report (白話溫暖) ============
   function executeDecodingFlow() {
+    if (state.wizard.isSubmitting) return;
+    state.wizard.isSubmitting = true;
+
     const { activeThemeId, answers } = state.wizard;
-    const consumeRes = WalletManager.consumePoint(activeThemeId, 1);
-    if (!consumeRes.success) {
-      alert('您的測算次數不足，請先至會員中心購買該主題方案！');
-      return;
-    }
+    const myDecodeToken = ++state.wizard.decodeToken;
 
-    renderThemesHub();
-    renderMemberCenter();
-
-    // Show Decoding Animation
-    readingModalCard.innerHTML = `
-      <div class="decoding-stage">
-        <div class="decoding-spinner-ring"></div>
-        <h3 style="color:var(--gold-bright);">正在為您深入解析命盤與手相...</h3>
-        <p style="color:var(--text-muted);font-size:0.85rem;">正在智能比對命理時機、手相紋路特徵與真實見證案例</p>
-        
-        <div class="decoding-progress-bar">
-          <div class="decoding-progress-fill" id="decodingProgress"></div>
-        </div>
-      </div>
-    `;
-
-    const fill = document.getElementById('decodingProgress');
-    let progress = 10;
-    const interval = setInterval(() => {
-      progress += 30;
-      if (fill) fill.style.width = `${progress}%`;
-      if (progress >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          showDecodedReport(activeThemeId, answers);
-        }, 500);
+    try {
+      const consumeRes = WalletManager.consumePoint(activeThemeId, 1);
+      if (!consumeRes.success) {
+        state.wizard.isSubmitting = false;
+        alert('您的測算次數不足，請先至會員中心購買該主題方案！');
+        renderWizardStep();
+        return;
       }
-    }, 400);
+
+      renderThemesHub();
+      renderMemberCenter();
+
+      // Show Decoding Animation
+      readingModalCard.innerHTML = `
+        <div class="decoding-stage">
+          <div class="decoding-spinner-ring"></div>
+          <h3 style="color:var(--gold-bright);">正在為您深入解析命盤與手相...</h3>
+          <p style="color:var(--text-muted);font-size:0.85rem;">正在智能比對命理時機、手相紋路特徵與真實見證案例</p>
+          
+          <div class="decoding-progress-bar">
+            <div class="decoding-progress-fill" id="decodingProgress"></div>
+          </div>
+        </div>
+      `;
+
+      function finishDecoding() {
+        const stillCurrent = state.wizard.decodeToken === myDecodeToken;
+        try {
+          showDecodedReport(activeThemeId, answers, stillCurrent);
+          state.wizard.isSubmitting = false;
+        } catch (err) {
+          console.error('產生報告失敗，已退回本次測算次數', err);
+          WalletManager.addPointsToThemes([activeThemeId], 1);
+          state.wizard.isSubmitting = false;
+          if (stillCurrent) {
+            alert('產生失敗，已退回本次測算次數，請重試');
+            renderWizardStep();
+          }
+        }
+      }
+
+      const fill = document.getElementById('decodingProgress');
+      let progress = 10;
+      const interval = setInterval(() => {
+        if (state.wizard.decodeToken !== myDecodeToken) {
+          clearInterval(interval);
+          finishDecoding();
+          return;
+        }
+        progress += 30;
+        if (fill) fill.style.width = `${progress}%`;
+        if (progress >= 100) {
+          clearInterval(interval);
+          setTimeout(finishDecoding, 500);
+        }
+      }, 400);
+    } catch (err) {
+      console.error('扣點或產生報告流程發生錯誤，已退回本次測算次數', err);
+      WalletManager.addPointsToThemes([activeThemeId], 1);
+      state.wizard.isSubmitting = false;
+      if (state.wizard.decodeToken === myDecodeToken) {
+        alert('產生失敗，已退回本次測算次數，請重試');
+        renderWizardStep();
+      }
+    }
   }
 
-  function showDecodedReport(themeId, answers) {
+  function showDecodedReport(themeId, answers, renderIntoModal = true) {
     const theme = THEMES.find((t) => t.id === themeId);
 
     const matchedStories = matchStoriesForReport(themeId, answers.question);
@@ -1356,6 +1397,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     WalletManager.saveReport(reportData);
+
+    if (!renderIntoModal) return; // 彈窗已經被關閉或換成別的內容：報告仍照存進歷史紀錄，但不能再蓋掉現在畫面上顯示的東西
 
     readingModalCard.innerHTML = `
       <div class="report-content-box">
