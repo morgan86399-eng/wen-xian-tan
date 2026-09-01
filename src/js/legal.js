@@ -102,10 +102,10 @@ export function showLegalModal(docType) {
   `;
 
   const close = () => {
-    backdrop.classList.remove('active');
+    backdrop.classList.remove('show', 'active');
   };
 
   card.querySelector('#closeLegalModalBtn')?.addEventListener('click', close);
   card.querySelector('#confirmReadLegalBtn')?.addEventListener('click', close);
-  backdrop.classList.add('active');
+  backdrop.classList.add('show', 'active');
 }

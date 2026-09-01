@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalCloseFixedBtn = document.getElementById('modalCloseFixedBtn');
   modalCloseFixedBtn?.addEventListener('click', () => {
     state.wizard.decodeToken += 1; // 讓還沒跑完的解析報告 timeout 失效，不再覆蓋關閉後的彈窗內容
-    readingModalBackdrop.classList.remove('show');
+    readingModalBackdrop.classList.remove('show', 'active');
   });
 
   // Stories View
@@ -587,7 +587,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isValid = state.customChosenThemes.size === plan.requiredCount;
     if (confirmPurchaseBtn) {
-      confirmPurchaseBtn.disabled = !isValid;
+      confirmPurchaseBtn.disabled = false;
+      confirmPurchaseBtn.style.opacity = isValid ? '1' : '0.85';
+      confirmPurchaseBtn.style.cursor = 'pointer';
       confirmPurchaseBtn.textContent = isValid
         ? `前往綠界安全支付 NT$ ${plan.price} →`
         : `請先選滿 ${plan.requiredCount} 個主題（目前已選 ${state.customChosenThemes.size} 項）`;
@@ -653,7 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     const close = () => {
-      backdrop.classList.remove('active');
+      backdrop.classList.remove('show', 'active');
     };
 
     card.querySelector('#closeCheckoutModalBtn')?.addEventListener('click', close);
@@ -668,7 +670,6 @@ document.addEventListener('DOMContentLoaded', () => {
           startBtn.textContent = '⏳ 正在為您連線綠界安全收銀台...';
         }
 
-        let useClientFallback = false;
         try {
           const res = await fetch('/api/ecpay/create', {
             method: 'POST',
@@ -687,20 +688,25 @@ document.addEventListener('DOMContentLoaded', () => {
             if (data.success && data.actionUrl && data.params) {
               submitDynamicEcpayForm(data.actionUrl, data.params);
               return;
+            } else {
+              throw new Error(data.error || '無法取得綠界結帳資訊');
             }
+          } else {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `伺服器回應異常 (${res.status})`);
           }
-          useClientFallback = true;
         } catch (err) {
-          useClientFallback = true;
-        }
-
-        if (useClientFallback) {
-          await submitClientSideEcpayOrder(plan, chosenThemes);
+          console.error('[ECPay Create Error]', err);
+          alert(`連線綠界付款失敗：${err.message}\n請確認本機伺服器已正常啟動。`);
+          if (startBtn) {
+            startBtn.disabled = false;
+            startBtn.textContent = `⚡ 確認前往綠界安全付款 (NT$ ${plan.price})`;
+          }
         }
       });
     }
 
-    backdrop.classList.add('active');
+    backdrop.classList.add('show', 'active');
   }
 
   function submitDynamicEcpayForm(actionUrl, params) {
@@ -799,7 +805,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const chosenArray = Array.from(state.customChosenThemes);
       if (chosenArray.length !== plan.requiredCount) {
-        alert(`請先選滿 ${plan.requiredCount} 個主題（目前已選 ${chosenArray.length} 項）`);
+        alert(`請先選滿 ${plan.requiredCount} 個主題（目前已選 ${chosenArray.length} 項）\n請在上方勾選您要開通的主題項目`);
+        document.getElementById('themePickerContainer')?.scrollIntoView({ behavior: 'smooth' });
         return;
       }
 
@@ -1682,7 +1689,7 @@ document.addEventListener('DOMContentLoaded', () => {
           `;
 
           const closeSuccess = () => {
-            backdrop.classList.remove('active');
+            backdrop.classList.remove('show', 'active');
           };
 
           card.querySelector('#closeSuccessModalBtn')?.addEventListener('click', closeSuccess);
@@ -1691,7 +1698,7 @@ document.addEventListener('DOMContentLoaded', () => {
             switchTab('hub');
           });
 
-          backdrop.classList.add('active');
+          backdrop.classList.add('show', 'active');
         }
       }
 
