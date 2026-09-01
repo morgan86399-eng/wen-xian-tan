@@ -1410,6 +1410,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="manifestation-cards-list">
             ${matchedStories.map((story) => `
               <div class="manifestation-story-card">
+                ${story.imageUrl ? `
+                  <div class="story-card-banner">
+                    <img src="${story.imageUrl}" alt="${story.title}" loading="lazy" onerror="this.parentElement.style.display='none'">
+                    <span class="story-banner-tag">✦ 五路祈福金 ✦</span>
+                    <span class="story-banner-label">顯化印證</span>
+                  </div>
+                ` : ''}
                 <div class="story-card-meta">
                   <span class="story-card-title">${story.title}</span>
                   <span class="story-card-user">${story.name} · ${story.category}</span>
@@ -1418,7 +1425,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="story-card-result-badge">✓ ${story.result}</div>
                 <details class="story-full-details">
                   <summary>點擊展開閱讀完整見證故事</summary>
-                  <p>${story.full}</p>
+                  <p style="margin-top:8px;font-size:0.84rem;line-height:1.75;color:var(--text-muted);">${story.full.replace(/\n\n/g, '<br><br>')}</p>
                 </details>
               </div>
             `).join('')}
@@ -1438,8 +1445,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('viewAllReportsBtn').addEventListener('click', () => {
       readingModalBackdrop.classList.remove('show');
-      switchTab('history');
+      state.activeTab = 'history';
+      updateActiveTab();
     });
+
+    readingModalBackdrop.classList.add('show');
   }
 
   // ============ 13. Render History Reports ============
@@ -1490,9 +1500,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = 'theme-hub-card';
       card.innerHTML = `
-        <div style="display:flex;align-items:center;justify-content:space-between;">
+        ${s.imageUrl ? `
+          <div class="story-card-banner">
+            <img src="${s.imageUrl}" alt="${s.title}" loading="lazy" onerror="this.parentElement.style.display='none'">
+            <span class="story-banner-tag">✦ 五路祈福金 ✦</span>
+            <span class="story-banner-label">真實顯化見證</span>
+          </div>
+        ` : ''}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px;">
           <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:36px;height:36px;border-radius:50%;background:var(--gold-gradient);color:#000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.9rem;">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--gold-gradient);color:#000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.9rem;flex-shrink:0;">
               ${s.name.slice(0, 1)}
             </div>
             <div>
@@ -1505,16 +1522,16 @@ document.addEventListener('DOMContentLoaded', () => {
           </span>
         </div>
 
-        <h4 style="font-size:1.05rem;color:#FFFFFF;margin-top:4px;">${s.title}</h4>
-        <p style="font-size:0.86rem;color:var(--text-secondary);">${s.summary}</p>
+        <h4 style="font-size:1.02rem;color:#FFFFFF;margin-top:8px;line-height:1.45;">${s.title}</h4>
+        <p style="font-size:0.86rem;color:var(--text-secondary);line-height:1.6;margin:6px 0 10px;">${s.summary}</p>
         
         <div style="display:inline-flex;align-self:flex-start;font-size:0.76rem;color:#34D399;font-weight:800;background:rgba(16,185,129,0.15);padding:3px 8px;border-radius:4px;">
           ✓ ${s.result}
         </div>
 
-        <details class="story-full-details" style="margin-top:6px;">
+        <details class="story-full-details" style="margin-top:10px;">
           <summary>閱讀完整見證始末</summary>
-          <p>${s.full}</p>
+          <p style="margin-top:8px;font-size:0.84rem;line-height:1.75;color:var(--text-muted);">${s.full.replace(/\n\n/g, '<br><br>')}</p>
         </details>
       `;
       storiesGrid.appendChild(card);

@@ -1667,6 +1667,61 @@ p {
   border-color: var(--gold-primary);
 }
 
+/* Story Card Image Banners */
+.story-card-banner {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  background: rgba(15, 23, 42, 0.6);
+  margin-bottom: 12px;
+  border: 1px solid rgba(212, 168, 83, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+
+.story-card-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease;
+}
+
+.theme-hub-card:hover .story-card-banner img,
+.manifestation-story-card:hover .story-card-banner img {
+  transform: scale(1.04);
+  filter: brightness(1.05);
+}
+
+.story-card-banner .story-banner-tag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(10, 15, 30, 0.85);
+  backdrop-filter: blur(8px);
+  color: var(--gold-bright, #FCD34D);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 168, 83, 0.35);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.story-card-banner .story-banner-label {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
 .story-card-meta {
   display: flex;
   justify-content: space-between;
