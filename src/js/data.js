@@ -351,26 +351,6 @@ export const DESIRED_OUTCOMES = [
   { id: "custom_goal", label: "其他自訂期望結果", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入您最希望獲得的指引或成果..." }
 ];
 
-// 正緣肖像圖庫
-export const PORTRAIT_ASSETS = {
-  male: [
-    'assets/portraits/male_taiwan.jpg',
-    'assets/portraits/male_taiwan_aries.jpg',
-    'assets/portraits/male_taiwan_gemini.jpg',
-    'assets/portraits/male_taiwan_libra.jpg',
-    'assets/portraits/male_japan.jpg',
-    'assets/portraits/male_korea.jpg'
-  ],
-  female: [
-    'assets/portraits/female_taiwan.jpg',
-    'assets/portraits/female_taiwan_aries.jpg',
-    'assets/portraits/female_taiwan_libra.jpg',
-    'assets/portraits/female_taiwan_virgo.jpg',
-    'assets/portraits/female_japan.jpg',
-    'assets/portraits/female_korea.jpg'
-  ]
-};
-
 /**
  * 五路祈福金真實顯化故事資料庫
  */

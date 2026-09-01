@@ -7,7 +7,6 @@ import {
   THEME_ROLE_CONFIG,
   ROLE_OPTIONS,
   DESIRED_OUTCOMES,
-  PORTRAIT_ASSETS,
   MANIFESTATION_STORIES
 } from './data.js';
 import { WalletManager } from './wallet.js';
@@ -1298,9 +1297,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showDecodedReport(themeId, answers) {
     const theme = THEMES.find((t) => t.id === themeId);
-    const genderKey = answers.gender === 'male' ? 'male' : 'female';
-    const portraitsPool = PORTRAIT_ASSETS[genderKey] || PORTRAIT_ASSETS.female;
-    const randomPortrait = portraitsPool[Math.floor(Math.random() * portraitsPool.length)];
 
     const matchedStories = matchStoriesForReport(themeId, answers.question);
 
@@ -1339,7 +1335,6 @@ document.addEventListener('DOMContentLoaded', () => {
       themeId,
       themeName: theme.name,
       title: theme.title,
-      portrait: randomPortrait,
       gender: genderLabel,
       age: ageLabel,
       relation: relationLabel,
@@ -1366,25 +1361,22 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
 
-        <div class="report-portrait-container">
-          <img src="${randomPortrait}" class="report-portrait-img" alt="正緣長相特徵模擬">
-          <div class="report-dimension-grid">
-            <div class="report-dim-card">
-              <div class="report-dim-label">天命正緣契合度</div>
-              <div class="report-dim-val">${reportData.score} %</div>
-            </div>
-            <div class="report-dim-card">
-              <div class="report-dim-label">關鍵轉折年齡</div>
-              <div class="report-dim-val">29 - 32 歲</div>
-            </div>
-            <div class="report-dim-card">
-              <div class="report-dim-label">貴人特徵與方位</div>
-              <div class="report-dim-val">正南方 · 溫和細心</div>
-            </div>
-            <div class="report-dim-card">
-              <div class="report-dim-label">手相命脈印證</div>
-              <div class="report-dim-val">吉星相照 · 貴人相助</div>
-            </div>
+        <div class="report-dimension-grid">
+          <div class="report-dim-card">
+            <div class="report-dim-label">天命靈犀契合度</div>
+            <div class="report-dim-val">${reportData.score} %</div>
+          </div>
+          <div class="report-dim-card">
+            <div class="report-dim-label">關鍵流年轉折</div>
+            <div class="report-dim-val">29 - 32 歲</div>
+          </div>
+          <div class="report-dim-card">
+            <div class="report-dim-label">貴人特徵與方位</div>
+            <div class="report-dim-val">正南方 · 溫和細心</div>
+          </div>
+          <div class="report-dim-card">
+            <div class="report-dim-label">手相命脈印證</div>
+            <div class="report-dim-val">${reportData.hasPalm ? '✋ 掌心靈犀已鎖定' : '吉星相照 · 貴人相助'}</div>
           </div>
         </div>
 
@@ -1468,10 +1460,12 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = 'theme-hub-card';
       card.innerHTML = `
         <div style="display:flex;gap:12px;align-items:center;">
-          <img src="${item.portrait}" style="width:60px;height:60px;border-radius:var(--radius-sm);object-fit:cover;border:1px solid var(--border-gold);" alt="報告縮圖">
+          <div style="width:48px;height:48px;border-radius:var(--radius-sm);background:rgba(212,168,83,0.15);border:1px solid var(--border-gold);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">
+            📜
+          </div>
           <div>
             <h4 style="color:var(--gold-bright);">${item.themeName}</h4>
-            <span style="font-size:0.75rem;color:var(--text-muted);">${new Date(item.date).toLocaleDateString()}</span>
+            <span style="font-size:0.75rem;color:var(--text-muted);">${new Date(item.date).toLocaleDateString('zh-TW')}</span>
           </div>
         </div>
         <div style="font-size:0.82rem;color:var(--text-gold);font-weight:700;">想了解的事：${item.question || '一般運勢'}</div>
