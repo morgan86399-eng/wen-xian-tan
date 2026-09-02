@@ -55,6 +55,7 @@ export async function onRequestPost(context) {
     }
 
     // 取得當前網址來源 (Origin)
+    const requestUrl = new URL(request.url);
     const config = getEcpayConfig(env);
     const origin = env.SITE_URL || (config.isProduction ? 'https://wen-xian-tan.taoyuanyangxintuina.shop' : requestUrl.origin);
     const tradeNo = generateTradeNo();

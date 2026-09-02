@@ -12,6 +12,7 @@ export async function onRequestPost(context) {
     const formData = await request.formData();
     const params = Object.fromEntries(formData.entries());
 
+    const requestUrl = new URL(request.url);
     const config = getEcpayConfig(env);
     const origin = env.SITE_URL || (config.isProduction ? 'https://wen-xian-tan.taoyuanyangxintuina.shop' : requestUrl.origin);
 
