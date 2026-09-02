@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         role: 'single',
         roleCustom: '',
         question: '',
-        goal: 'timing',
+        goal: 'skip',
         goalCustom: '',
         palmDataUrl: null
       },
@@ -913,7 +913,7 @@ document.addEventListener('DOMContentLoaded', () => {
       role: roleConf.defaultRole || roleConf.options[0]?.id || 'single',
       roleCustom: '',
       question: '',
-      goal: 'timing',
+      goal: 'skip',
       goalCustom: '',
       palmDataUrl: null
     };
@@ -1040,7 +1040,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="wizard-step-body">
           <div>
             <div class="wizard-question-title">6. 您最希望獲得怎樣的幫助與結果？</div>
-            <div class="wizard-question-sub">報告中將針對您的核心期望，給予具體的行動方向與時機建議</div>
+            <div class="wizard-question-sub">點選自訂輸入期望，或直接點選略過</div>
           </div>
           <div class="wizard-options-grid">
             ${renderOptionCards(DESIRED_OUTCOMES, answers.goal, answers.goalCustom, 'goalCustom')}
@@ -1559,7 +1559,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const goalLabel = (answers.goal === 'custom_goal' && answers.goalCustom)
       ? answers.goalCustom
-      : (DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || '掌握時機指引');
+      : (answers.goal === 'skip' || !answers.goal
+          ? '略過（由仙佛全方位推演指引）'
+          : (DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || '由仙佛全方位推演指引'));
 
     if (typeof confetti === 'function') {
       confetti({

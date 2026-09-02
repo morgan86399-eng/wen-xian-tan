@@ -343,12 +343,20 @@ export const ROLE_OPTIONS = THEME_ROLE_CONFIG.love.options;
 
 // Step 6: 希望要有怎樣的結果
 export const DESIRED_OUTCOMES = [
-  { id: "timing", label: "算出精準的「年齡數字」與「轉運時機」", icon: "⏳", desc: "例如：幾歲會遇到正緣、何時跳槽加薪、何時發跡" },
-  { id: "guidance", label: "獲得明確的「行動指南」與「貴人方位」", icon: "🧭", desc: "清楚知道下一步該怎麼做，避免走冤枉路" },
-  { id: "avoid_danger", label: "幫我「趨吉避凶」，避開破財或爛桃花", icon: "🛡️", desc: "提早防範問題，大事化小小事化無" },
-  { id: "breakthrough", label: "突破瓶頸，讓「事業或收入」翻倍成長", icon: "📈", desc: "打破目前的僵局，迎來更好的發展" },
-  { id: "peace", label: "解開心結，讓「內心平靜安定」", icon: "🕊️", desc: "放下長年的焦慮與煩惱，找回安心與自在" },
-  { id: "custom_goal", label: "其他自訂期望結果", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入您最希望獲得的指引或成果..." }
+  {
+    id: "custom_goal",
+    label: "（點選後可輸入自訂期望）",
+    icon: "✏️",
+    desc: "點選後可直接在下方文字框輸入您的具體期許",
+    isCustom: true,
+    placeholder: "請在此輸入您最希望獲得的指引或成果..."
+  },
+  {
+    id: "skip",
+    label: "略過",
+    icon: "⏩",
+    desc: "不指定特定期望，由仙佛全方位為您推演指引"
+  }
 ];
 
 /**
