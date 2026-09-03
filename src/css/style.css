@@ -1877,6 +1877,105 @@ p {
   text-decoration: none;
 }
 
+.otp-status-loading {
+  padding: 16px 0;
+  color: var(--gold-bright);
+  font-size: 0.9rem;
+}
+
+.otp-spinner {
+  width: 24px;
+  height: 24px;
+  margin: 0 auto 10px;
+  border: 2px solid rgba(212, 175, 55, 0.2);
+  border-top-color: var(--gold-bright);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.otp-error-alert {
+  color: #EF4444;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+.auth-step-bar {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.auth-step-bar--compact {
+  margin-bottom: 12px;
+}
+
+.auth-step-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(212, 175, 55, 0.15);
+}
+
+.auth-step-item.active {
+  color: var(--gold-bright);
+  border-color: rgba(212, 175, 55, 0.45);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.auth-step-item.done {
+  color: #D1D5DB;
+  border-color: rgba(212, 175, 55, 0.25);
+}
+
+.auth-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 0.65rem;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.auth-step-item.active .auth-step-num {
+  background: rgba(245, 158, 11, 0.25);
+}
+
+.auth-form-hint {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .otp-spinner {
+    animation: none;
+    border-top-color: rgba(212, 175, 55, 0.5);
+  }
+
+  .otp-digit-field {
+    transition: none;
+  }
+
+  .otp-digit-field:focus {
+    transform: none;
+  }
+
+  .otp-digit-field.error {
+    animation: none;
+  }
+}
+
 /* Simulated Celestial Letter Drawer */
 .celestial-letter-drawer {
   background: rgba(18, 14, 34, 0.85);

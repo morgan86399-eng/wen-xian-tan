@@ -239,43 +239,51 @@ document.addEventListener('DOMContentLoaded', () => {
   function openEmailVerifyDialog(email, purpose = 'login', userName = '') {
     state.wizard.decodeToken += 1;
     const cleanEmail = (email || '').trim().toLowerCase();
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     readingModalCard.innerHTML = `
       <div class="otp-dialog-shell">
-        <div class="otp-dialog-icon">✉️</div>
-        <h3 class="otp-dialog-title">信士仙緣安全驗證</h3>
+        <div class="otp-dialog-icon" aria-hidden="true">✉️</div>
+        <h3 class="otp-dialog-title">Email 驗證</h3>
+
+        <ol class="auth-step-bar" aria-label="驗證步驟">
+          <li class="auth-step-item done"><span class="auth-step-num">1</span>填信箱</li>
+          <li class="auth-step-item active"><span class="auth-step-num">2</span>等信</li>
+          <li class="auth-step-item"><span class="auth-step-num">3</span>輸入碼</li>
+        </ol>
+
         <p class="otp-dialog-subtitle">
-          仙壇已向信箱 <span class="otp-target-email-badge">${escapeHtml(cleanEmail)}</span> 發出 6 位數安全驗證碼
+          驗證碼只會寄到 <span class="otp-target-email-badge">${escapeHtml(cleanEmail)}</span>，請到信箱查看並手動輸入 6 位數字。
         </p>
 
-        <div id="otpStatusLoading" style="padding: 16px 0; color: var(--gold-bright); font-size: 0.9rem;">
-          <div style="width: 24px; height: 24px; margin: 0 auto 10px; border: 2px solid rgba(212,175,55,0.2); border-top-color: var(--gold-bright); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-          正在通傳仙壇發送信件，請稍候...
+        <div id="otpStatusLoading" class="otp-status-loading">
+          <div class="otp-spinner" aria-hidden="true"></div>
+          正在寄送驗證碼，請稍候…
         </div>
 
         <form id="otpVerifyForm" style="display:none;">
-          <div class="otp-inputs-grid" id="otpInputsGrid">
-            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit-field" data-index="0" autofocus>
-            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit-field" data-index="1">
-            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit-field" data-index="2">
-            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit-field" data-index="3">
-            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit-field" data-index="4">
-            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit-field" data-index="5">
+          <div class="otp-inputs-grid" id="otpInputsGrid" role="group" aria-label="6 位數驗證碼">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" class="otp-digit-field" data-index="0" aria-label="第 1 碼" autofocus>
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" class="otp-digit-field" data-index="1" aria-label="第 2 碼">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" class="otp-digit-field" data-index="2" aria-label="第 3 碼">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" class="otp-digit-field" data-index="3" aria-label="第 4 碼">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" class="otp-digit-field" data-index="4" aria-label="第 5 碼">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" class="otp-digit-field" data-index="5" aria-label="第 6 碼">
           </div>
 
           <div class="otp-resend-bar">
-            <span>驗證碼效期：5分鐘</span>
+            <span>驗證碼效期：10 分鐘</span>
             <div>
               <span id="otpCountdownBox">重發倒數：<strong class="otp-countdown-tag" id="otpTimerCount">60</strong> 秒</span>
-              <button type="button" class="otp-btn-resend" id="otpResendBtn" style="display:none;">重新獲取驗證碼</button>
+              <button type="button" class="otp-btn-resend" id="otpResendBtn" style="display:none;">重新寄送驗證碼</button>
             </div>
           </div>
 
-          <div id="otpErrorAlert" style="display:none; color: #EF4444; font-size: 0.85rem; margin-bottom: 12px;"></div>
+          <div id="otpErrorAlert" class="otp-error-alert" style="display:none;" role="alert"></div>
 
           <div style="display:flex; gap:10px;">
             <button type="submit" class="btn btn-gold" id="otpSubmitBtn" style="flex:1;">
-              ⚡ 立即驗證並登入仙壇
+              驗證並登入
             </button>
             <button type="button" class="btn btn-outline" id="otpCancelBtn" style="width:84px;">
               取消
@@ -324,6 +332,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (res.success || res.ok) {
         startCountdown();
+        document.querySelectorAll('.auth-step-item').forEach((el, idx) => {
+          el.classList.toggle('done', idx <= 1);
+          el.classList.toggle('active', idx === 2);
+        });
 
         const firstInput = document.querySelector('.otp-digit-field[data-index="0"]');
         if (firstInput) setTimeout(() => firstInput.focus(), 50);
@@ -404,20 +416,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const submitBtn = document.getElementById('otpSubmitBtn');
       if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.textContent = '⏳ 正在驗證仙緣憑證...';
+        submitBtn.textContent = '驗證中…';
       }
 
       const verifyRes = await MemberManager.verifyEmailCode(cleanEmail, fullCode);
 
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = '⚡ 立即驗證並登入仙壇';
+        submitBtn.textContent = '驗證並登入';
       }
 
       if (verifyRes.success) {
         if (otpCooldownTimer) clearInterval(otpCooldownTimer);
         readingModalBackdrop.classList.remove('show');
-        if (typeof window.confetti === 'function') {
+        if (!prefersReducedMotion && typeof window.confetti === 'function') {
           window.confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
         }
         updateTopBarUserStatus();
@@ -428,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
           setTimeout(() => i.classList.remove('error'), 400);
         });
         if (errorEl) {
-          errorEl.textContent = verifyRes.message || '驗證碼錯誤，請重新確認';
+          errorEl.textContent = verifyRes.message || '驗證碼錯誤或已過期，請重新取得';
           errorEl.style.display = 'block';
         }
       }
@@ -514,36 +526,38 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <div class="auth-divider">
-        <span>或使用 Email 認證信 / 密碼</span>
+        <span>或使用 Email 驗證碼登入</span>
       </div>
 
-      <!-- 傳統信箱密碼 Tab 表單 -->
+      <!-- Email OTP 表單 -->
       <div class="auth-tabs-row">
         <button type="button" class="auth-tab-btn ${formMode === 'login' ? 'active' : ''}" id="authPageTabLogin">信士登入</button>
         <button type="button" class="auth-tab-btn ${formMode === 'register' ? 'active' : ''}" id="authPageTabRegister">免費註冊</button>
       </div>
 
+      <ol class="auth-step-bar auth-step-bar--compact" aria-label="登入步驟">
+        <li class="auth-step-item active"><span class="auth-step-num">1</span>填信箱</li>
+        <li class="auth-step-item"><span class="auth-step-num">2</span>等信</li>
+        <li class="auth-step-item"><span class="auth-step-num">3</span>輸入碼</li>
+      </ol>
+
       <form id="authPageForm" style="display:grid;gap:14px;">
         ${formMode === 'register' ? `
           <div class="auth-form-group">
-            <label class="auth-form-label">信士尊姓大名：</label>
+            <label class="auth-form-label" for="pageAuthNameInput">信士尊姓大名：</label>
             <input type="text" id="pageAuthNameInput" class="auth-form-input" placeholder="例如：您的稱呼" required>
           </div>
         ` : ''}
 
         <div class="auth-form-group">
-          <label class="auth-form-label">電子信箱：</label>
+          <label class="auth-form-label" for="pageAuthEmailInput">電子信箱：</label>
           <input type="email" id="pageAuthEmailInput" class="auth-form-input" placeholder="name@example.com" required>
-        </div>
-
-        <div class="auth-form-group">
-          <label class="auth-form-label">密碼（選填，支援免密碼 Email 驗證）：</label>
-          <input type="password" id="pageAuthPasswordInput" class="auth-form-input" placeholder="可留空，改用信箱驗證碼">
+          <p class="auth-form-hint">送出後，驗證碼只會寄到該信箱，需手動輸入才能登入。</p>
         </div>
 
         <div style="display:flex;gap:10px;">
           <button type="submit" class="btn btn-gold" style="flex:1;">
-            ${formMode === 'login' ? '登入仙壇 (發送 Email 驗證碼)' : '發送 Email 驗證碼註冊'}
+            ${formMode === 'login' ? '寄送登入驗證碼' : '寄送註冊驗證碼'}
           </button>
         </div>
       </form>

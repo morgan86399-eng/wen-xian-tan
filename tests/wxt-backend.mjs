@@ -4,12 +4,16 @@ import assert from 'node:assert/strict';
 import { createFakeD1 } from './helpers/fake-d1.mjs';
 import { onRequest as ecpayCallback } from '../functions/api/ecpay/callback.js';
 import { onRequest as sendCode } from '../functions/api/auth/email/send-code.js';
+import { onRequest as verifyCode } from '../functions/api/auth/email/verify.js';
 import { onRequest as generate } from '../functions/api/reading/generate.js';
 import {
   atomicDeductCredit,
   createOrder,
   grantCreditsForOrder,
   getCreditsMap,
+  putVerifyCode,
+  consumeVerifyCode,
+  VERIFY_CODE_MAX_ATTEMPTS,
   upsertEmailUser,
   recordPaymentEvent,
   markOrderPaid
@@ -163,6 +167,49 @@ await check('回應 JSON 不含 6 位數字', async (env) => {
   assert.ok(!/\b\d{6}\b/.test(dump), `回應含 6 位數：${dump}`);
   assert.equal(body.code, undefined);
   assert.equal(raw.headers.get('set-cookie'), null);
+});
+
+await check('缺 RESEND_API_KEY 回 503 且無 cookie', async (env) => {
+  const noResend = { ...env };
+  delete noResend.RESEND_API_KEY;
+  const { status, body, raw } = await postJson(sendCode, noResend, { email: 'otp@example.test' });
+  assert.equal(status, 503);
+  assert.equal(body.error, 'SERVICE_UNAVAILABLE');
+  assert.equal(raw.headers.get('set-cookie'), null);
+});
+
+console.log('\n[verify OTP]');
+
+await check('verify 成功才 Set-Cookie', async (env) => {
+  const email = 'cookie@example.test';
+  await putVerifyCode(env, email, '654321');
+  const { status, body, raw } = await postJson(verifyCode, env, { email, code: '654321' });
+  assert.equal(status, 200);
+  assert.equal(body.ok, true);
+  assert.ok(raw.headers.get('set-cookie')?.includes('wx_session='));
+});
+
+await check('未 verify 時 send-code 不發 session', async (env) => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => ({ id: 'email_1' }) });
+  const { raw } = await postJson(sendCode, env, { email: 'nosession@example.test' });
+  globalThis.fetch = realFetch;
+  assert.equal(raw.headers.get('set-cookie'), null);
+});
+
+await check('錯碼達上限後鎖定', async (env) => {
+  const email = 'lock@example.test';
+  await putVerifyCode(env, email, '123456');
+  for (let i = 0; i < VERIFY_CODE_MAX_ATTEMPTS; i += 1) {
+    const wrong = await postJson(verifyCode, env, { email, code: '000000' });
+    assert.equal(wrong.status, 401);
+    assert.equal(wrong.body.error, 'INVALID_CODE');
+  }
+  const correct = await postJson(verifyCode, env, { email, code: '123456' });
+  assert.equal(correct.status, 401);
+  assert.equal(correct.body.error, 'INVALID_CODE');
+  const consumed = await consumeVerifyCode(env, email, '123456');
+  assert.equal(consumed.ok, false);
 });
 
 console.log('\n[generate 未登入 401]');

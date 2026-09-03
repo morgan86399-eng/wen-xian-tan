@@ -3,8 +3,8 @@
 import { fetchWithTimeout } from './http.mjs';
 import { requireGroq } from './auth.mjs';
 
-const GEMINI_TEXT_DEFAULT = 'gemini-3.6-flash';
-const GEMINI_VISION_DEFAULT = 'gemini-3.6-flash';
+const GEMINI_TEXT_DEFAULT = 'gemini-3.7-flash';
+const GEMINI_VISION_DEFAULT = 'gemini-3.7-flash';
 const TEXT_MODEL_DEFAULT = 'llama-3.3-70b-versatile';
 const VISION_MODEL_DEFAULT = 'llama-4-scout-17b-16e-instruct';
 const WORKERS_AI_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
