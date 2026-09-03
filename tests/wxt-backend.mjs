@@ -340,8 +340,8 @@ await check('主力 Gemini 型號滿載時，同金鑰換次選型號，還不�
       GEMINI_API_KEY: 'AQ.test',
       GROQ_API_KEY: 'gsk_test'
     }, { systemPrompt: 's', userPrompt: 'u' });
-    assert.deepEqual(models, ['gemini-3.6-flash', 'gemini-flash-latest']);
-    assert.equal(result.model, 'gemini-flash-latest');
+    assert.deepEqual(models, ['gemini-3.6-flash', 'gemini-3.5-flash']);
+    assert.equal(result.model, 'gemini-3.5-flash');
     assert.equal(result.parsed.summary, 'fallback-ok');
   } finally {
     globalThis.fetch = realFetch;

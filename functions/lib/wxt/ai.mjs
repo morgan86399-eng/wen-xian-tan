@@ -6,7 +6,7 @@ import { requireGroq } from './auth.mjs';
 /* gemini-3.7-flash 長期回 503（需求過載），主力改用實測穩定的 3.6-flash，再備 flash-latest */
 const GEMINI_TEXT_DEFAULT = 'gemini-3.6-flash';
 const GEMINI_VISION_DEFAULT = 'gemini-3.6-flash';
-const GEMINI_TEXT_FALLBACK_DEFAULT = 'gemini-flash-latest';
+const GEMINI_TEXT_FALLBACK_DEFAULT = 'gemini-3.5-flash';
 const TEXT_MODEL_DEFAULT = 'openai/gpt-oss-120b';
 const VISION_MODEL_DEFAULT = 'qwen/qwen3.8-27b';
 const WORKERS_AI_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
