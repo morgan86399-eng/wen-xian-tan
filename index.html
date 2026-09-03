@@ -2,9 +2,11 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>問仙壇 · 掌心解碼 - 2026 全方位命理透視</title>
   <meta name="description" content="只拍掌心、不拍臉。解開你的正緣相遇年齡、事業巔峰與發財時機。">
+  <meta name="theme-color" content="#030817">
+  <link rel="canonical" href="https://www.zenasker.com/">
   
   <!-- Open Graph -->
   <meta property="og:title" content="問仙壇 · 掌心解碼">
@@ -25,6 +27,11 @@
   <link rel="stylesheet" href="src/css/payment-modal.css">
 </head>
 <body>
+  <div class="sapphire-sky" aria-hidden="true">
+    <div class="sapphire-aurora sapphire-aurora--one"></div>
+    <div class="sapphire-aurora sapphire-aurora--two"></div>
+    <div class="sapphire-starfield" id="sapphireStarfield"></div>
+  </div>
   <!-- 購買前的儀式過場：以網頁文字呈現春聯，避免圖像中文字失真 -->
   <section class="celestial-transition" id="celestialPurchaseTransition" aria-hidden="true" aria-label="購買前儀式過場">
     <div class="celestial-transition__mist celestial-transition__mist--one"></div>
@@ -67,18 +74,18 @@
     <header class="app-header">
       <div class="app-header-inner">
         <!-- Brand Logo & Title -->
-        <div class="brand-wrap" data-goto-tab="hub">
+        <button type="button" class="brand-wrap" data-goto-tab="hub" aria-label="返回六大篇章">
           <svg class="brand-svg-icon" viewBox="0 0 200 200" overflow="visible" fill="none">
             <defs>
               <linearGradient id="brandGoldLuxury" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stop-color="#FFFFFF"/>
-                <stop offset="25%" stop-color="#FDE68A"/>
-                <stop offset="65%" stop-color="#F59E0B"/>
-                <stop offset="100%" stop-color="#92400E"/>
+                <stop offset="25%" stop-color="#E8F4FF"/>
+                <stop offset="65%" stop-color="#62A9FF"/>
+                <stop offset="100%" stop-color="#C7A45A"/>
               </linearGradient>
               <radialGradient id="brandHaloLuxury" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="rgba(255, 248, 219, 0.45)"/>
-                <stop offset="50%" stop-color="rgba(245, 158, 11, 0.25)"/>
+                <stop offset="0%" stop-color="rgba(145, 205, 255, 0.52)"/>
+                <stop offset="50%" stop-color="rgba(42, 104, 224, 0.28)"/>
                 <stop offset="100%" stop-color="transparent"/>
               </radialGradient>
             </defs>
@@ -91,26 +98,29 @@
               <circle cx="0" cy="0" r="3.2" fill="#FFFFFF"/>
             </g>
           </svg>
-        </div>
+        </button>
 
         <!-- Desktop Navigation Tabs -->
         <nav class="app-nav-tabs">
           <button type="button" class="app-tab-btn active" data-tab="hub">
-            <span>🔮</span> 六大篇章
+            <span>✦</span> 六大篇章
           </button>
           <button type="button" class="app-tab-btn" data-tab="member">
-            <span>👤</span> 會員與次數
+            <span>◇</span> 會員與次數
           </button>
           <button type="button" class="app-tab-btn" data-tab="history">
-            <span>📜</span> 測算紀錄
+            <span>▤</span> 測算紀錄
           </button>
           <button type="button" class="app-tab-btn" data-tab="stories">
-            <span>✨</span> 靈驗見證榜
+            <span>✧</span> 靈驗見證榜
           </button>
         </nav>
 
         <!-- Right Side: User Profile & Balance Capsule -->
         <div style="display:flex;align-items:center;gap:10px;">
+          <button type="button" class="motion-toggle" id="motionToggle" aria-pressed="false" title="切換動態效果">
+            <span aria-hidden="true">✦</span><span class="motion-toggle__label">動態</span>
+          </button>
           <button type="button" class="user-topbar-btn" id="userTopBarBtn">
             <span>👤 登入 / 註冊</span>
           </button>
@@ -126,16 +136,57 @@
         <div class="app-hero app-hero--editorial">
           <div class="hero-copy">
             <div class="hero-slogan-capsule">
-              <span>🔮 2026 仙佛指引 · 手相手機拍照即可測算</span>
-              <span>|</span>
-              <span class="live-dot"></span>
-              <span id="heroLiveCount">85</span>
-              <span>人在線測算</span>
+              <span class="hero-slogan-gem" aria-hidden="true"></span>
+              <span>藍寶石星象 · 掌紋六篇深度解讀</span>
             </div>
             <h1 class="hero-main-title">掌心解碼</h1>
             <p class="hero-description">不用排隊跑廟宇！手機拍照上傳手相，即可算出未來的正緣長相、跳槽加薪時機與發財年份。隨時為您指點迷津！</p>
+            <div class="hero-actions">
+              <button type="button" class="btn btn-primary sapphire-cta" id="heroExploreBtn">查看六大篇章</button>
+              <button type="button" class="btn btn-outline sapphire-ghost" data-goto-tab="member">會員與購買方案</button>
+            </div>
           </div>
-          <div class="hero-art" role="img" aria-label="掌紋與星圖主視覺">
+          <div class="hero-art" role="img" aria-label="藍寶石掌紋與星環主視覺" data-sapphire-tilt>
+            <div class="hero-art__prism"></div>
+            <svg class="hero-celestial" viewBox="0 0 520 520" aria-hidden="true">
+              <defs>
+                <radialGradient id="sapphireCore" cx="38%" cy="30%" r="72%">
+                  <stop offset="0" stop-color="#F2FAFF"/>
+                  <stop offset=".18" stop-color="#87CAFF"/>
+                  <stop offset=".48" stop-color="#185DDB"/>
+                  <stop offset=".78" stop-color="#071C62"/>
+                  <stop offset="1" stop-color="#020718"/>
+                </radialGradient>
+                <linearGradient id="sapphireGold" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#FFF8D8"/>
+                  <stop offset=".35" stop-color="#D7B866"/>
+                  <stop offset=".72" stop-color="#7FD0FF"/>
+                  <stop offset="1" stop-color="#8B6724"/>
+                </linearGradient>
+                <filter id="sapphireGlow" x="-80%" y="-80%" width="260%" height="260%">
+                  <feGaussianBlur stdDeviation="5" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <circle class="orbit orbit--outer" cx="260" cy="260" r="225"/>
+              <circle class="orbit orbit--mid" cx="260" cy="260" r="180"/>
+              <circle class="orbit orbit--inner" cx="260" cy="260" r="138"/>
+              <g class="orbit-gems" fill="url(#sapphireCore)" stroke="url(#sapphireGold)" stroke-width="3">
+                <path d="M260 20l14 14-14 14-14-14z"/>
+                <path d="M500 260l-14 14-14-14 14-14z"/>
+                <path d="M260 500l-14-14 14-14 14 14z"/>
+                <path d="M20 260l14-14 14 14-14 14z"/>
+              </g>
+              <path class="palm-line palm-line--fill" d="M174 398c-26-36-34-74-25-111l15-64c3-13 14-20 25-17 10 3 15 13 13 25l-6 34 8-118c1-14 10-22 21-21 12 1 18 10 17 24l-2 91 8-130c1-15 11-23 22-22 12 1 18 11 17 25l-5 126 12-106c2-14 12-21 23-19 11 2 16 12 14 26l-13 112 16-75c3-13 14-19 24-16 11 3 15 14 12 27l-20 104c-9 48-25 79-52 105-22 21-48 29-77 25-28-4-49-19-66-45z"/>
+              <path class="palm-line palm-line--trace" pathLength="1" d="M174 398c-26-36-34-74-25-111l15-64c3-13 14-20 25-17 10 3 15 13 13 25l-6 34 8-118c1-14 10-22 21-21 12 1 18 10 17 24l-2 91 8-130c1-15 11-23 22-22 12 1 18 11 17 25l-5 126 12-106c2-14 12-21 23-19 11 2 16 12 14 26l-13 112 16-75c3-13 14-19 24-16 11 3 15 14 12 27l-20 104c-9 48-25 79-52 105-22 21-48 29-77 25-28-4-49-19-66-45z"/>
+              <g class="palm-marks" fill="none" stroke="url(#sapphireGold)" stroke-linecap="round">
+                <path d="M196 302c38-39 84-50 137-31"/>
+                <path d="M205 334c45-18 82-13 112 17"/>
+                <path d="M221 267c30 14 54 37 69 70"/>
+              </g>
+              <circle class="hero-jewel-halo" cx="273" cy="327" r="42"/>
+              <path class="hero-jewel" d="M273 293l30 34-30 35-30-35z" fill="url(#sapphireCore)" stroke="url(#sapphireGold)" stroke-width="4" filter="url(#sapphireGlow)"/>
+            </svg>
             <div class="hero-art__seal">掌<br>心<br>解<br>碼</div>
           </div>
         </div>

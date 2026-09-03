@@ -14,6 +14,7 @@ import { MemberManager } from './member.js';
 import { openCamera, openFilePicker, ensurePalmCaptureDom } from './palm_capture.js';
 import { showLegalModal } from './legal.js';
 import '../css/payment-modal.css';
+import '../css/sapphire.css';
 import './payment-sdk.js';
 
 /**
@@ -88,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const bottomTabBtns = document.querySelectorAll('.app-bottom-tab');
   const appViews = document.querySelectorAll('.app-view');
   const userTopBarBtn = document.getElementById('userTopBarBtn');
-  const heroLiveCountEl = document.getElementById('heroLiveCount');
 
   // Hub Grid
   const themesMatrixGrid = document.getElementById('themesMatrixGrid');
@@ -126,14 +126,78 @@ document.addEventListener('DOMContentLoaded', () => {
   // History Reports View
   const historyReportsGrid = document.getElementById('historyReportsGrid');
 
-  // ============ 1. Live Online Simulation ============
-  function updateLiveCount() {
-    if (!heroLiveCountEl) return;
-    const base = 85;
-    const delta = Math.floor(Math.random() * 9) - 4;
-    heroLiveCountEl.textContent = Math.max(68, base + delta);
+  // ============ 1. Sapphire Motion System ============
+  function initSapphireMotion() {
+    const systemReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const motionToggle = document.getElementById('motionToggle');
+    let motionEnabled = !systemReducedMotion;
+    const applyMotionMode = () => {
+      document.documentElement.dataset.motion = motionEnabled ? 'full' : 'reduced';
+      motionToggle?.setAttribute('aria-pressed', String(motionEnabled));
+      const label = motionToggle?.querySelector('.motion-toggle__label');
+      if (label) label.textContent = motionEnabled ? '動態開啟' : '動態關閉';
+    };
+    applyMotionMode();
+    motionToggle?.addEventListener('click', () => {
+      motionEnabled = !motionEnabled;
+      applyMotionMode();
+    });
+
+    const starfield = document.getElementById('sapphireStarfield');
+
+    if (starfield) {
+      const starCount = window.matchMedia('(max-width: 620px)').matches ? 18 : 34;
+      const fragment = document.createDocumentFragment();
+      for (let i = 0; i < starCount; i += 1) {
+        const star = document.createElement('i');
+        const size = 1 + Math.random() * 2.4;
+        star.style.setProperty('--star-x', `${Math.random() * 100}%`);
+        star.style.setProperty('--star-y', `${Math.random() * 100}%`);
+        star.style.setProperty('--star-size', `${size}px`);
+        star.style.setProperty('--star-delay', `${Math.random() * -8}s`);
+        star.style.setProperty('--star-duration', `${5 + Math.random() * 8}s`);
+        fragment.appendChild(star);
+      }
+      starfield.replaceChildren(fragment);
+    }
+
+    const heroArt = document.querySelector('[data-sapphire-tilt]');
+    if (heroArt && window.matchMedia('(pointer:fine)').matches) {
+      let frameId = 0;
+      let targetX = 0;
+      let targetY = 0;
+      const renderTilt = () => {
+        frameId = 0;
+        heroArt.style.setProperty('--tilt-x', `${targetX.toFixed(2)}deg`);
+        heroArt.style.setProperty('--tilt-y', `${targetY.toFixed(2)}deg`);
+      };
+      heroArt.addEventListener('pointermove', (event) => {
+        const rect = heroArt.getBoundingClientRect();
+        targetX = ((event.clientY - rect.top) / rect.height - 0.5) * -5;
+        targetY = ((event.clientX - rect.left) / rect.width - 0.5) * 7;
+        if (!frameId) frameId = window.requestAnimationFrame(renderTilt);
+      });
+      heroArt.addEventListener('pointerleave', () => {
+        targetX = 0;
+        targetY = 0;
+        if (!frameId) frameId = window.requestAnimationFrame(renderTilt);
+      });
+    }
+
+    document.getElementById('heroExploreBtn')?.addEventListener('click', () => {
+      document.getElementById('themesMatrixGrid')?.scrollIntoView({ behavior: motionEnabled ? 'smooth' : 'auto' });
+    });
+
+    document.addEventListener('pointermove', (event) => {
+      const target = event.target.closest('.sapphire-cta, .btn-gold, .theme-hub-card');
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      target.style.setProperty('--pointer-x', `${event.clientX - rect.left}px`);
+      target.style.setProperty('--pointer-y', `${event.clientY - rect.top}px`);
+    }, { passive: true });
   }
-  setInterval(updateLiveCount, 4000);
+
+  initSapphireMotion();
 
   // ============ 1.5 Purchase Transition ============
   function startCelestialPurchaseTransition(onComplete) {
@@ -472,6 +536,26 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalPoints = 0;
     Object.values(wallet).forEach((pts) => { totalPoints += pts; });
 
+    const isLocalDevelopment = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const devLoginSection = isLocalDevelopment ? `
+      <div class="auth-divider">
+        <span>測試帳號登入（開發用）</span>
+      </div>
+
+      <form id="devLoginForm" style="display:grid;gap:14px;">
+        <div class="auth-form-group">
+          <label class="auth-form-label" for="devLoginUsername">帳號：</label>
+          <input type="text" id="devLoginUsername" class="auth-form-input" placeholder="帳號" value="user">
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-form-label" for="devLoginPassword">密碼：</label>
+          <input type="password" id="devLoginPassword" class="auth-form-input" placeholder="密碼" value="user123">
+        </div>
+        <div id="devLoginError" style="display:none;color:#EF4444;font-size:0.85rem;"></div>
+        <button type="submit" class="btn btn-outline" style="width:100%;">測試帳號登入</button>
+      </form>
+    ` : '';
+
     authPageContainer.innerHTML = `
       <div class="auth-page-header">
         <h2>🔮 仙壇結緣 ｜ 信士登入 / 註冊</h2>
@@ -562,22 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </form>
 
-      <div class="auth-divider">
-        <span>測試帳號登入（開發用）</span>
-      </div>
-
-      <form id="devLoginForm" style="display:grid;gap:14px;">
-        <div class="auth-form-group">
-          <label class="auth-form-label" for="devLoginUsername">帳號：</label>
-          <input type="text" id="devLoginUsername" class="auth-form-input" placeholder="帳號" value="user">
-        </div>
-        <div class="auth-form-group">
-          <label class="auth-form-label" for="devLoginPassword">密碼：</label>
-          <input type="password" id="devLoginPassword" class="auth-form-input" placeholder="密碼" value="user123">
-        </div>
-        <div id="devLoginError" style="display:none;color:#EF4444;font-size:0.85rem;"></div>
-        <button type="submit" class="btn btn-outline" style="width:100%;">測試帳號登入</button>
-      </form>
+      ${devLoginSection}
 
       <div class="auth-guarantee-badge">
         <span>🔒</span>
