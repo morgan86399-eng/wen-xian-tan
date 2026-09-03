@@ -128,14 +128,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ============ 1. Sapphire Motion System ============
   function initSapphireMotion() {
-    const systemReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const motionToggle = document.getElementById('motionToggle');
-    let motionEnabled = !systemReducedMotion;
+    let motionEnabled = true;
     const applyMotionMode = () => {
       document.documentElement.dataset.motion = motionEnabled ? 'full' : 'reduced';
       motionToggle?.setAttribute('aria-pressed', String(motionEnabled));
+      motionToggle?.setAttribute('aria-label', `動畫特效：${motionEnabled ? '開' : '關'}`);
       const label = motionToggle?.querySelector('.motion-toggle__label');
-      if (label) label.textContent = motionEnabled ? '動態開啟' : '動態關閉';
+      if (label) label.textContent = motionEnabled ? '動畫：開' : '動畫：關';
     };
     applyMotionMode();
     motionToggle?.addEventListener('click', () => {

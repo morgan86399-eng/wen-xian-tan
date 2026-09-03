@@ -339,10 +339,10 @@ body {
 .hero-art__seal { display: none; }
 
 .orbit { fill: none; stroke: rgba(151, 210, 255, .34); stroke-width: 1.4; stroke-dasharray: 4 8; transform-origin: 260px 260px; }
-.orbit--outer { animation: sapphireOrbit 36s linear infinite; }
-.orbit--mid { stroke: rgba(226, 203, 137, .38); stroke-dasharray: 2 13; animation: sapphireOrbitReverse 26s linear infinite; }
-.orbit--inner { stroke-width: 2; animation: sapphireOrbit 18s linear infinite; }
-.orbit-gems { transform-origin: 260px 260px; animation: sapphireOrbit 28s linear infinite; }
+.orbit--outer { animation: sapphireOrbit 18s linear infinite; }
+.orbit--mid { stroke: rgba(226, 203, 137, .5); stroke-dasharray: 2 13; animation: sapphireOrbitReverse 14s linear infinite; }
+.orbit--inner { stroke-width: 2; animation: sapphireOrbit 10s linear infinite; }
+.orbit-gems { transform-origin: 260px 260px; animation: sapphireOrbit 12s linear infinite; filter: drop-shadow(0 0 8px rgba(92, 183, 255, .8)); }
 
 @keyframes sapphireOrbit { to { transform: rotate(360deg); } }
 @keyframes sapphireOrbitReverse { to { transform: rotate(-360deg); } }
