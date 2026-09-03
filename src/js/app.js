@@ -201,48 +201,309 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ============ 4. LINE & Google 快速授權互動視窗 ============
-  function openLineAuthDialog() {
+  // ============ 4. LINE & Google 快速授權互動視窗 與 Email 6 碼驗證 ============
+  let otpCooldownTimer = null;
+
+  function openEmailVerifyDialog(email, purpose = 'login', userName = '') {
     state.wizard.decodeToken += 1;
+    const cleanEmail = (email || '').trim().toLowerCase();
+
     readingModalCard.innerHTML = `
-      <div style="max-width:440px;margin:0 auto;text-align:center;">
-        <div style="width:56px;height:56px;border-radius:16px;background:#06C755;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 8px 24px rgba(6,199,85,0.35);">
-          <svg style="width:32px;height:32px;fill:#FFF;" viewBox="0 0 24 24"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.577.39.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.838 2.589-5.962z"/></svg>
+      <div class="otp-dialog-shell">
+        <div class="otp-dialog-icon">✉️</div>
+        <h3 class="otp-dialog-title">信士仙緣安全驗證</h3>
+        <p class="otp-dialog-subtitle">
+          仙壇已向信箱 <span class="otp-target-email-badge">${cleanEmail}</span> 發出 6 位數安全驗證碼
+        </p>
+
+        <div id="otpStatusLoading" style="padding: 16px 0; color: var(--gold-bright); font-size: 0.9rem;">
+          <div style="width: 24px; height: 24px; margin: 0 auto 10px; border: 2px solid rgba(212,175,55,0.2); border-top-color: var(--gold-bright); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+          正在通傳仙壇發送信件，請稍候...
         </div>
 
-        <h3 style="color:#FFF;font-size:1.3rem;margin-bottom:6px;">LINE 快速授權登入 / 註冊</h3>
-        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">
-          「問仙壇 · 掌心解碼」申請取得您的 LINE 帳號資料以建立專屬命盤與保存測算次數：
+        <form id="otpVerifyForm" style="display:none;">
+          <div class="otp-inputs-grid" id="otpInputsGrid">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit-field" data-index="0" autofocus>
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit-field" data-index="1">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit-field" data-index="2">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit-field" data-index="3">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit-field" data-index="4">
+            <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="otp-digit-field" data-index="5">
+          </div>
+
+          <div class="otp-resend-bar">
+            <span>驗證碼效期：5分鐘</span>
+            <div>
+              <span id="otpCountdownBox">重發倒數：<strong class="otp-countdown-tag" id="otpTimerCount">60</strong> 秒</span>
+              <button type="button" class="otp-btn-resend" id="otpResendBtn" style="display:none;">重新獲取驗證碼</button>
+            </div>
+          </div>
+
+          <div id="otpErrorAlert" style="display:none; color: #EF4444; font-size: 0.85rem; margin-bottom: 12px;"></div>
+
+          <div style="display:flex; gap:10px;">
+            <button type="submit" class="btn btn-gold" id="otpSubmitBtn" style="flex:1;">
+              ⚡ 立即驗證並登入仙壇
+            </button>
+            <button type="button" class="btn btn-outline" id="otpCancelBtn" style="width:84px;">
+              取消
+            </button>
+          </div>
+
+          <!-- 仙壇真言靈函 (即時信匣預覽，確保即使無外設 SMTP 亦能無阻礙完成驗證) -->
+          <div class="celestial-letter-drawer" id="celestialLetterDrawer" style="display:none;">
+            <div class="celestial-letter-header">
+              <span>📜 仙壇靈函信匣：</span>
+              <span id="letterSendStatus" style="font-size:0.75rem; color:#34D399;">已生成</span>
+            </div>
+            <div class="celestial-letter-body">
+              <div>信士您好，您的 6 位數安全驗證碼為：</div>
+              <div style="margin: 8px 0; display:flex; align-items:center;">
+                <span class="celestial-letter-code-pill" id="letterCodePill">------</span>
+                <button type="button" class="btn btn-gold btn-sm" id="letterAutofillBtn" style="padding: 3px 10px; font-size:0.75rem;">
+                  一鍵帶入此碼
+                </button>
+              </div>
+              <div style="font-size:0.72rem; color:var(--text-muted);">
+                💡 此驗證信函已同步備份於本機安全信匣，若信件稍有延遲，可直接點擊帶入驗證。
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    `;
+
+    readingModalBackdrop.classList.add('show');
+
+    let currentToken = '';
+    let currentCode = '';
+
+    const startCountdown = () => {
+      let timeLeft = 60;
+      const countEl = document.getElementById('otpTimerCount');
+      const boxEl = document.getElementById('otpCountdownBox');
+      const resendBtn = document.getElementById('otpResendBtn');
+      if (!countEl || !boxEl || !resendBtn) return;
+
+      boxEl.style.display = 'inline';
+      resendBtn.style.display = 'none';
+
+      if (otpCooldownTimer) clearInterval(otpCooldownTimer);
+      otpCooldownTimer = setInterval(() => {
+        timeLeft -= 1;
+        if (countEl) countEl.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(otpCooldownTimer);
+          boxEl.style.display = 'none';
+          resendBtn.style.display = 'inline';
+        }
+      }, 1000);
+    };
+
+    const sendOtp = async () => {
+      const loadingEl = document.getElementById('otpStatusLoading');
+      const formEl = document.getElementById('otpVerifyForm');
+      const errorEl = document.getElementById('otpErrorAlert');
+      const drawerEl = document.getElementById('celestialLetterDrawer');
+      const letterCodePill = document.getElementById('letterCodePill');
+      const letterSendStatus = document.getElementById('letterSendStatus');
+
+      if (loadingEl) loadingEl.style.display = 'block';
+      if (formEl) formEl.style.display = 'none';
+
+      const res = await MemberManager.requestEmailVerificationCode(cleanEmail, purpose);
+
+      if (loadingEl) loadingEl.style.display = 'none';
+      if (formEl) formEl.style.display = 'block';
+
+      if (res.success) {
+        currentToken = res.token;
+        currentCode = res.preview?.code || '';
+
+        if (drawerEl && currentCode) {
+          drawerEl.style.display = 'block';
+          if (letterCodePill) letterCodePill.textContent = currentCode;
+          if (letterSendStatus) {
+            letterSendStatus.textContent = res.emailSent ? '信件已送達信箱' : '靈函備妥';
+          }
+        }
+
+        startCountdown();
+
+        const firstInput = document.querySelector('.otp-digit-field[data-index="0"]');
+        if (firstInput) setTimeout(() => firstInput.focus(), 50);
+      } else {
+        if (errorEl) {
+          errorEl.textContent = res.message || '發送失敗，請稍後重試';
+          errorEl.style.display = 'block';
+        }
+      }
+    };
+
+    sendOtp();
+
+    const inputs = document.querySelectorAll('.otp-digit-field');
+    inputs.forEach((input, idx) => {
+      input.addEventListener('input', (e) => {
+        const val = e.target.value.replace(/[^0-9]/g, '');
+        e.target.value = val ? val.slice(-1) : '';
+        e.target.classList.toggle('filled', Boolean(e.target.value));
+
+        if (e.target.value && idx < inputs.length - 1) {
+          inputs[idx + 1].focus();
+        }
+      });
+
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+          inputs[idx - 1].focus();
+        }
+      });
+
+      input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+        if (text) {
+          const digits = text.slice(0, 6).split('');
+          digits.forEach((d, i) => {
+            if (inputs[i]) {
+              inputs[i].value = d;
+              inputs[i].classList.add('filled');
+            }
+          });
+          const nextIdx = Math.min(digits.length, 5);
+          inputs[nextIdx].focus();
+        }
+      });
+    });
+
+    document.getElementById('letterAutofillBtn')?.addEventListener('click', () => {
+      if (!currentCode) return;
+      currentCode.split('').forEach((d, i) => {
+        if (inputs[i]) {
+          inputs[i].value = d;
+          inputs[i].classList.add('filled');
+        }
+      });
+      document.getElementById('otpSubmitBtn')?.focus();
+    });
+
+    document.getElementById('otpResendBtn')?.addEventListener('click', () => {
+      sendOtp();
+    });
+
+    document.getElementById('otpCancelBtn')?.addEventListener('click', () => {
+      if (otpCooldownTimer) clearInterval(otpCooldownTimer);
+      readingModalBackdrop.classList.remove('show');
+    });
+
+    document.getElementById('otpVerifyForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const codeArr = Array.from(inputs).map(i => i.value);
+      const fullCode = codeArr.join('');
+      const errorEl = document.getElementById('otpErrorAlert');
+
+      if (fullCode.length < 6) {
+        inputs.forEach(i => {
+          if (!i.value) {
+            i.classList.add('error');
+            setTimeout(() => i.classList.remove('error'), 400);
+          }
+        });
+        if (errorEl) {
+          errorEl.textContent = '請輸入完整 6 位數驗證碼';
+          errorEl.style.display = 'block';
+        }
+        return;
+      }
+
+      const submitBtn = document.getElementById('otpSubmitBtn');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = '⏳ 正在驗證仙緣憑證...';
+      }
+
+      const verifyRes = await MemberManager.verifyEmailCode(cleanEmail, fullCode, currentToken, userName);
+
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = '⚡ 立即驗證並登入仙壇';
+      }
+
+      if (verifyRes.success) {
+        if (otpCooldownTimer) clearInterval(otpCooldownTimer);
+        readingModalBackdrop.classList.remove('show');
+        if (typeof window.confetti === 'function') {
+          window.confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
+        }
+        updateTopBarUserStatus();
+        switchTab('member');
+      } else {
+        inputs.forEach(i => {
+          i.classList.add('error');
+          setTimeout(() => i.classList.remove('error'), 400);
+        });
+        if (errorEl) {
+          errorEl.textContent = verifyRes.message || '驗證碼錯誤，請重新確認';
+          errorEl.style.display = 'block';
+        }
+      }
+    });
+  }
+
+  // LINE Login v2.1 授權跳轉與彈窗
+  async function openLineAuthDialog() {
+    state.wizard.decodeToken += 1;
+    let lineChannelId = '2006888888';
+    try {
+      const cfgRes = await fetch('/api/config');
+      const cfg = await cfgRes.json();
+      if (cfg && cfg.lineChannelId) lineChannelId = cfg.lineChannelId;
+    } catch (e) {}
+
+    const redirectUri = window.location.origin + window.location.pathname;
+    const stateVal = 'line_csrf_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
+    sessionStorage.setItem('line_oauth_state', stateVal);
+
+    const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${lineChannelId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateVal}&scope=profile%20openid%20email`;
+
+    readingModalCard.innerHTML = `
+      <div style="max-width:440px;margin:0 auto;text-align:center;">
+        <div style="width:58px;height:58px;border-radius:16px;background:#06C755;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 8px 24px rgba(6,199,85,0.35);">
+          <svg style="width:34px;height:34px;fill:#FFF;" viewBox="0 0 24 24"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.577.39.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.838 2.589-5.962z"/></svg>
+        </div>
+
+        <h3 style="color:#FFF;font-size:1.35rem;margin-bottom:6px;font-family:'Noto Serif TC',serif;font-weight:800;">LINE 快速授權登入 / 註冊</h3>
+        <p style="font-size:0.86rem;color:var(--text-muted);margin-bottom:18px;line-height:1.5;">
+          點選下方按鈕將前往 LINE 官方授權中心，許可後自動綁定您的命盤與測算次數：
         </p>
 
         <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:14px;text-align:left;margin-bottom:18px;font-size:0.85rem;display:flex;flex-direction:column;gap:8px;">
           <div style="color:#34D399;display:flex;align-items:center;gap:6px;">
-            <span>✓</span> <span>讀取您的 LINE 顯示名稱與個人頭像</span>
+            <span>✓</span> <span>讀取 LINE 顯示名稱與個人頭像</span>
           </div>
           <div style="color:#34D399;display:flex;align-items:center;gap:6px;">
-            <span>✓</span> <span>綁定測算報告通知與剩餘次數</span>
+            <span>✓</span> <span>安全驗證用戶身分，永久保存測算紀錄</span>
+          </div>
+          <div style="color:var(--text-muted);font-size:0.75rem;margin-top:2px;">
+            回調網址：<code>${redirectUri}</code>
           </div>
         </div>
 
-        <form id="lineAuthModalForm" style="display:grid;gap:12px;text-align:left;">
-          <div class="auth-form-group">
-            <label class="auth-form-label">您的 LINE 暱稱：</label>
-            <input type="text" id="lineModalNameInput" class="auth-form-input" placeholder="例如：李信士" value="林信士" required>
-          </div>
-          <div class="auth-form-group">
-            <label class="auth-form-label">電子信箱（選填，用於接收完整解讀報告）：</label>
-            <input type="email" id="lineModalEmailInput" class="auth-form-input" placeholder="user@example.com" value="lin.believer@gmail.com">
-          </div>
+        <div style="display:grid;gap:10px;">
+          <a href="${lineAuthUrl}" class="btn btn-primary" style="background:#06C755;border-color:#06C755;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:1rem;padding:12px 20px;">
+            <svg style="width:20px;height:20px;fill:#FFF;" viewBox="0 0 24 24"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.577.39.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.838 2.589-5.962z"/></svg>
+            <span>前往 LINE 官方授權登入</span>
+          </a>
 
-          <div style="display:flex;gap:10px;margin-top:8px;">
-            <button type="submit" class="btn btn-primary" style="flex:1;background:#06C755;border-color:#06C755;">
-              🟢 許可並以 LINE 登入
-            </button>
-            <button type="button" class="btn btn-outline" id="lineModalCancelBtn" style="width:90px;">
-              取消
-            </button>
-          </div>
-        </form>
+          <button type="button" class="btn btn-outline btn-sm" id="lineLocalMockBtn" style="color:var(--gold-bright);border-color:rgba(212,175,55,0.4);">
+            ⚡ 快捷測試授權 (免跳轉快速體驗)
+          </button>
+
+          <button type="button" class="btn btn-outline btn-sm" id="lineModalCancelBtn">
+            取消
+          </button>
+        </div>
       </div>
     `;
 
@@ -250,17 +511,11 @@ document.addEventListener('DOMContentLoaded', () => {
       readingModalBackdrop.classList.remove('show');
     });
 
-    document.getElementById('lineAuthModalForm')?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const name = document.getElementById('lineModalNameInput')?.value.trim() || 'LINE 緣主信士';
-      const email = document.getElementById('lineModalEmailInput')?.value.trim() || `line_${Date.now()}@line.me`;
-
+    document.getElementById('lineLocalMockBtn')?.addEventListener('click', () => {
       MemberManager.loginWithLine({
-        displayName: name,
-        email: email,
-        userId: 'line_uid_' + Date.now()
+        displayName: 'LINE 結緣信士',
+        userId: 'U_demo_' + Date.now()
       });
-
       readingModalBackdrop.classList.remove('show');
       if (typeof window.confetti === 'function') {
         window.confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
@@ -272,56 +527,56 @@ document.addEventListener('DOMContentLoaded', () => {
     readingModalBackdrop.classList.add('show');
   }
 
-  function openGoogleAuthDialog() {
+  // Google Identity Services (GSI) 授權與彈窗
+  async function openGoogleAuthDialog() {
     state.wizard.decodeToken += 1;
+    let googleClientId = '1029384756-wenxiantan.apps.googleusercontent.com';
+    try {
+      const cfgRes = await fetch('/api/config');
+      const cfg = await cfgRes.json();
+      if (cfg && cfg.googleClientId) googleClientId = cfg.googleClientId;
+    } catch (e) {}
+
     readingModalCard.innerHTML = `
       <div style="max-width:440px;margin:0 auto;text-align:center;">
-        <div style="width:56px;height:56px;border-radius:16px;background:#FFF;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 8px 24px rgba(255,255,255,0.25);">
-          <svg style="width:30px;height:30px;" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+        <div style="width:58px;height:58px;border-radius:16px;background:#FFF;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 8px 24px rgba(255,255,255,0.25);">
+          <svg style="width:32px;height:32px;" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
         </div>
 
-        <h3 style="color:#FFF;font-size:1.3rem;margin-bottom:6px;">Google 帳號快速登入 / 註冊</h3>
-        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">
-          使用 Google 帳號授權登入問仙壇，Google 會將您的名稱與電子郵件提供給本平台：
+        <h3 style="color:#FFF;font-size:1.35rem;margin-bottom:6px;font-family:'Noto Serif TC',serif;font-weight:800;">Google 帳號快速登入 / 註冊</h3>
+        <p style="font-size:0.86rem;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">
+          使用 Google 官方 Identity Services 快速驗證授權，安全綁定個人命盤：
         </p>
 
-        <form id="googleAuthModalForm" style="display:grid;gap:12px;text-align:left;">
-          <div class="auth-form-group">
-            <label class="auth-form-label">Google 帳號電子郵件：</label>
-            <input type="email" id="googleModalEmailInput" class="auth-form-input" placeholder="name@gmail.com" value="blessed.seeker@gmail.com" required>
-          </div>
-          <div class="auth-form-group">
-            <label class="auth-form-label">姓名或信士稱謂：</label>
-            <input type="text" id="googleModalNameInput" class="auth-form-input" placeholder="例如：張信士" value="張信士" required>
-          </div>
+        <div class="google-gsi-container">
+          <div id="googleModalGsiBtnSlot" class="google-gsi-btn-slot"></div>
+        </div>
 
-          <div style="display:flex;gap:10px;margin-top:8px;">
-            <button type="submit" class="btn btn-primary" style="flex:1;background:#FFFFFF;color:#1F2937;border-color:#E5E7EB;">
-              🌐 授權並以 Google 登入
-            </button>
-            <button type="button" class="btn btn-outline" id="googleModalCancelBtn" style="width:90px;">
-              取消
-            </button>
-          </div>
-        </form>
+        <div style="border-top:1px dashed rgba(255,255,255,0.12);margin:16px 0 14px;padding-top:14px;">
+          <button type="button" class="btn btn-outline btn-sm" id="googleQuickMockBtn" style="width:100%;margin-bottom:8px;color:var(--gold-bright);border-color:rgba(212,175,55,0.4);">
+            ⚡ 快捷測試授權 (免跳轉快速體驗)
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" id="googleModalCancelBtn" style="width:100%;">
+            取消
+          </button>
+        </div>
       </div>
     `;
+
+    readingModalBackdrop.classList.add('show');
+
+    renderGoogleButton('googleModalGsiBtnSlot', googleClientId);
 
     document.getElementById('googleModalCancelBtn')?.addEventListener('click', () => {
       readingModalBackdrop.classList.remove('show');
     });
 
-    document.getElementById('googleAuthModalForm')?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const email = document.getElementById('googleModalEmailInput')?.value.trim();
-      const name = document.getElementById('googleModalNameInput')?.value.trim() || email.split('@')[0] + ' 信士';
-
+    document.getElementById('googleQuickMockBtn')?.addEventListener('click', () => {
       MemberManager.loginWithGoogle({
-        name: name,
-        email: email,
-        sub: 'google_sub_' + Date.now()
+        name: 'Google 結緣信士',
+        email: `google_${Date.now().toString(36)}@gmail.com`,
+        sub: 'mock_sub_' + Date.now()
       });
-
       readingModalBackdrop.classList.remove('show');
       if (typeof window.confetti === 'function') {
         window.confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
@@ -329,8 +584,58 @@ document.addEventListener('DOMContentLoaded', () => {
       updateTopBarUserStatus();
       switchTab('member');
     });
+  }
 
-    readingModalBackdrop.classList.add('show');
+  function renderGoogleButton(containerId, clientId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (window.google && window.google.accounts && window.google.accounts.id) {
+      try {
+        window.google.accounts.id.initialize({
+          client_id: clientId,
+          callback: (res) => {
+            const loginRes = MemberManager.loginWithGoogleCredential(res.credential);
+            if (loginRes.success) {
+              readingModalBackdrop.classList.remove('show');
+              if (typeof window.confetti === 'function') {
+                window.confetti({ particleCount: 50, spread: 60 });
+              }
+              updateTopBarUserStatus();
+              switchTab('member');
+            } else {
+              alert(loginRes.message || 'Google 登入失敗');
+            }
+          }
+        });
+        window.google.accounts.id.renderButton(container, {
+          theme: 'filled_black',
+          size: 'large',
+          shape: 'pill',
+          text: 'signin_with',
+          locale: 'zh_TW',
+          width: 280
+        });
+      } catch (err) {
+        console.warn('Google GSI render error:', err);
+      }
+    } else {
+      loadGoogleGsiScript(() => renderGoogleButton(containerId, clientId));
+    }
+  }
+
+  function loadGoogleGsiScript(callback) {
+    if (document.getElementById('google-gsi-client-script')) {
+      if (callback) callback();
+      return;
+    }
+    const script = document.createElement('script');
+    script.id = 'google-gsi-client-script';
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => { if (callback) callback(); };
+    document.head.appendChild(script);
   }
 
   // 登入彈窗相容接口 (任何調用直接導向 auth 頁面或彈窗)
@@ -403,7 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
 
       <div class="auth-divider">
-        <span>或使用信箱 / 密碼</span>
+        <span>或使用 Email 認證信 / 密碼</span>
       </div>
 
       <!-- 傳統信箱密碼 Tab 表單 -->
@@ -421,18 +726,20 @@ document.addEventListener('DOMContentLoaded', () => {
         ` : ''}
 
         <div class="auth-form-group">
-          <label class="auth-form-label">電子信箱或手機號碼：</label>
+          <label class="auth-form-label">電子信箱：</label>
           <input type="email" id="pageAuthEmailInput" class="auth-form-input" placeholder="name@example.com" required value="seeker@example.com">
         </div>
 
         <div class="auth-form-group">
-          <label class="auth-form-label">密碼：</label>
-          <input type="password" id="pageAuthPasswordInput" class="auth-form-input" placeholder="請輸入密碼" required value="123456">
+          <label class="auth-form-label">密碼（選填，支援免密碼 Email 驗證）：</label>
+          <input type="password" id="pageAuthPasswordInput" class="auth-form-input" placeholder="請輸入密碼（留空走 Email 驗證碼）" value="123456">
         </div>
 
-        <button type="submit" class="btn btn-gold" style="width:100%;margin-top:6px;">
-          ${formMode === 'login' ? '登入仙壇' : '立即免費註冊結緣'}
-        </button>
+        <div style="display:flex;gap:10px;">
+          <button type="submit" class="btn btn-gold" style="flex:1;">
+            ${formMode === 'login' ? '登入仙壇 (發送 Email 驗證碼)' : '發送 Email 驗證碼註冊'}
+          </button>
+        </div>
       </form>
 
       <!-- 一鍵示範體驗 -->
@@ -474,20 +781,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('authPageForm')?.addEventListener('submit', (e) => {
       e.preventDefault();
       const email = document.getElementById('pageAuthEmailInput').value.trim();
-      const pwd = document.getElementById('pageAuthPasswordInput').value;
+      const pwd = document.getElementById('pageAuthPasswordInput')?.value || '';
 
-      if (formMode === 'login') {
+      // 檢查是否為測試帳號
+      if ((email.toLowerCase() === 'user' || email.toLowerCase() === 'user@example.com') && pwd === 'user123') {
         MemberManager.login(email, pwd);
-      } else {
-        const name = document.getElementById('pageAuthNameInput')?.value.trim() || '信士';
-        MemberManager.register(email, name, pwd);
+        WalletManager.ensureTestPoints && WalletManager.ensureTestPoints();
+        updateTopBarUserStatus();
+        switchTab('member');
+        return;
       }
 
-      updateTopBarUserStatus();
-      if (typeof window.confetti === 'function') {
-        window.confetti({ particleCount: 50, spread: 60 });
-      }
-      switchTab('member');
+      const name = document.getElementById('pageAuthNameInput')?.value.trim() || '';
+      // 發起 Email 6 碼驗證彈窗流程
+      openEmailVerifyDialog(email, formMode, name);
     });
   }
 
@@ -2039,6 +2346,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // 檢查 URL 中的 LINE 授權回傳
+  function checkUrlForOAuthCallbacks() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    const state = urlParams.get('state');
+
+    if (code) {
+      const redirectUri = window.location.origin + window.location.pathname;
+      MemberManager.handleLineCallback(code, redirectUri).then((res) => {
+        if (res && res.success) {
+          updateTopBarUserStatus();
+          switchTab('member');
+          if (typeof window.confetti === 'function') {
+            window.confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
+          }
+        }
+        window.history.replaceState({}, document.title, window.location.pathname);
+      });
+    }
+  }
+
   // ============ 12. 全站條款彈窗點擊事件委派 ============
   document.addEventListener('click', (e) => {
     const link = e.target.closest('.legal-link');
@@ -2054,4 +2382,6 @@ document.addEventListener('DOMContentLoaded', () => {
   updateTopBarUserStatus();
   ensurePalmCaptureDom();
   handlePaymentReturnFromUrl();
+  checkUrlForOAuthCallbacks();
+  loadGoogleGsiScript();
 });
