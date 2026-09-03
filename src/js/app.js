@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="otp-dialog-icon">✉️</div>
         <h3 class="otp-dialog-title">信士仙緣安全驗證</h3>
         <p class="otp-dialog-subtitle">
-          仙壇已向信箱 <span class="otp-target-email-badge">${cleanEmail}</span> 發出 6 位數安全驗證碼
+          仙壇已向信箱 <span class="otp-target-email-badge">${escapeHtml(cleanEmail)}</span> 發出 6 位數安全驗證碼
         </p>
 
         <div id="otpStatusLoading" style="padding: 16px 0; color: var(--gold-bright); font-size: 0.9rem;">
@@ -471,14 +471,13 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="auth-current-user-card">
           <div class="auth-current-user-header">
             <div class="auth-current-user-info">
-              <div class="auth-current-user-avatar">${currentUser.avatar ? `<img src="${currentUser.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : currentUser.name.slice(0, 1)}</div>
+              <div class="auth-current-user-avatar">${currentUser.avatar ? `<img src="${escapeHtml(currentUser.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : escapeHtml(currentUser.name).slice(0, 1)}</div>
               <div>
                 <div style="font-weight:800;font-size:1.05rem;color:#FFF;display:flex;align-items:center;gap:6px;">
-                  <span>${currentUser.name}</span>
-                  <span class="member-tier-badge" style="font-size:0.75rem;">✨ ${currentUser.tier || '結緣信士'}</span>
+                  <span>${escapeHtml(currentUser.name)}</span>
                 </div>
                 <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">
-                  ${currentUser.provider === 'line' ? '🟢 LINE 綁定帳號' : currentUser.provider === 'google' ? '🌐 Google 綁定帳號' : '✉️ 信箱帳號'} ｜ ${currentUser.email}
+                  ${currentUser.provider === 'line' ? 'LINE 帳號' : currentUser.provider === 'google' ? 'Google 帳號' : '信箱帳號'} ｜ ${escapeHtml(currentUser.email)}
                 </div>
               </div>
             </div>
@@ -604,13 +603,12 @@ document.addEventListener('DOMContentLoaded', () => {
         memberProfileContainer.innerHTML = `
           <div class="member-profile-card">
             <div class="member-avatar-block">
-              <div class="member-large-avatar">${user.avatar ? `<img src="${user.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : user.name.slice(0, 1)}</div>
+              <div class="member-large-avatar">${user.avatar ? `<img src="${escapeHtml(user.avatar)}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : escapeHtml(user.name).slice(0, 1)}</div>
               <div class="member-info-col">
                 <h3>
-                  <span>${user.name}</span>
-                  <span class="member-tier-badge">✨ ${user.tier || '有緣信士'}</span>
+                  <span>${escapeHtml(user.name)}</span>
                 </h3>
-                <div class="member-email-text">${user.email} ｜ 加入日期：${user.joinedAt || '2026-08-31'}</div>
+                <div class="member-email-text">${escapeHtml(user.email)}</div>
               </div>
             </div>
 
