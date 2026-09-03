@@ -1,209 +1,65 @@
 /**
- * 問仙壇 · 獨立點數額度錢包管理系統 (Isolated Theme Points Wallet)
- * 每個主題擁有獨立的餘額與扣點邏輯，互不混淆
+ * 問仙壇 · 點數與歷史（只信 /api/me 與 /api/readings，不用 localStorage 當餘額）
  */
 
-const STORAGE_KEY_POINTS = 'wenxiantan_points_wallet_v2';
-const STORAGE_KEY_HISTORY = 'wenxiantan_reports_history_v2';
+import { MemberManager } from './member.js';
+
+function emptyCredits() {
+  return { love: 0, work: 0, career: 0, wealth: 0, family: 0, children: 0 };
+}
+
+function extractReadings(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.readings)) return data.readings;
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
+}
 
 export const WalletManager = {
-  // 取得預設 6 大核心篇章額度（預設贈送 感情篇 1 點結緣體驗）
-  getDefaultWallet() {
-    return {
-      love: 1,      // 感情篇 (預設贈送 1 點)
-      work: 0,      // 工作篇
-      career: 0,    // 事業篇
-      wealth: 0,    // 財運篇
-      family: 0,    // 家庭篇
-      children: 0   // 小孩篇
-    };
-  },
+  _reports: [],
 
-  // 測試帳號專屬全篇章 1000 點錢包
-  getTestUserWallet() {
-    return {
-      love: 1000,
-      work: 1000,
-      career: 1000,
-      wealth: 1000,
-      family: 1000,
-      children: 1000
-    };
-  },
-
-  // 確保測試帳號擁有各篇章 1000 點額度
-  ensureTestPoints() {
-    const testWallet = this.getTestUserWallet();
-    this.savePoints(testWallet);
-    return testWallet;
-  },
-
-  // 取得所有篇章的點數物件
   getPoints() {
-    try {
-      const session = localStorage.getItem('wenxiantan_user_session_v2');
-      let isTestUser = false;
-      if (session) {
-        try {
-          const user = JSON.parse(session);
-          if (user && (user.email === 'user' || user.id === 'usr_test_user')) {
-            isTestUser = true;
-          }
-        } catch (err) {}
-      }
-
-      const saved = localStorage.getItem(STORAGE_KEY_POINTS);
-      if (!saved) {
-        const initial = isTestUser ? this.getTestUserWallet() : this.getDefaultWallet();
-        this.savePoints(initial);
-        return initial;
-      }
-
-      const parsed = JSON.parse(saved);
-      if (isTestUser) {
-        let modified = false;
-        ['love', 'work', 'career', 'wealth', 'family', 'children'].forEach((k) => {
-          if (typeof parsed[k] !== 'number' || parsed[k] < 1) {
-            parsed[k] = 1000;
-            modified = true;
-          }
-        });
-        if (modified) {
-          this.savePoints(parsed);
-        }
-        return parsed;
-      }
-
-      return { ...this.getDefaultWallet(), ...parsed };
-    } catch (e) {
-      console.error('Failed to load wallet points', e);
-      return this.getDefaultWallet();
+    if (typeof MemberManager.getCredits === 'function') {
+      return MemberManager.getCredits();
     }
+    return emptyCredits();
   },
 
-  // 取得單一主題的剩餘點數
   getThemePoints(themeId) {
-    const points = this.getPoints();
-    return typeof points[themeId] === 'number' ? points[themeId] : 0;
+    const n = Number(this.getPoints()[themeId]);
+    return Number.isFinite(n) ? n : 0;
   },
 
-  // 儲存點數物件
-  savePoints(wallet) {
+  async refreshCredits() {
+    const me = await MemberManager.refreshMe();
+    return me.credits || this.getPoints();
+  },
+
+  async fetchReports() {
     try {
-      localStorage.setItem(STORAGE_KEY_POINTS, JSON.stringify(wallet));
-    } catch (e) {
-      console.error('Failed to save wallet points', e);
-    }
-  },
-
-  // 方案儲值：針對選定的主題列表，各自增加指定點數
-  addPointsToThemes(themeIds, pointsToAdd = 3) {
-    const wallet = this.getPoints();
-    themeIds.forEach((id) => {
-      wallet[id] = (wallet[id] || 0) + pointsToAdd;
-    });
-    this.savePoints(wallet);
-    return wallet;
-  },
-
-  // 消耗單一主題點數
-  consumePoint(themeId, amount = 1) {
-    const wallet = this.getPoints();
-    const current = wallet[themeId] || 0;
-    if (current < amount) {
-      return { success: false, remaining: current };
-    }
-    wallet[themeId] = current - amount;
-    this.savePoints(wallet);
-    return { success: true, remaining: wallet[themeId] };
-  },
-
-  // 報告與歷史紀錄只保留見證文字，不保留任何圖片來源。
-  sanitizeReport(reportData) {
-    if (!reportData || typeof reportData !== 'object') return reportData;
-
-    const { matchedStories, ...report } = reportData;
-    const textOnlyStories = Array.isArray(matchedStories)
-      ? matchedStories.map((story) => ({
-        themeId: story?.themeId,
-        title: story?.title,
-        name: story?.name,
-        category: story?.category,
-        summary: story?.summary,
-        result: story?.result,
-        full: story?.full
-      }))
-      : [];
-
-    return { ...report, matchedStories: textOnlyStories };
-  },
-
-  // 儲存已產生的解讀報告與文字見證
-  saveReport(reportData) {
-    try {
-      const list = this.getReports();
-      const record = {
-        id: 'rep_' + Date.now(),
-        date: new Date().toISOString(),
-        ...this.sanitizeReport(reportData)
-      };
-      list.unshift(record);
-      localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(list));
-      return record;
-    } catch (e) {
-      console.error('Failed to save report', e);
-      return null;
-    }
-  },
-
-  // 取得歷史報告列表
-  getReports() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_HISTORY);
-      const records = saved ? JSON.parse(saved) : [];
-      if (!Array.isArray(records)) return [];
-
-      // 舊紀錄曾包含 imageUrl；使用者再次開啟網站時同步移除。
-      const sanitized = records.map((record) => this.sanitizeReport(record));
-      if (JSON.stringify(records) !== JSON.stringify(sanitized)) {
-        localStorage.setItem(STORAGE_KEY_HISTORY, JSON.stringify(sanitized));
+      const res = await fetch('/api/readings', { credentials: 'include' });
+      if (res.status === 401) {
+        this._reports = [];
+        return [];
       }
-      return sanitized;
-    } catch (e) {
+      if (!res.ok) {
+        this._reports = [];
+        return [];
+      }
+      const data = await res.json().catch(() => ({}));
+      this._reports = extractReadings(data);
+      return this._reports;
+    } catch {
+      this._reports = [];
       return [];
     }
   },
 
-  // ============ 綠界訂單交易紀錄與防重複核發 ============
-  hasProcessedOrder(tradeNo) {
-    if (!tradeNo) return false;
-    const orders = this.getOrderHistory();
-    return orders.some((o) => o.tradeNo === tradeNo);
+  getReports() {
+    return Array.isArray(this._reports) ? this._reports : [];
   },
 
-  recordOrder(orderInfo) {
-    try {
-      const orders = this.getOrderHistory();
-      const record = {
-        id: 'ord_' + Date.now(),
-        date: new Date().toISOString(),
-        ...orderInfo
-      };
-      orders.unshift(record);
-      localStorage.setItem('wenxiantan_orders_v1', JSON.stringify(orders));
-      return record;
-    } catch (e) {
-      console.error('Failed to save order record', e);
-      return null;
-    }
-  },
-
-  getOrderHistory() {
-    try {
-      const saved = localStorage.getItem('wenxiantan_orders_v1');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
+  findReport(id) {
+    return this.getReports().find((item) => item && (item.id === id || item.readingId === id)) || null;
   }
 };

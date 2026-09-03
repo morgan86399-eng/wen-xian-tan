@@ -20,24 +20,35 @@ import './payment-sdk.js';
  * 問仙壇 · 掌心解碼 App - 核心應用邏輯與白話問卷引導引擎
  */
 document.addEventListener('DOMContentLoaded', () => {
-  // 自動清洗並遷移用戶瀏覽器中任何殘留的「陳信士」歷史 Session / DB
-  try {
-    const rawSession = localStorage.getItem('wenxiantan_user_session_v2');
-    if (rawSession && rawSession.includes('陳信士')) {
-      const parsed = JSON.parse(rawSession);
-      parsed.name = '信士';
-      if (parsed.email === 'chen.blessed@example.com') parsed.email = 'seeker@example.com';
-      localStorage.setItem('wenxiantan_user_session_v2', JSON.stringify(parsed));
+  function escapeHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function createNonce() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return crypto.randomUUID();
     }
-    const rawDb = localStorage.getItem('wenxiantan_members_db_v2');
-    if (rawDb && rawDb.includes('陳信士')) {
-      localStorage.setItem('wenxiantan_members_db_v2', rawDb.replaceAll('陳信士', '信士').replaceAll('chen.blessed@example.com', 'seeker@example.com'));
-    }
-    const rawReports = localStorage.getItem('wenxiantan_reports_history_v2');
-    if (rawReports && (rawReports.includes('陳信士') || rawReports.includes('陳先生') || rawReports.includes('陳小姐'))) {
-      localStorage.setItem('wenxiantan_reports_history_v2', rawReports.replaceAll('陳信士', '信士').replaceAll('陳先生', '周先生').replaceAll('陳小姐', '李小姐'));
-    }
-  } catch (e) {}
+    return `n_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  function requireLogin() {
+    if (MemberManager.isLoggedIn()) return true;
+    switchTab('auth');
+    return false;
+  }
+
+  async function refreshSessionUi() {
+    await MemberManager.refreshMe();
+    updateTopBarUserStatus();
+    renderThemesHub();
+    if (state.currentTab === 'member') renderMemberCenter();
+    if (state.currentTab === 'auth') renderAuthPage();
+    if (state.currentTab === 'history') renderHistoryReports();
+  }
 
   // ============ Application State ============
   const state = {
@@ -63,7 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
         question: '',
         goal: 'skip',
         goalCustom: '',
-        palmDataUrl: null
+        palmDataUrl: null,
+        palmImageBase64: '',
+        palmConsent: false
       },
       isSubmitting: false,
       decodeToken: 0
@@ -269,33 +282,11 @@ document.addEventListener('DOMContentLoaded', () => {
             </button>
           </div>
 
-          <!-- 仙壇真言靈函 (即時信匣預覽，確保即使無外設 SMTP 亦能無阻礙完成驗證) -->
-          <div class="celestial-letter-drawer" id="celestialLetterDrawer" style="display:none;">
-            <div class="celestial-letter-header">
-              <span>📜 仙壇靈函信匣：</span>
-              <span id="letterSendStatus" style="font-size:0.75rem; color:#34D399;">已生成</span>
-            </div>
-            <div class="celestial-letter-body">
-              <div>信士您好，您的 6 位數安全驗證碼為：</div>
-              <div style="margin: 8px 0; display:flex; align-items:center;">
-                <span class="celestial-letter-code-pill" id="letterCodePill">------</span>
-                <button type="button" class="btn btn-gold btn-sm" id="letterAutofillBtn" style="padding: 3px 10px; font-size:0.75rem;">
-                  一鍵帶入此碼
-                </button>
-              </div>
-              <div style="font-size:0.72rem; color:var(--text-muted);">
-                💡 此驗證信函已同步備份於本機安全信匣，若信件稍有延遲，可直接點擊帶入驗證。
-              </div>
-            </div>
-          </div>
         </form>
       </div>
     `;
 
     readingModalBackdrop.classList.add('show');
-
-    let currentToken = '';
-    let currentCode = '';
 
     const startCountdown = () => {
       let timeLeft = 60;
@@ -323,10 +314,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const loadingEl = document.getElementById('otpStatusLoading');
       const formEl = document.getElementById('otpVerifyForm');
       const errorEl = document.getElementById('otpErrorAlert');
-      const drawerEl = document.getElementById('celestialLetterDrawer');
-      const letterCodePill = document.getElementById('letterCodePill');
-      const letterSendStatus = document.getElementById('letterSendStatus');
-
       if (loadingEl) loadingEl.style.display = 'block';
       if (formEl) formEl.style.display = 'none';
 
@@ -335,18 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (loadingEl) loadingEl.style.display = 'none';
       if (formEl) formEl.style.display = 'block';
 
-      if (res.success) {
-        currentToken = res.token;
-        currentCode = res.preview?.code || '';
-
-        if (drawerEl && currentCode) {
-          drawerEl.style.display = 'block';
-          if (letterCodePill) letterCodePill.textContent = currentCode;
-          if (letterSendStatus) {
-            letterSendStatus.textContent = res.emailSent ? '信件已送達信箱' : '靈函備妥';
-          }
-        }
-
+      if (res.success || res.ok) {
         startCountdown();
 
         const firstInput = document.querySelector('.otp-digit-field[data-index="0"]');
@@ -396,17 +372,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    document.getElementById('letterAutofillBtn')?.addEventListener('click', () => {
-      if (!currentCode) return;
-      currentCode.split('').forEach((d, i) => {
-        if (inputs[i]) {
-          inputs[i].value = d;
-          inputs[i].classList.add('filled');
-        }
-      });
-      document.getElementById('otpSubmitBtn')?.focus();
-    });
-
     document.getElementById('otpResendBtn')?.addEventListener('click', () => {
       sendOtp();
     });
@@ -442,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.textContent = '⏳ 正在驗證仙緣憑證...';
       }
 
-      const verifyRes = await MemberManager.verifyEmailCode(cleanEmail, fullCode, currentToken, userName);
+      const verifyRes = await MemberManager.verifyEmailCode(cleanEmail, fullCode);
 
       if (submitBtn) {
         submitBtn.disabled = false;
@@ -470,191 +435,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // LINE Login v2.1 授權跳轉與彈窗
   async function openLineAuthDialog() {
-    state.wizard.decodeToken += 1;
-    let lineChannelId = '2006888888';
-    try {
-      const cfgRes = await fetch('/api/config');
-      const cfg = await cfgRes.json();
-      if (cfg && cfg.lineChannelId) lineChannelId = cfg.lineChannelId;
-    } catch (e) {}
-
-    const redirectUri = window.location.origin + window.location.pathname;
-    const stateVal = 'line_csrf_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 8);
-    sessionStorage.setItem('line_oauth_state', stateVal);
-
-    const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${lineChannelId}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${stateVal}&scope=profile%20openid%20email`;
-
-    readingModalCard.innerHTML = `
-      <div style="max-width:440px;margin:0 auto;text-align:center;">
-        <div style="width:58px;height:58px;border-radius:16px;background:#06C755;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 8px 24px rgba(6,199,85,0.35);">
-          <svg style="width:34px;height:34px;fill:#FFF;" viewBox="0 0 24 24"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.577.39.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.838 2.589-5.962z"/></svg>
-        </div>
-
-        <h3 style="color:#FFF;font-size:1.35rem;margin-bottom:6px;font-family:'Noto Serif TC',serif;font-weight:800;">LINE 快速授權登入 / 註冊</h3>
-        <p style="font-size:0.86rem;color:var(--text-muted);margin-bottom:18px;line-height:1.5;">
-          點選下方按鈕將前往 LINE 官方授權中心，許可後自動綁定您的命盤與測算次數：
-        </p>
-
-        <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:14px;text-align:left;margin-bottom:18px;font-size:0.85rem;display:flex;flex-direction:column;gap:8px;">
-          <div style="color:#34D399;display:flex;align-items:center;gap:6px;">
-            <span>✓</span> <span>讀取 LINE 顯示名稱與個人頭像</span>
-          </div>
-          <div style="color:#34D399;display:flex;align-items:center;gap:6px;">
-            <span>✓</span> <span>安全驗證用戶身分，永久保存測算紀錄</span>
-          </div>
-          <div style="color:var(--text-muted);font-size:0.75rem;margin-top:2px;">
-            回調網址：<code>${redirectUri}</code>
-          </div>
-        </div>
-
-        <div style="display:grid;gap:10px;">
-          <a href="${lineAuthUrl}" class="btn btn-primary" style="background:#06C755;border-color:#06C755;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:1rem;padding:12px 20px;">
-            <svg style="width:20px;height:20px;fill:#FFF;" viewBox="0 0 24 24"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.577.39.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.838 2.589-5.962z"/></svg>
-            <span>前往 LINE 官方授權登入</span>
-          </a>
-
-          <button type="button" class="btn btn-outline btn-sm" id="lineLocalMockBtn" style="color:var(--gold-bright);border-color:rgba(212,175,55,0.4);">
-            ⚡ 快捷測試授權 (免跳轉快速體驗)
-          </button>
-
-          <button type="button" class="btn btn-outline btn-sm" id="lineModalCancelBtn">
-            取消
-          </button>
-        </div>
-      </div>
-    `;
-
-    document.getElementById('lineModalCancelBtn')?.addEventListener('click', () => {
-      readingModalBackdrop.classList.remove('show');
-    });
-
-    document.getElementById('lineLocalMockBtn')?.addEventListener('click', () => {
-      MemberManager.loginWithLine({
-        displayName: 'LINE 結緣信士',
-        userId: 'U_demo_' + Date.now()
-      });
-      readingModalBackdrop.classList.remove('show');
-      if (typeof window.confetti === 'function') {
-        window.confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
-      }
-      updateTopBarUserStatus();
-      switchTab('member');
-    });
-
-    readingModalBackdrop.classList.add('show');
+    const res = await MemberManager.startLineLogin();
+    if (!res.ok) alert(res.message || '無法開始 LINE 登入');
   }
 
-  // Google Identity Services (GSI) 授權與彈窗
   async function openGoogleAuthDialog() {
-    state.wizard.decodeToken += 1;
-    let googleClientId = '1029384756-wenxiantan.apps.googleusercontent.com';
-    try {
-      const cfgRes = await fetch('/api/config');
-      const cfg = await cfgRes.json();
-      if (cfg && cfg.googleClientId) googleClientId = cfg.googleClientId;
-    } catch (e) {}
-
-    readingModalCard.innerHTML = `
-      <div style="max-width:440px;margin:0 auto;text-align:center;">
-        <div style="width:58px;height:58px;border-radius:16px;background:#FFF;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 8px 24px rgba(255,255,255,0.25);">
-          <svg style="width:32px;height:32px;" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
-        </div>
-
-        <h3 style="color:#FFF;font-size:1.35rem;margin-bottom:6px;font-family:'Noto Serif TC',serif;font-weight:800;">Google 帳號快速登入 / 註冊</h3>
-        <p style="font-size:0.86rem;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">
-          使用 Google 官方 Identity Services 快速驗證授權，安全綁定個人命盤：
-        </p>
-
-        <div class="google-gsi-container">
-          <div id="googleModalGsiBtnSlot" class="google-gsi-btn-slot"></div>
-        </div>
-
-        <div style="border-top:1px dashed rgba(255,255,255,0.12);margin:16px 0 14px;padding-top:14px;">
-          <button type="button" class="btn btn-outline btn-sm" id="googleQuickMockBtn" style="width:100%;margin-bottom:8px;color:var(--gold-bright);border-color:rgba(212,175,55,0.4);">
-            ⚡ 快捷測試授權 (免跳轉快速體驗)
-          </button>
-          <button type="button" class="btn btn-outline btn-sm" id="googleModalCancelBtn" style="width:100%;">
-            取消
-          </button>
-        </div>
-      </div>
-    `;
-
-    readingModalBackdrop.classList.add('show');
-
-    renderGoogleButton('googleModalGsiBtnSlot', googleClientId);
-
-    document.getElementById('googleModalCancelBtn')?.addEventListener('click', () => {
-      readingModalBackdrop.classList.remove('show');
-    });
-
-    document.getElementById('googleQuickMockBtn')?.addEventListener('click', () => {
-      MemberManager.loginWithGoogle({
-        name: 'Google 結緣信士',
-        email: `google_${Date.now().toString(36)}@gmail.com`,
-        sub: 'mock_sub_' + Date.now()
-      });
-      readingModalBackdrop.classList.remove('show');
-      if (typeof window.confetti === 'function') {
-        window.confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
-      }
-      updateTopBarUserStatus();
-      switchTab('member');
-    });
-  }
-
-  function renderGoogleButton(containerId, clientId) {
-    const container = document.getElementById(containerId);
-    if (!container) return;
-
-    if (window.google && window.google.accounts && window.google.accounts.id) {
-      try {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: (res) => {
-            const loginRes = MemberManager.loginWithGoogleCredential(res.credential);
-            if (loginRes.success) {
-              readingModalBackdrop.classList.remove('show');
-              if (typeof window.confetti === 'function') {
-                window.confetti({ particleCount: 50, spread: 60 });
-              }
-              updateTopBarUserStatus();
-              switchTab('member');
-            } else {
-              alert(loginRes.message || 'Google 登入失敗');
-            }
-          }
-        });
-        window.google.accounts.id.renderButton(container, {
-          theme: 'filled_black',
-          size: 'large',
-          shape: 'pill',
-          text: 'signin_with',
-          locale: 'zh_TW',
-          width: 280
-        });
-      } catch (err) {
-        console.warn('Google GSI render error:', err);
-      }
-    } else {
-      loadGoogleGsiScript(() => renderGoogleButton(containerId, clientId));
-    }
-  }
-
-  function loadGoogleGsiScript(callback) {
-    if (document.getElementById('google-gsi-client-script')) {
-      if (callback) callback();
-      return;
-    }
-    const script = document.createElement('script');
-    script.id = 'google-gsi-client-script';
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.defer = true;
-    script.onload = () => { if (callback) callback(); };
-    document.head.appendChild(script);
+    const res = await MemberManager.startGoogleLogin();
+    if (!res.ok) alert(res.message || '無法開始 Google 登入');
   }
 
   // 登入彈窗相容接口 (任何調用直接導向 auth 頁面或彈窗)
@@ -740,18 +528,18 @@ document.addEventListener('DOMContentLoaded', () => {
         ${formMode === 'register' ? `
           <div class="auth-form-group">
             <label class="auth-form-label">信士尊姓大名：</label>
-            <input type="text" id="pageAuthNameInput" class="auth-form-input" placeholder="例如：王信士" required value="王信士">
+            <input type="text" id="pageAuthNameInput" class="auth-form-input" placeholder="例如：您的稱呼" required>
           </div>
         ` : ''}
 
         <div class="auth-form-group">
           <label class="auth-form-label">電子信箱：</label>
-          <input type="email" id="pageAuthEmailInput" class="auth-form-input" placeholder="name@example.com" required value="seeker@example.com">
+          <input type="email" id="pageAuthEmailInput" class="auth-form-input" placeholder="name@example.com" required>
         </div>
 
         <div class="auth-form-group">
           <label class="auth-form-label">密碼（選填，支援免密碼 Email 驗證）：</label>
-          <input type="password" id="pageAuthPasswordInput" class="auth-form-input" placeholder="請輸入密碼（留空走 Email 驗證碼）" value="123456">
+          <input type="password" id="pageAuthPasswordInput" class="auth-form-input" placeholder="可留空，改用信箱驗證碼">
         </div>
 
         <div style="display:flex;gap:10px;">
@@ -760,13 +548,6 @@ document.addEventListener('DOMContentLoaded', () => {
           </button>
         </div>
       </form>
-
-      <!-- 一鍵示範體驗 -->
-      <div class="auth-demo-box">
-        <button type="button" class="btn btn-outline btn-sm" id="pageDemoLoginBtn" style="width:100%;">
-          ⚡ 一鍵免密碼體驗登入 (信士示範帳號)
-        </button>
-      </div>
 
       <div class="auth-guarantee-badge">
         <span>🔒</span>
@@ -782,37 +563,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('authPageTabRegister')?.addEventListener('click', () => renderAuthPage('register'));
 
     document.getElementById('authGoToMemberBtn')?.addEventListener('click', () => switchTab('member'));
-    document.getElementById('authLogoutBtn')?.addEventListener('click', () => {
-      MemberManager.logout();
+    document.getElementById('authLogoutBtn')?.addEventListener('click', async () => {
+      await MemberManager.logout();
       updateTopBarUserStatus();
       renderAuthPage();
-    });
-
-    document.getElementById('pageDemoLoginBtn')?.addEventListener('click', () => {
-      MemberManager.loginDemo();
-      updateTopBarUserStatus();
-      if (typeof window.confetti === 'function') {
-        window.confetti({ particleCount: 40, spread: 50 });
-      }
-      switchTab('member');
     });
 
     document.getElementById('authPageForm')?.addEventListener('submit', (e) => {
       e.preventDefault();
       const email = document.getElementById('pageAuthEmailInput').value.trim();
-      const pwd = document.getElementById('pageAuthPasswordInput')?.value || '';
-
-      // 檢查是否為測試帳號
-      if ((email.toLowerCase() === 'user' || email.toLowerCase() === 'user@example.com') && pwd === 'user123') {
-        MemberManager.login(email, pwd);
-        WalletManager.ensureTestPoints && WalletManager.ensureTestPoints();
-        updateTopBarUserStatus();
-        switchTab('member');
-        return;
-      }
-
       const name = document.getElementById('pageAuthNameInput')?.value.trim() || '';
-      // 發起 Email 6 碼驗證彈窗流程
       openEmailVerifyDialog(email, formMode, name);
     });
   }
@@ -924,6 +684,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const quickReadBtn = card.querySelector('[data-action="quick-read"]');
         if (quickReadBtn) {
           quickReadBtn.addEventListener('click', () => {
+            if (!requireLogin()) return;
             startGuidedWizard(theme.id);
           });
         }
@@ -1007,6 +768,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function handleThemeClick(themeId) {
+    if (!requireLogin()) return;
     const quota = WalletManager.getThemePoints(themeId);
     if (quota > 0) {
       startGuidedWizard(themeId);
@@ -1143,11 +905,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const isValid = state.customChosenThemes.size === plan.requiredCount;
+    const agreed = Boolean(document.getElementById('agreeTermsCheckbox')?.checked);
     if (confirmPurchaseBtn) {
-      confirmPurchaseBtn.disabled = !isValid;
-      confirmPurchaseBtn.textContent = isValid
-        ? `前往安全支付 (Portaly) NT$ ${plan.price} →`
-        : `請先選滿 ${plan.requiredCount} 個主題（目前已選 ${state.customChosenThemes.size} 項）`;
+      confirmPurchaseBtn.disabled = !isValid || !agreed;
+      if (!agreed) {
+        confirmPurchaseBtn.textContent = '請先勾選同意服務條款與隱私權政策';
+      } else if (!isValid) {
+        confirmPurchaseBtn.textContent = `請先選滿 ${plan.requiredCount} 個主題（目前已選 ${state.customChosenThemes.size} 項）`;
+      } else {
+        confirmPurchaseBtn.textContent = `前往綠界安全支付 NT$ ${plan.price} →`;
+      }
     }
 
     if (themePickerCountEl) {
@@ -1155,12 +922,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ============ 9. Portaly (傳送門) 台灣在地金流發起與確認 ============
   if (typeof window !== 'undefined' && window.PaymentSDK) {
     window.PaymentSDK.init({ serverUrl: '' });
   }
 
-  function triggerPortalyCheckout(plan, chosenThemes, onCustomSuccess) {
+  document.getElementById('agreeTermsCheckbox')?.addEventListener('change', () => {
+    updateCheckoutSummary();
+  });
+
+  function triggerEcpayCheckout(plan, chosenThemes, onCustomSuccess) {
+    if (!requireLogin()) return;
+
     const themeTitles = chosenThemes
       .map((id) => THEMES.find((t) => t.id === id)?.name || id)
       .join('、');
@@ -1171,85 +943,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     PaymentSDK.openCheckout({
+      productId: plan.id,
       planId: plan.id,
       planName: `問仙壇 · ${plan.label} (${themeTitles})`,
-      amount: plan.price,
-      userName: '求問信眾',
-      themes: chosenThemes,
-      onSuccess: (order) => {
-        console.log('[Portaly 付款/驗證成功]', order);
-
-        // 1. 存入所選篇章的測算點數 (每篇各存入 pointsReward 次)
-        WalletManager.addPointsToThemes(chosenThemes, plan.pointsReward || 3);
-
-        // 2. 記錄訂單
-        WalletManager.recordOrder({
-          tradeNo: order.id,
-          planId: plan.id,
-          themes: chosenThemes,
-          amount: plan.price,
-          status: 'paid',
-          paymentMethod: order.paymentMethod || 'Portaly 台灣在地金流'
-        });
-
-        // 3. 畫面即時重新渲染
+      displayPrice: plan.price,
+      themeKeys: chosenThemes,
+      onSuccess: async (order) => {
+        await MemberManager.refreshMe();
         renderThemesHub();
         renderMemberCenter();
-
-        // 4. 自訂回調或顯示成功彈窗
+        updateTopBarUserStatus();
         if (typeof onCustomSuccess === 'function') {
           onCustomSuccess(order);
         } else {
-          showPortalySuccessModal(plan, chosenThemes, order);
+          showPaymentConfirmModal(order);
         }
+      },
+      onError: (err) => {
+        if (err && err.message === 'UNAUTHENTICATED') switchTab('auth');
       }
     });
   }
 
-  function showPortalySuccessModal(plan, chosenThemes, order) {
+  function showPaymentConfirmModal(order) {
     const backdrop = document.getElementById('readingModalBackdrop');
     const card = document.getElementById('readingModalCard');
     if (!backdrop || !card) return;
-
-    const themeTitles = chosenThemes
-      .map((id) => THEMES.find((t) => t.id === id)?.name || id)
-      .join('、');
-
+    const credits = WalletManager.getPoints();
+    const total = Object.values(credits).reduce((sum, n) => sum + Number(n || 0), 0);
     card.innerHTML = `
       <div class="wizard-header" style="border-bottom:1px solid var(--border-gold);padding-bottom:14px;margin-bottom:16px;">
         <div class="wizard-title-row">
           <h3 style="display:flex;align-items:center;gap:8px;color:#34D399;font-size:1.25rem;">
-            <span>🎉</span> 結緣供養成功！
+            <span>✓</span> 已向伺服器確認點數
           </h3>
           <button type="button" class="btn btn-outline btn-sm" id="closePortalySuccessBtn" style="padding:4px 10px;">✕ 關閉</button>
         </div>
       </div>
-
       <div style="text-align:center;padding:10px 0 20px;">
-        <div style="font-size:3.2rem;margin-bottom:10px;">🧧</div>
-        <h4 style="color:var(--gold-bright);font-size:1.25rem;margin-bottom:8px;">誠心叩問，福澤圓滿</h4>
         <p style="color:var(--text-secondary);font-size:0.92rem;line-height:1.6;max-width:440px;margin:0 auto 16px;">
-          感謝您的結緣支持！系統已成功開通 <strong>${themeTitles}</strong>，所選篇章各自存入 <strong>${plan.pointsReward || 3} 次</strong> 深度命理與掌紋解析次數！
+          目前帳號剩餘測算次數合計 <strong>${total}</strong> 次。點數以伺服器為準。
         </p>
-        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);padding:10px 16px;font-size:0.8rem;color:var(--text-muted);display:inline-block;">
-          訂單單號：<span style="color:#FFFFFF;font-family:monospace;">${order.id || '已完成'}</span> ｜ 付款方式：<span style="color:#10B981;">${order.paymentMethod || 'Portaly 台灣金流'}</span>
-        </div>
+        <div style="font-size:0.8rem;color:var(--text-muted);">訂單：${escapeHtml(order && (order.id || order.merchantTradeNo) || '')}</div>
         <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;">
-          <button type="button" class="btn btn-gold btn-lg" id="startReadingNowPortalyBtn" style="box-shadow:0 0 20px rgba(212,168,83,0.4);">🔮 立即前往測算</button>
+          <button type="button" class="btn btn-gold btn-lg" id="startReadingNowPortalyBtn">前往測算</button>
         </div>
       </div>
     `;
-
-    const closeSuccess = () => {
-      backdrop.classList.remove('show', 'active');
-    };
-
+    const closeSuccess = () => backdrop.classList.remove('show', 'active');
     card.querySelector('#closePortalySuccessBtn')?.addEventListener('click', closeSuccess);
     card.querySelector('#startReadingNowPortalyBtn')?.addEventListener('click', () => {
       closeSuccess();
       switchTab('hub');
     });
-
     backdrop.classList.add('show', 'active');
   }
 
@@ -1272,7 +1018,8 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      triggerPortalyCheckout(plan, chosenArray);
+      if (!requireLogin()) return;
+      triggerEcpayCheckout(plan, chosenArray);
     });
   }
 

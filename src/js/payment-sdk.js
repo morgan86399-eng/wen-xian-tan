@@ -1,85 +1,125 @@
 /**
- * 算命問仙專案 - Portaly (傳送門) 台灣在地金流前端獨立 SDK (PaymentSDK)
- * 支援 台灣信用卡 / LINE Pay / 街口 / ATM 轉帳 / 超商代碼
- * 適用任何前端架構 (Vanilla JS / Vue / React / Next.js)
+ * 問仙壇 · 綠界 ECPay 結帳（只建單，不模擬付款、不收體驗碼、不用 Portaly 當正式結帳）
  */
 (function (global) {
+  function readJson(res) {
+    return res.json().catch(() => ({}));
+  }
+
+  function isPaidOrder(data) {
+    if (!data || typeof data !== 'object') return false;
+    if (data.error) return false;
+    const order = data.order || data;
+    const status = String(order.status || data.status || '').toUpperCase();
+    return status === 'PAID' || data.isPaid === true || order.isPaid === true;
+  }
+
+  function submitEcpayForm(action, fields) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = action;
+    form.style.display = 'none';
+    Object.entries(fields || {}).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = value == null ? '' : String(value);
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+  }
+
   const PaymentSDK = {
-    serverUrl: '', // 預設同網域，若後端分開部署可設為 http://localhost:3000
+    serverUrl: '',
     activeOrder: null,
     pollingTimer: null,
     onSuccessCallback: null,
 
     init: function (config) {
       if (config && config.serverUrl) {
-        this.serverUrl = config.serverUrl.replace(/\/$/, '');
+        this.serverUrl = String(config.serverUrl).replace(/\/$/, '');
       }
     },
 
-    /**
-     * 開啟結帳彈窗並發起 Portaly 金流流程
-     * @param {Object} options 
-     *  - planId: 方案代號
-     *  - planName: 方案名稱
-     *  - amount: 金額 (NT$)
-     *  - userName: 用戶名稱
-     *  - userEmail: 用戶 Email
-     *  - onSuccess: 付款/解鎖成功後的回調函式 (order) => void
-     */
     openCheckout: function (options) {
       const self = this;
       self.onSuccessCallback = options.onSuccess || function () {};
-
-      // 檢查並注入彈窗 DOM
       self._injectModalDOM();
 
       const modal = document.getElementById('kaiyun-payment-modal');
       const planNameEl = document.getElementById('kyp-plan-name');
       const planPriceEl = document.getElementById('kyp-plan-price');
       const totalEl = document.getElementById('kyp-total-price');
-      const payAmountEl = document.getElementById('kyp-pay-amount');
       const orderIdEl = document.getElementById('kyp-order-id');
-      const pollingStatus = document.getElementById('kyp-polling-status');
+      const statusEl = document.getElementById('kyp-polling-status');
+      const errorEl = document.getElementById('kyp-error');
 
-      if (planNameEl) planNameEl.innerText = options.planName || '命理合盤解鎖專案';
-      if (planPriceEl) planPriceEl.innerText = `NT$ ${options.amount || 399}`;
-      if (totalEl) totalEl.innerText = `NT$ ${options.amount || 399}`;
-      if (payAmountEl) payAmountEl.innerText = `NT$ ${options.amount || 399}`;
-      if (orderIdEl) orderIdEl.innerText = '建立專屬訂單中...';
-      if (pollingStatus) pollingStatus.style.display = 'none';
+      if (planNameEl) planNameEl.textContent = options.planName || '問仙壇方案';
+      if (planPriceEl) planPriceEl.textContent = `NT$ ${options.displayPrice || ''}`;
+      if (totalEl) totalEl.textContent = `NT$ ${options.displayPrice || ''}`;
+      if (orderIdEl) orderIdEl.textContent = '建立訂單中...';
+      if (statusEl) statusEl.style.display = 'none';
+      if (errorEl) {
+        errorEl.style.display = 'none';
+        errorEl.textContent = '';
+      }
+      if (modal) modal.style.display = 'flex';
 
-      modal.style.display = 'flex';
-
-      // 呼叫後端 API 建立訂單
       fetch(`${self.serverUrl}/api/orders/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
-          planId: options.planId || 'standard',
-          planName: options.planName || '命理合盤解鎖專案',
-          themes: options.themes || [],
-          amount: options.amount || 399,
-          userName: options.userName || '緣主',
-          userEmail: options.userEmail || ''
+          productId: options.productId || options.planId,
+          themeKeys: options.themeKeys || options.themes || []
         })
       })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.order) {
-          self.activeOrder = data.order;
-          if (orderIdEl) orderIdEl.innerText = data.order.id;
-          self._startPolling(data.order.id);
-        }
-      })
-      .catch(err => {
-        console.warn('連線金流伺服器失敗，啟用離線備用模式', err);
-        const fallbackId = `ORD-OFFLINE-${Date.now().toString(36).toUpperCase()}`;
-        self.activeOrder = { 
-          id: fallbackId, 
-          portalyCheckoutUrl: 'https://portaly.cc' 
-        };
-        if (orderIdEl) orderIdEl.innerText = fallbackId;
-      });
+        .then(async (res) => {
+          const data = await readJson(res);
+          if (res.status === 401 || data.error === 'UNAUTHENTICATED') {
+            throw new Error('UNAUTHENTICATED');
+          }
+          if (!res.ok || data.ok === false) {
+            throw new Error(data.error || data.message || '建單失敗');
+          }
+          return data;
+        })
+        .then((data) => {
+          const order = data.order || data;
+          const orderId = order.id || order.orderId || data.orderId || data.merchantTradeNo;
+          self.activeOrder = { id: orderId, ...order };
+
+          if (orderIdEl) orderIdEl.textContent = orderId || '已建立';
+
+          const action = data.action || data.ecpayAction || order.action;
+          const fields = data.fields || data.ecpayFields || order.fields;
+          const checkoutUrl = data.url || data.checkoutUrl || order.checkoutUrl || order.url;
+
+          if (action && fields) {
+            submitEcpayForm(action, fields);
+            return;
+          }
+          if (checkoutUrl) {
+            window.location.assign(checkoutUrl);
+            return;
+          }
+          if (orderId) {
+            if (statusEl) statusEl.style.display = 'block';
+            self._startPolling(orderId);
+            return;
+          }
+          throw new Error('伺服器未回傳結帳資訊');
+        })
+        .catch((err) => {
+          if (errorEl) {
+            errorEl.style.display = 'block';
+            errorEl.textContent = err && err.message === 'UNAUTHENTICATED'
+              ? '請先登入再結帳'
+              : ((err && err.message) || '目前無法建立訂單');
+          }
+          if (typeof options.onError === 'function') options.onError(err);
+        });
     },
 
     closeCheckout: function () {
@@ -88,87 +128,27 @@
       if (modal) modal.style.display = 'none';
     },
 
-    openPortalyWindow: function () {
-      const self = this;
-      const url = (self.activeOrder && self.activeOrder.portalyCheckoutUrl) 
-        ? self.activeOrder.portalyCheckoutUrl 
-        : 'https://portaly.cc';
-      window.open(url, '_blank');
-      const pollingStatus = document.getElementById('kyp-polling-status');
-      if (pollingStatus) pollingStatus.style.display = 'block';
-    },
-
-    triggerMockPay: function () {
-      const self = this;
-      if (!self.activeOrder || !self.activeOrder.id) {
-        alert('訂單正在建立，請稍候 1 秒再試。');
-        return;
-      }
-      fetch(`${self.serverUrl}/api/dev/mock-pay`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: self.activeOrder.id })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          self._handlePaymentSuccess(data.order);
-        } else {
-          self._handlePaymentSuccess(self.activeOrder);
-        }
-      })
-      .catch(() => {
-        self._handlePaymentSuccess(self.activeOrder);
-      });
-    },
-
-    handleManualVerify: function () {
-      const self = this;
-      const input = document.getElementById('kyp-manual-input');
-      const code = input ? input.value.trim() : '';
-      if (!code) {
-        alert('請輸入 Portaly 訂單單號或 VIP-LUCKY-2026 體驗碼！');
-        return;
-      }
-      fetch(`${self.serverUrl}/api/orders/verify-manual`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId: self.activeOrder ? self.activeOrder.id : '',
-          queryCode: code
-        })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          self._handlePaymentSuccess(data.order);
-        } else {
-          alert(data.message || '驗證失敗，請檢查單號。');
-        }
-      })
-      .catch(() => {
-        if (code === 'VIP-LUCKY-2026') {
-          self._handlePaymentSuccess(self.activeOrder || { id: 'VIP' });
-        } else {
-          alert('連線金流伺服器失敗。');
-        }
-      });
-    },
-
     _startPolling: function (orderId) {
       const self = this;
       self._stopPolling();
       self.pollingTimer = setInterval(() => {
         if (!orderId) return;
-        fetch(`${self.serverUrl}/api/orders/${orderId}/status`)
-          .then(res => res.json())
-          .then(data => {
-            if (data.success && data.isPaid) {
-              self._handlePaymentSuccess(data.order);
+        fetch(`${self.serverUrl}/api/orders/${encodeURIComponent(orderId)}`, {
+          credentials: 'include'
+        })
+          .then(async (res) => {
+            if (res.status === 404) return null;
+            const data = await readJson(res);
+            if (!res.ok) return null;
+            return data;
+          })
+          .then((data) => {
+            if (isPaidOrder(data)) {
+              self._handlePaymentSuccess(data.order || data);
             }
           })
           .catch(() => {});
-      }, 1800);
+      }, 2500);
     },
 
     _stopPolling: function () {
@@ -179,77 +159,95 @@
     },
 
     _handlePaymentSuccess: function (order) {
-      const self = this;
-      self._stopPolling();
-      self.closeCheckout();
-
-      if (window.confetti) {
-        window.confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
-      }
-
-      if (typeof self.onSuccessCallback === 'function') {
-        self.onSuccessCallback(order);
+      this._stopPolling();
+      this.closeCheckout();
+      if (typeof this.onSuccessCallback === 'function') {
+        this.onSuccessCallback(order);
       }
     },
 
     _injectModalDOM: function () {
       if (document.getElementById('kaiyun-payment-modal')) return;
+      const modal = document.createElement('div');
+      modal.id = 'kaiyun-payment-modal';
+      modal.className = 'kyp-modal-backdrop';
+      modal.style.display = 'none';
 
-      const modalHtml = `
-        <div id="kaiyun-payment-modal" class="kyp-modal-backdrop" style="display: none;">
-          <div class="kyp-modal-card">
-            <div class="kyp-modal-header">
-              <h3 class="kyp-modal-title">🔐 安全加密結帳 (台灣在地金流)</h3>
-              <button class="kyp-modal-close" onclick="PaymentSDK.closeCheckout()">✕</button>
-            </div>
-            <div class="kyp-modal-body">
-              <div class="kyp-order-box">
-                <div class="kyp-order-row">
-                  <span id="kyp-plan-name">方案名稱</span>
-                  <span id="kyp-plan-price" class="kyp-gold-text">NT$ 399</span>
-                </div>
-                <div class="kyp-order-divider"></div>
-                <div class="kyp-order-row kyp-total-row">
-                  <span>應付總額</span>
-                  <span id="kyp-total-price" class="kyp-gold-text">NT$ 399</span>
-                </div>
-                <div class="kyp-id-badge">
-                  <span>訂單編號：<strong id="kyp-order-id">建立中...</strong></span>
-                </div>
-              </div>
+      const card = document.createElement('div');
+      card.className = 'kyp-modal-card';
 
-              <!-- Portaly 台灣金流卡片 -->
-              <div class="kyp-portaly-card">
-                <div class="kyp-badge-title">🌟 推薦支付（支援 台灣各家信用卡 / LINE Pay / 超商）</div>
-                <p class="kyp-portaly-desc">
-                  透過 <strong>Portaly 傳送門</strong> 台灣本地安全金流結帳，免跨國手續費。<br>
-                  付款完成後 <strong style="color: #34D399;">系統秒級自動驗證開通</strong>！
-                </p>
-                <button type="button" class="kyp-btn-portaly" onclick="PaymentSDK.openPortalyWindow()">
-                  🛍️ 前往 Portaly 安全支付 (<span id="kyp-pay-amount">NT$ 399</span>) ➔
-                </button>
-                <div id="kyp-polling-status" class="kyp-polling-text" style="display: none;">
-                  <span class="kyp-spinner"></span> 已開啟結帳頁面，正在監聽付款完成通知...
-                </div>
-              </div>
+      const header = document.createElement('div');
+      header.className = 'kyp-modal-header';
+      const title = document.createElement('h3');
+      title.className = 'kyp-modal-title';
+      title.textContent = '綠界安全結帳';
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'kyp-modal-close';
+      closeBtn.textContent = '✕';
+      closeBtn.addEventListener('click', () => PaymentSDK.closeCheckout());
+      header.appendChild(title);
+      header.appendChild(closeBtn);
 
-              <!-- 開發者測試與手動兌換面板 -->
-              <div class="kyp-dev-box">
-                <div style="font-size: 11.5px; color: #F59E0B; font-weight: 700; margin-bottom: 6px;">⚡ 本地開發測試與補發</div>
-                <button type="button" class="kyp-btn-mock" onclick="PaymentSDK.triggerMockPay()">
-                  ⚡ [測試模式] 一鍵模擬 Portaly 付款成功並秒解鎖
-                </button>
+      const body = document.createElement('div');
+      body.className = 'kyp-modal-body';
 
-                <div style="margin-top: 8px; display: flex; gap: 6px;">
-                  <input type="text" id="kyp-manual-input" class="kyp-input" placeholder="輸入單號或 VIP-LUCKY-2026 體驗碼">
-                  <button type="button" class="kyp-btn-sub" onclick="PaymentSDK.handleManualVerify()">驗證</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-      document.body.insertAdjacentHTML('beforeend', modalHtml);
+      const nameRow = document.createElement('div');
+      const nameLabel = document.createElement('span');
+      nameLabel.id = 'kyp-plan-name';
+      nameLabel.textContent = '方案名稱';
+      const priceLabel = document.createElement('span');
+      priceLabel.id = 'kyp-plan-price';
+      priceLabel.className = 'kyp-gold-text';
+      nameRow.appendChild(nameLabel);
+      nameRow.appendChild(priceLabel);
+
+      const totalRow = document.createElement('div');
+      const totalText = document.createElement('span');
+      totalText.textContent = '應付總額';
+      const totalPrice = document.createElement('span');
+      totalPrice.id = 'kyp-total-price';
+      totalPrice.className = 'kyp-gold-text';
+      totalRow.appendChild(totalText);
+      totalRow.appendChild(totalPrice);
+
+      const orderBadge = document.createElement('div');
+      orderBadge.className = 'kyp-id-badge';
+      const orderSpan = document.createElement('span');
+      orderSpan.textContent = '訂單編號：';
+      const orderStrong = document.createElement('strong');
+      orderStrong.id = 'kyp-order-id';
+      orderStrong.textContent = '建立中...';
+      orderSpan.appendChild(orderStrong);
+      orderBadge.appendChild(orderSpan);
+
+      const hint = document.createElement('p');
+      hint.className = 'kyp-portaly-desc';
+      hint.textContent = '將導向綠界付款頁。付款完成後，點數由伺服器入帳，不會依網址參數加點。';
+
+      const status = document.createElement('div');
+      status.id = 'kyp-polling-status';
+      status.className = 'kyp-polling-text';
+      status.style.display = 'none';
+      status.textContent = '已建立訂單，正在向伺服器確認付款狀態...';
+
+      const error = document.createElement('div');
+      error.id = 'kyp-error';
+      error.style.display = 'none';
+      error.style.color = '#F87171';
+      error.style.fontSize = '0.85rem';
+
+      body.appendChild(nameRow);
+      body.appendChild(totalRow);
+      body.appendChild(orderBadge);
+      body.appendChild(hint);
+      body.appendChild(status);
+      body.appendChild(error);
+
+      card.appendChild(header);
+      card.appendChild(body);
+      modal.appendChild(card);
+      document.body.appendChild(modal);
     }
   };
 

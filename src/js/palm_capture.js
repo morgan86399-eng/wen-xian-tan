@@ -103,6 +103,39 @@ async function canKeepOriginal(file) {
   return jpeg || png || webp;
 }
 
+export async function fileToCompressedBase64(file, maxSide = 1024, quality = 0.8) {
+  if (!file) return "";
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new Image();
+    image.decoding = "async";
+    image.src = url;
+    try {
+      await image.decode();
+    } catch {
+      throw new Error("這張照片無法轉成可傳送的格式，請改拍一張清晰的掌心照片。");
+    }
+    let width = image.naturalWidth;
+    let height = image.naturalHeight;
+    const longest = Math.max(width, height);
+    if (longest > maxSide) {
+      const scale = maxSide / longest;
+      width = Math.max(1, Math.round(width * scale));
+      height = Math.max(1, Math.round(height * scale));
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d", { alpha: false });
+    context.fillStyle = "#fff";
+    context.fillRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+    return canvas.toDataURL("image/jpeg", quality);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 export function setFile(hand, file) {
   if (state.previewUrls[hand]) URL.revokeObjectURL(state.previewUrls[hand]);
   state.previewUrls[hand] = "";
@@ -110,6 +143,7 @@ export function setFile(hand, file) {
     state.files[hand] = null;
     if (!state.files.left && !state.files.right) {
       window.KaiyunPalmCapture.lastFile = null;
+      window.KaiyunPalmCapture.lastBase64 = "";
     }
     document.dispatchEvent(new CustomEvent("kaiyun-palm-cleared", { detail: { hand } }));
     return;
@@ -129,6 +163,11 @@ export async function handleFile(hand, file) {
   try {
     const prepared = await prepareImage(file);
     setFile(hand, prepared);
+    const base64 = await fileToCompressedBase64(prepared, 1024, 0.8);
+    window.KaiyunPalmCapture.lastBase64 = base64;
+    document.dispatchEvent(new CustomEvent("kaiyun-palm-captured", {
+      detail: { hand, file: prepared, previewUrl: state.previewUrls[hand], palmImageBase64: base64 }
+    }));
   } catch (errorValue) {
     setFile(hand, null);
     if (error) error.textContent = errorValue instanceof Error ? errorValue.message : "照片無法處理，請重試。";
@@ -558,6 +597,7 @@ export function ensurePalmCaptureDom() {
 
 window.KaiyunPalmCapture = {
   lastFile: null,
+  lastBase64: "",
   lastHand: "left",
   activeHand: "left",
   gender: "",
