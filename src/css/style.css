@@ -1890,7 +1890,7 @@ p {
 }
 
 .celestial-letter-drawer::before {
-  content: "仙壇真言靈函";
+  content: "";
   position: absolute;
   top: 8px;
   right: -24px;
