@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <!-- 一鍵示範體驗 -->
       <div class="auth-demo-box">
         <button type="button" class="btn btn-outline btn-sm" id="pageDemoLoginBtn" style="width:100%;">
-          ⚡ 一鍵免密碼體驗登入 (陳信士示範帳號)
+          ⚡ 一鍵免密碼體驗登入 (信士示範帳號)
         </button>
       </div>
 

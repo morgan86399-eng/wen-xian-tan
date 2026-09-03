@@ -131,12 +131,12 @@ export const MemberManager = {
     return { success: true, user: newUser, isNew: true };
   },
 
-  // 一鍵體驗登入 (陳信士示範帳號)
+  // 一鍵體驗登入 (信士示範帳號)
   loginDemo() {
     const demoUser = {
       id: 'usr_demo',
-      name: '陳信士',
-      email: 'chen.blessed@example.com',
+      name: '信士',
+      email: 'seeker@example.com',
       provider: 'demo',
       gender: 'female',
       tier: '有緣信士',
