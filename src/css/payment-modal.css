@@ -1,5 +1,5 @@
 /* ==========================================================================
-   算命問仙專案 - Portaly (傳送門) 獨立金流彈窗樣式 (暗黑科技奢華風)
+   算命問仙專案 - 獨立金流彈窗樣式 (暗黑科技奢華風)
    所有 class 皆以 kyp- 為前綴，絕對不與主專案 CSS 產生命名衝突
    ========================================================================== */
 
@@ -126,7 +126,7 @@
   font-family: monospace;
 }
 
-.kyp-portaly-card {
+.kyp-checkout-card {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
   border: 1px solid rgba(16, 185, 129, 0.35);
   border-radius: 14px;
@@ -142,14 +142,14 @@
   margin-bottom: 6px;
 }
 
-.kyp-portaly-desc {
+.kyp-checkout-desc {
   font-size: 12.5px;
   color: #E5E7EB;
   line-height: 1.5;
   margin: 0 0 14px 0;
 }
 
-.kyp-btn-portaly {
+.kyp-btn-checkout {
   width: 100%;
   background: linear-gradient(135deg, #10B981 0%, #059669 100%);
   color: #FFFFFF;
@@ -163,7 +163,7 @@
   transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
-.kyp-btn-portaly:hover {
+.kyp-btn-checkout:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
   background: linear-gradient(135deg, #34D399 0%, #10B981 100%);

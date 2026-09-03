@@ -52,7 +52,6 @@
 ```text
 wen-xian-tan/
 ├── index.html            # 現代模組化主頁面 (Module-based)
-├── standalone.html       # 單檔零依賴版本 (可直接雙擊瀏覽器開啟)
 ├── package.json          # 專案依賴與腳本設定
 ├── src/
 │   ├── css/
@@ -67,8 +66,8 @@ wen-xian-tan/
 
 ## 🚀 快速開始
 
-### 方法一：直接雙擊開啟（最簡單）
-直接使用任何瀏覽器開啟 `standalone.html` 即可完整體驗所有功能。
+### 方法一：開發伺服器
+執行 `npm run dev` 後在瀏覽器開啟 `http://localhost:8788` 即可體驗所有功能。
 
 ### 方法二：使用 Node.js / Vite 開發伺服器
 ```bash
