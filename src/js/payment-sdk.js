@@ -1,5 +1,5 @@
 /**
- * 問仙壇 · 綠界 ECPay 結帳（只建單，不模擬付款、不收體驗碼、不用 Portaly 當正式結帳）
+ * 問仙壇 · 綠界 ECPay 結帳（只建單，不模擬付款、不收體驗碼）
  */
 (function (global) {
   function readJson(res) {
@@ -222,7 +222,7 @@
       orderBadge.appendChild(orderSpan);
 
       const hint = document.createElement('p');
-      hint.className = 'kyp-portaly-desc';
+      hint.className = 'kyp-checkout-desc';
       hint.textContent = '將導向綠界付款頁。付款完成後，點數由伺服器入帳，不會依網址參數加點。';
 
       const status = document.createElement('div');

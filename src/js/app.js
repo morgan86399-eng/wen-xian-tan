@@ -989,7 +989,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <h3 style="display:flex;align-items:center;gap:8px;color:#34D399;font-size:1.25rem;">
             <span>✓</span> 已向伺服器確認點數
           </h3>
-          <button type="button" class="btn btn-outline btn-sm" id="closePortalySuccessBtn" style="padding:4px 10px;">✕ 關閉</button>
+          <button type="button" class="btn btn-outline btn-sm" id="closePaymentSuccessBtn" style="padding:4px 10px;">✕ 關閉</button>
         </div>
       </div>
       <div style="text-align:center;padding:10px 0 20px;">
@@ -998,13 +998,13 @@ document.addEventListener('DOMContentLoaded', () => {
         </p>
         <div style="font-size:0.8rem;color:var(--text-muted);">訂單：${escapeHtml(order && (order.id || order.merchantTradeNo) || '')}</div>
         <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;">
-          <button type="button" class="btn btn-gold btn-lg" id="startReadingNowPortalyBtn">前往測算</button>
+          <button type="button" class="btn btn-gold btn-lg" id="startReadingNowBtn">前往測算</button>
         </div>
       </div>
     `;
     const closeSuccess = () => backdrop.classList.remove('show', 'active');
-    card.querySelector('#closePortalySuccessBtn')?.addEventListener('click', closeSuccess);
-    card.querySelector('#startReadingNowPortalyBtn')?.addEventListener('click', () => {
+    card.querySelector('#closePaymentSuccessBtn')?.addEventListener('click', closeSuccess);
+    card.querySelector('#startReadingNowBtn')?.addEventListener('click', () => {
       closeSuccess();
       switchTab('hub');
     });

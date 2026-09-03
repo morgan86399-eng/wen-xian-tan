@@ -262,7 +262,7 @@ await check('有 Gemini 時先打 Gemini', async (env) => {
     }, { systemPrompt: 's', userPrompt: 'u' });
     assert.match(calls[0], /generativelanguage\.googleapis\.com/);
     assert.equal(result.parsed.summary, 'gemini-ok');
-    assert.equal(result.model, 'gemini-3.6-flash');
+    assert.equal(result.model, 'gemini-3.7-flash');
   } finally {
     globalThis.fetch = realFetch;
   }
