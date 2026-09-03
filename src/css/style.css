@@ -2091,8 +2091,9 @@ p {
 .decoding-progress-fill {
   height: 100%;
   width: 0%;
-  background: var(--cta-gradient);
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, #3b82f6, #7dd3fc);
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.55);
+  transition: width 0.4s ease;
 }
 
 /* Full Decoded Reading Report */
@@ -2673,6 +2674,27 @@ p {
   margin: 0 auto;
 }
 
+.ritual-orb {
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 20px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ritual-orb-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid rgba(212, 175, 55, 0.22);
+  border-top-color: var(--gold-bright);
+  border-right-color: #EC4899;
+  animation: ritualSpin 1.4s linear infinite;
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.25);
+}
+
 .ritual-censer-halo {
   width: 86px;
   height: 86px;
@@ -2696,7 +2718,25 @@ p {
 
 .ritual-censer-icon {
   font-size: 2.2rem;
+  position: relative;
+  z-index: 1;
   animation: ritualPulse 2s ease-in-out infinite alternate;
+}
+
+.ritual-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  max-width: 360px;
+  margin: 0 auto 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+#decodingProgressLabel {
+  color: var(--gold-bright);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 @keyframes ritualPulse {

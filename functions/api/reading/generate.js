@@ -9,6 +9,7 @@ import {
 } from '../../lib/wxt/store.mjs';
 import { buildSystemPrompt, buildUserPrompt, scanForbidden, replaceForbidden } from '../../lib/wxt/forbidden.mjs';
 import { describePalm, generateReport } from '../../lib/wxt/ai.mjs';
+import { withAdviceField } from '../../lib/wxt/report-format.mjs';
 
 export const onRequest = postOnly(async ({ request, env }) => {
   if (!hasDb(env)) return json({ error: 'SERVICE_UNAVAILABLE' }, 503);
@@ -30,7 +31,7 @@ export const onRequest = postOnly(async ({ request, env }) => {
       ok: true,
       id: existing.id,
       themeId: existing.theme_id,
-      report: JSON.parse(existing.content_json),
+      report: withAdviceField(JSON.parse(existing.content_json)),
       model: existing.model,
       tokens: existing.tokens,
       cached: true
@@ -51,7 +52,7 @@ export const onRequest = postOnly(async ({ request, env }) => {
         ok: true,
         id: cached.id,
         themeId: cached.theme_id,
-        report: JSON.parse(cached.content_json),
+        report: withAdviceField(JSON.parse(cached.content_json)),
         model: cached.model,
         tokens: cached.tokens,
         cached: true
@@ -105,6 +106,8 @@ export const onRequest = postOnly(async ({ request, env }) => {
     await refundCredit(env, { userId: session.uid, themeId, idempotencyKey });
     return json({ error: 'GENERATION_FAILED' }, 503);
   }
+
+  report = withAdviceField(report);
 
   const readingId = await saveReading(env, {
     userId: session.uid,

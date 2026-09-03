@@ -22,6 +22,7 @@ import { scanForbidden, replaceForbidden } from '../functions/lib/wxt/forbidden.
 import { getEcpayConfig, calculateCheckMacValue } from '../functions/lib/wxt/ecpay.mjs';
 import { signUserSession, sessionCookieHeader } from '../functions/lib/wxt/auth.mjs';
 import { generateReport } from '../functions/lib/wxt/ai.mjs';
+import { formatAdviceFromReport, pickReportObject, withAdviceField } from '../functions/lib/wxt/report-format.mjs';
 
 let passed = 0;
 
@@ -297,6 +298,87 @@ await check('Gemini 失敗才打 Groq', async (env) => {
     assert.ok(hosts.some((item) => item.includes('generativelanguage.googleapis.com')));
     assert.ok(hosts.some((item) => item.includes('api.groq.com')));
     assert.equal(result.parsed.summary, 'groq-ok');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+console.log('\n[報告正文正規化]');
+
+await check('summary+sections 收成 advice，前端能從 generate 包取出正文', async () => {
+  const raw = {
+    title: '感情篇',
+    summary: '先把相處節奏看清楚。',
+    sections: [
+      { heading: '對象輪廓', body: '對方目前偏觀察、少主動。' },
+      { heading: '下一步', body: '這週只確認一件具體約定。' }
+    ]
+  };
+  const advice = formatAdviceFromReport(raw);
+  assert.match(advice, /相處節奏/);
+  assert.match(advice, /對象輪廓/);
+  assert.match(advice, /具體約定/);
+  assert.equal(withAdviceField(raw).advice, advice);
+
+  const fromGenerate = pickReportObject({ ok: true, id: 'rd_1', report: raw });
+  assert.equal(formatAdviceFromReport(fromGenerate), advice);
+
+  const fromHistory = pickReportObject({
+    id: 'rd_1',
+    themeId: 'love',
+    content: raw
+  });
+  assert.equal(formatAdviceFromReport(fromHistory), advice);
+});
+
+await check('已登入且有點數時 generate 回傳 advice 正文', async (env) => {
+  const { id } = await upsertEmailUser(env, 'advice@example.test');
+  const orderId = await createOrder(env, {
+    userId: id,
+    productId: 'single',
+    amount: 199,
+    themes: ['love'],
+    merchantTradeNo: 'WXT250903120000ADV'
+  });
+  await grantCreditsForOrder(env, {
+    userId: id,
+    orderId,
+    themes: ['love'],
+    creditsPerTheme: 3,
+    idempotencyPrefix: `order:${orderId}`
+  });
+  const token = await signUserSession(env, { uid: id, provider: 'email' });
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    if (String(url).includes('api.groq.com')) {
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [{
+            message: {
+              content: JSON.stringify({
+                title: '感情篇',
+                summary: '先把相處節奏看清楚。',
+                sections: [{ heading: '下一步', body: '這週只確認一件具體約定。' }]
+              })
+            }
+          }],
+          usage: { total_tokens: 9 }
+        })
+      };
+    }
+    throw new Error(`不該打到 ${url}`);
+  };
+  try {
+    const { status, body } = await postJson(generate, env, {
+      themeId: 'love',
+      requestId: 'nonce-advice-12345678',
+      answers: { question: '這段關係接下來怎麼相處' }
+    }, { cookie: `wx_session=${token}` });
+    assert.equal(status, 200);
+    assert.equal(body.ok, true);
+    assert.match(String(body.report.advice || ''), /相處節奏/);
+    assert.match(String(body.report.advice || ''), /具體約定/);
   } finally {
     globalThis.fetch = realFetch;
   }

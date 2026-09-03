@@ -16,6 +16,7 @@ import { showLegalModal } from './legal.js';
 import '../css/payment-modal.css';
 import '../css/sapphire.css';
 import './payment-sdk.js';
+import { formatAdviceFromReport, pickReportObject } from '../../functions/lib/wxt/report-format.mjs';
 
 /**
  * 問仙壇 · 掌心解碼 App - 核心應用邏輯與白話問卷引導引擎
@@ -80,7 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
         palmConsent: false
       },
       isSubmitting: false,
-      decodeToken: 0
+      decodeToken: 0,
+      progressTimer: null
     }
   };
 
@@ -116,6 +118,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalCloseFixedBtn = document.getElementById('modalCloseFixedBtn');
   modalCloseFixedBtn?.addEventListener('click', () => {
     state.wizard.decodeToken += 1; // 讓還沒跑完的解析報告 timeout 失效，不再覆蓋關閉後的彈窗內容
+    if (state.wizard.progressTimer) {
+      clearInterval(state.wizard.progressTimer);
+      state.wizard.progressTimer = null;
+    }
+    state.wizard.isSubmitting = false;
     readingModalBackdrop.classList.remove('show', 'active');
   });
 
@@ -1711,36 +1718,40 @@ document.addEventListener('DOMContentLoaded', () => {
       const themeObj = THEMES.find((t) => t.id === activeThemeId) || THEMES[0];
       const themeName = themeObj.name;
 
-      // Show 4-Stage Celestial Ritual Loading Animation
       readingModalCard.innerHTML = `
         <div class="ritual-stage-container">
-          <div class="ritual-censer-halo">
+          <div class="ritual-orb" aria-hidden="true">
+            <div class="ritual-orb-ring"></div>
             <span class="ritual-censer-icon">${hasPalm ? '✋' : '🔮'}</span>
           </div>
           <h3 class="ritual-title" id="ritualStageTitle">開壇定壇 · 仙佛降臨</h3>
           <p class="ritual-subtitle" id="ritualStageSub">恭請仙佛降臨壇前，調閱信士生辰因果簿...</p>
 
-          <div class="ritual-stepper">
-            <div class="ritual-step-node active" id="ritualStep1">
+          <div class="ritual-stepper" role="list" aria-label="測算進度">
+            <div class="ritual-step-node active" id="ritualStep1" role="listitem">
               <div class="ritual-step-circle">1</div>
               <span class="ritual-step-label">開壇調閱</span>
             </div>
-            <div class="ritual-step-node" id="ritualStep2">
+            <div class="ritual-step-node" id="ritualStep2" role="listitem">
               <div class="ritual-step-circle">2</div>
               <span class="ritual-step-label">${hasPalm ? '掌紋對照' : '問答解析'}</span>
             </div>
-            <div class="ritual-step-node" id="ritualStep3">
+            <div class="ritual-step-node" id="ritualStep3" role="listitem">
               <div class="ritual-step-circle">3</div>
               <span class="ritual-step-label">靈犀解構</span>
             </div>
-            <div class="ritual-step-node" id="ritualStep4">
+            <div class="ritual-step-node" id="ritualStep4" role="listitem">
               <div class="ritual-step-circle">4</div>
               <span class="ritual-step-label">天書顯化</span>
             </div>
           </div>
 
-          <div class="decoding-progress-bar">
-            <div class="decoding-progress-fill" id="decodingProgress" style="width:15%;"></div>
+          <div class="ritual-progress-meta">
+            <span>目前進度</span>
+            <span id="decodingProgressLabel" aria-live="polite">18%</span>
+          </div>
+          <div class="decoding-progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="18">
+            <div class="decoding-progress-fill" id="decodingProgress" style="width:18%;"></div>
           </div>
         </div>
       `;
@@ -1748,21 +1759,22 @@ document.addEventListener('DOMContentLoaded', () => {
       const ritualTitle = document.getElementById('ritualStageTitle');
       const ritualSub = document.getElementById('ritualStageSub');
       const progressFill = document.getElementById('decodingProgress');
+      const progressLabel = document.getElementById('decodingProgressLabel');
+      const progressBar = readingModalCard.querySelector('.decoding-progress-bar');
       const step1 = document.getElementById('ritualStep1');
       const step2 = document.getElementById('ritualStep2');
       const step3 = document.getElementById('ritualStep3');
       const step4 = document.getElementById('ritualStep4');
 
-      // 階段演出時程
       const ritualStages = [
         {
-          pct: 35,
+          pct: 22,
           title: '開壇定壇 · 仙佛降臨',
           sub: '恭請仙佛降臨壇前，調閱信士生辰因果簿...',
           activate: [step1]
         },
         {
-          pct: 65,
+          pct: 48,
           title: hasPalm ? `掌心對照 · 【${themeName}】` : `問答解析 · 【${themeName}】`,
           sub: hasPalm
             ? `正在把掌紋影像送出分析...`
@@ -1770,7 +1782,7 @@ document.addEventListener('DOMContentLoaded', () => {
           activate: [step1, step2]
         },
         {
-          pct: 88,
+          pct: 68,
           title: '靈犀感知 · 剖析叩問煩惱',
           sub: `深度透視信士所求之因果病灶與轉折契機...`,
           activate: [step1, step2, step3]
@@ -1783,13 +1795,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       ];
 
-      let currentStageIdx = 0;
+      let waitTick = null;
+      function setProgressPct(pct) {
+        const shown = Math.max(0, Math.min(100, Math.round(pct)));
+        if (progressFill) progressFill.style.width = `${shown}%`;
+        if (progressLabel) progressLabel.textContent = `${shown}%`;
+        if (progressBar) progressBar.setAttribute('aria-valuenow', String(shown));
+      }
+
       function setStage(idx) {
         if (!ritualStages[idx]) return;
         const s = ritualStages[idx];
         if (ritualTitle) ritualTitle.textContent = s.title;
         if (ritualSub) ritualSub.textContent = s.sub;
-        if (progressFill) progressFill.style.width = `${s.pct}%`;
+        setProgressPct(s.pct);
         [step1, step2, step3, step4].forEach((el) => {
           if (!el) return;
           if (s.activate.includes(el)) {
@@ -1799,9 +1818,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      // 平滑前進階段
-      const stageTimer1 = setTimeout(() => setStage(1), 700);
-      const stageTimer2 = setTimeout(() => setStage(2), 1600);
+      function startWaitingProgress() {
+        if (waitTick) return;
+        const started = Date.now();
+        waitTick = setInterval(() => {
+          const elapsed = Date.now() - started;
+          const pct = 68 + 24 * (1 - Math.exp(-elapsed / 35000));
+          setProgressPct(pct);
+        }, 400);
+        state.wizard.progressTimer = waitTick;
+      }
+
+      function stopWaitingProgress() {
+        if (waitTick) {
+          clearInterval(waitTick);
+          waitTick = null;
+        }
+        if (state.wizard.progressTimer) {
+          clearInterval(state.wizard.progressTimer);
+          state.wizard.progressTimer = null;
+        }
+      }
+
+      setStage(0);
+      const stageTimer1 = setTimeout(() => setStage(1), 800);
+      const stageTimer2 = setTimeout(() => {
+        setStage(2);
+        startWaitingProgress();
+      }, 1800);
 
       // 非同步請求後端 AI 生成 API
       const payload = {
@@ -1842,6 +1886,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .then(async ({ res, data }) => {
         clearTimeout(stageTimer1);
         clearTimeout(stageTimer2);
+        stopWaitingProgress();
         const stillCurrent = state.wizard.decodeToken === myDecodeToken;
         await MemberManager.refreshMe();
         renderThemesHub();
@@ -1888,6 +1933,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 400);
       })
       .catch(() => {
+        clearTimeout(stageTimer1);
+        clearTimeout(stageTimer2);
+        stopWaitingProgress();
         state.wizard.isSubmitting = false;
         if (state.wizard.decodeToken === myDecodeToken) {
           alert('目前連不上伺服器，報告尚未產生，點數以伺服器為準');
@@ -1896,6 +1944,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     } catch (err) {
       state.wizard.isSubmitting = false;
+      if (typeof stopWaitingProgress === 'function') stopWaitingProgress();
       if (state.wizard.decodeToken === myDecodeToken) {
         alert('報告尚未產生，請稍後再試');
         renderWizardStep();
@@ -1942,16 +1991,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    const reading = apiResult?.reading || apiResult?.report || apiResult || {};
-    const reportObj = reading.report && typeof reading.report === 'object' ? reading.report : reading;
-    const adviceText = String(
-      reportObj.advice
-      || reportObj.body
-      || reportObj.content
-      || reportObj.text
-      || reportObj.formattedAdvice
-      || ''
-    ).replace(/<[^>]+>/g, ' ').trim();
+    const reportObj = pickReportObject(apiResult);
+    const adviceText = formatAdviceFromReport(reportObj);
     const finalThemeTitle = reportObj.title || (hasPalm ? theme.title : (theme.titleNoPalm || theme.title));
     const finalTurnaround = reportObj.turnaroundYear || '';
     const finalNoble = reportObj.nobleGuide || '';
@@ -1959,7 +2000,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const finalDimVal = reportObj.fourthDimensionValue || '';
 
     const reportData = {
-      id: reading.id || reportObj.id,
+      id: apiResult?.id || reportObj.id,
       themeId,
       themeName: theme.name,
       title: finalThemeTitle,
@@ -1974,7 +2015,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fourthDimensionLabel: finalDimLabel,
       fourthDimensionValue: finalDimVal,
       advice: adviceText,
-      hasPalm: Boolean(hasPalm || reading.has_palm || reading.hasPalm),
+      hasPalm: Boolean(hasPalm || apiResult?.has_palm || apiResult?.hasPalm || reportObj.has_palm || reportObj.hasPalm),
       matchedStories
     };
 
