@@ -149,7 +149,9 @@ document.addEventListener('DOMContentLoaded', () => {
       view.classList.toggle('active', view.id === `view-${tabId}`);
     });
 
-    if (tabId === 'member') {
+    if (tabId === 'auth') {
+      renderAuthPage();
+    } else if (tabId === 'member') {
       renderMemberCenter();
     } else if (tabId === 'history') {
       renderHistoryReports();
@@ -181,153 +183,380 @@ document.addEventListener('DOMContentLoaded', () => {
     Object.values(wallet).forEach((pts) => { totalPoints += pts; });
 
     if (user) {
+      userTopBarBtn.className = 'user-topbar-btn';
       userTopBarBtn.innerHTML = `
-        <span class="user-avatar-circle">${user.name.slice(0, 1)}</span>
-        <span>${user.name} ｜ 🪙 剩餘測算次數：<strong style="color:#FFF;">${totalPoints}</strong> 次</span>
+        <span class="user-avatar-circle">${user.avatar ? `<img src="${user.avatar}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : user.name.slice(0, 1)}</span>
+        <span>${user.name} ｜ 🪙 剩餘：<strong style="color:#FFF;">${totalPoints}</strong> 次</span>
       `;
-      userTopBarBtn.onclick = () => switchTab('member');
+      userTopBarBtn.title = '點擊跳轉至使用者登入/註冊頁面 (可切換帳號)';
+      userTopBarBtn.onclick = () => switchTab('auth');
     } else {
+      userTopBarBtn.className = 'user-topbar-btn unlogged';
       userTopBarBtn.innerHTML = `
-        <span>👤 登入 / 註冊</span>
+        <span class="user-avatar-circle" style="background:rgba(245, 158, 11, 0.25);color:var(--gold-bright);">👤</span>
+        <span>登入 / 註冊</span>
       `;
-      userTopBarBtn.onclick = () => openAuthModal();
+      userTopBarBtn.title = '點擊跳轉至使用者登入/註冊頁面 (支援 LINE · Google)';
+      userTopBarBtn.onclick = () => switchTab('auth');
     }
   }
 
-  // ============ 4. Auth Modal (登入/註冊彈窗 - 白話) ============
-  function openAuthModal(defaultMode = 'login') {
-    state.wizard.decodeToken += 1; // 蓋掉這個彈窗前，讓任何還沒跑完的解析報告 timeout 失效
+  // ============ 4. LINE & Google 快速授權互動視窗 ============
+  function openLineAuthDialog() {
+    state.wizard.decodeToken += 1;
     readingModalCard.innerHTML = `
-      <div style="max-width:440px;margin:0 auto;">
-        <div class="auth-tabs-row">
-          <button type="button" class="auth-tab-btn ${defaultMode === 'login' ? 'active' : ''}" id="authTabLogin">登入帳號</button>
-          <button type="button" class="auth-tab-btn ${defaultMode === 'register' ? 'active' : ''}" id="authTabRegister">免費註冊</button>
+      <div style="max-width:440px;margin:0 auto;text-align:center;">
+        <div style="width:56px;height:56px;border-radius:16px;background:#06C755;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 8px 24px rgba(6,199,85,0.35);">
+          <svg style="width:32px;height:32px;fill:#FFF;" viewBox="0 0 24 24"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.577.39.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.838 2.589-5.962z"/></svg>
         </div>
 
-        <form id="authModalForm" style="display:grid;gap:14px;">
-          ${defaultMode === 'register' ? `
-            <div class="auth-form-group">
-              <label class="auth-form-label">您的姓名或暱稱：</label>
-              <input type="text" id="authNameInput" class="auth-form-input" placeholder="例如：陳信士" required value="陳信士">
-            </div>
-          ` : ''}
+        <h3 style="color:#FFF;font-size:1.3rem;margin-bottom:6px;">LINE 快速授權登入 / 註冊</h3>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">
+          「問仙壇 · 掌心解碼」申請取得您的 LINE 帳號資料以建立專屬命盤與保存測算次數：
+        </p>
 
+        <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:14px;text-align:left;margin-bottom:18px;font-size:0.85rem;display:flex;flex-direction:column;gap:8px;">
+          <div style="color:#34D399;display:flex;align-items:center;gap:6px;">
+            <span>✓</span> <span>讀取您的 LINE 顯示名稱與個人頭像</span>
+          </div>
+          <div style="color:#34D399;display:flex;align-items:center;gap:6px;">
+            <span>✓</span> <span>綁定測算報告通知與剩餘次數</span>
+          </div>
+        </div>
+
+        <form id="lineAuthModalForm" style="display:grid;gap:12px;text-align:left;">
           <div class="auth-form-group">
-            <label class="auth-form-label">電子信箱或手機：</label>
-            <input type="email" id="authEmailInput" class="auth-form-input" placeholder="name@example.com" required value="chen.blessed@example.com">
+            <label class="auth-form-label">您的 LINE 暱稱：</label>
+            <input type="text" id="lineModalNameInput" class="auth-form-input" placeholder="例如：李信士" value="林信士" required>
+          </div>
+          <div class="auth-form-group">
+            <label class="auth-form-label">電子信箱（選填，用於接收完整解讀報告）：</label>
+            <input type="email" id="lineModalEmailInput" class="auth-form-input" placeholder="user@example.com" value="lin.believer@gmail.com">
           </div>
 
-          <div class="auth-form-group">
-            <label class="auth-form-label">密碼：</label>
-            <input type="password" id="authPasswordInput" class="auth-form-input" placeholder="請輸入密碼" required value="123456">
-          </div>
-
-          <div style="display:flex;gap:10px;margin-top:10px;">
-            <button type="submit" class="btn btn-gold" style="width:100%;">
-              ${defaultMode === 'login' ? '登入會員中心' : '立即免費註冊'}
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button type="submit" class="btn btn-primary" style="flex:1;background:#06C755;border-color:#06C755;">
+              🟢 許可並以 LINE 登入
+            </button>
+            <button type="button" class="btn btn-outline" id="lineModalCancelBtn" style="width:90px;">
+              取消
             </button>
           </div>
-
-          <button type="button" class="btn btn-outline btn-sm" id="quickDemoLoginBtn" style="margin-top:6px;">
-            ⚡ 一鍵免密碼體驗登入 (預設陳信士)
-          </button>
-
-          <button type="button" class="btn btn-outline btn-sm" id="authCancelBtn" style="margin-top:4px;">
-            取消
-          </button>
         </form>
       </div>
     `;
 
-    document.getElementById('authTabLogin').addEventListener('click', () => openAuthModal('login'));
-    document.getElementById('authTabRegister').addEventListener('click', () => openAuthModal('register'));
-    document.getElementById('authCancelBtn').addEventListener('click', () => {
+    document.getElementById('lineModalCancelBtn')?.addEventListener('click', () => {
       readingModalBackdrop.classList.remove('show');
     });
 
-    document.getElementById('quickDemoLoginBtn').addEventListener('click', () => {
-      MemberManager.setCurrentUser({
-        id: 'usr_demo',
-        name: '陳信士',
-        email: 'chen.blessed@example.com',
-        gender: 'female',
-        tier: '有緣信士',
-        joinedAt: '2026-08-31'
-      });
-      updateTopBarUserStatus();
-      renderMemberCenter();
-      readingModalBackdrop.classList.remove('show');
-      switchTab('member');
-    });
-
-    document.getElementById('authModalForm').addEventListener('submit', (e) => {
+    document.getElementById('lineAuthModalForm')?.addEventListener('submit', (e) => {
       e.preventDefault();
-      const email = document.getElementById('authEmailInput').value.trim();
-      const pwd = document.getElementById('authPasswordInput').value;
+      const name = document.getElementById('lineModalNameInput')?.value.trim() || 'LINE 緣主信士';
+      const email = document.getElementById('lineModalEmailInput')?.value.trim() || `line_${Date.now()}@line.me`;
 
-      if (defaultMode === 'login') {
-        MemberManager.login(email, pwd);
-      } else {
-        const name = document.getElementById('authNameInput').value.trim();
-        MemberManager.register(email, name, pwd);
-      }
+      MemberManager.loginWithLine({
+        displayName: name,
+        email: email,
+        userId: 'line_uid_' + Date.now()
+      });
 
-      updateTopBarUserStatus();
-      renderMemberCenter();
       readingModalBackdrop.classList.remove('show');
+      if (typeof window.confetti === 'function') {
+        window.confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+      }
+      updateTopBarUserStatus();
       switchTab('member');
     });
 
     readingModalBackdrop.classList.add('show');
   }
 
-  // ============ 5. Render Member Dashboard & Wallet Center (白話化) ============
+  function openGoogleAuthDialog() {
+    state.wizard.decodeToken += 1;
+    readingModalCard.innerHTML = `
+      <div style="max-width:440px;margin:0 auto;text-align:center;">
+        <div style="width:56px;height:56px;border-radius:16px;background:#FFF;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 8px 24px rgba(255,255,255,0.25);">
+          <svg style="width:30px;height:30px;" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+        </div>
+
+        <h3 style="color:#FFF;font-size:1.3rem;margin-bottom:6px;">Google 帳號快速登入 / 註冊</h3>
+        <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;line-height:1.5;">
+          使用 Google 帳號授權登入問仙壇，Google 會將您的名稱與電子郵件提供給本平台：
+        </p>
+
+        <form id="googleAuthModalForm" style="display:grid;gap:12px;text-align:left;">
+          <div class="auth-form-group">
+            <label class="auth-form-label">Google 帳號電子郵件：</label>
+            <input type="email" id="googleModalEmailInput" class="auth-form-input" placeholder="name@gmail.com" value="blessed.seeker@gmail.com" required>
+          </div>
+          <div class="auth-form-group">
+            <label class="auth-form-label">姓名或信士稱謂：</label>
+            <input type="text" id="googleModalNameInput" class="auth-form-input" placeholder="例如：張信士" value="張信士" required>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:8px;">
+            <button type="submit" class="btn btn-primary" style="flex:1;background:#FFFFFF;color:#1F2937;border-color:#E5E7EB;">
+              🌐 授權並以 Google 登入
+            </button>
+            <button type="button" class="btn btn-outline" id="googleModalCancelBtn" style="width:90px;">
+              取消
+            </button>
+          </div>
+        </form>
+      </div>
+    `;
+
+    document.getElementById('googleModalCancelBtn')?.addEventListener('click', () => {
+      readingModalBackdrop.classList.remove('show');
+    });
+
+    document.getElementById('googleAuthModalForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('googleModalEmailInput')?.value.trim();
+      const name = document.getElementById('googleModalNameInput')?.value.trim() || email.split('@')[0] + ' 信士';
+
+      MemberManager.loginWithGoogle({
+        name: name,
+        email: email,
+        sub: 'google_sub_' + Date.now()
+      });
+
+      readingModalBackdrop.classList.remove('show');
+      if (typeof window.confetti === 'function') {
+        window.confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+      }
+      updateTopBarUserStatus();
+      switchTab('member');
+    });
+
+    readingModalBackdrop.classList.add('show');
+  }
+
+  // 登入彈窗相容接口 (任何調用直接導向 auth 頁面或彈窗)
+  function openAuthModal() {
+    switchTab('auth');
+  }
+
+  // ============ 5. Render User Auth Page (專屬登入/註冊頁面) ============
+  function renderAuthPage(formMode = 'login') {
+    const authPageContainer = document.getElementById('authPageContainer');
+    if (!authPageContainer) return;
+
+    const currentUser = MemberManager.getCurrentUser();
+    const wallet = WalletManager.getPoints();
+    let totalPoints = 0;
+    Object.values(wallet).forEach((pts) => { totalPoints += pts; });
+
+    authPageContainer.innerHTML = `
+      <div class="auth-page-header">
+        <h2>🔮 仙壇結緣 ｜ 信士登入 / 註冊</h2>
+        <p>一鍵登入仙壇帳號，永久保存您的各篇掌紋解讀報告、正緣肖像與測算次數</p>
+      </div>
+
+      ${currentUser ? `
+        <!-- 當前已登入狀態卡片 -->
+        <div class="auth-current-user-card">
+          <div class="auth-current-user-header">
+            <div class="auth-current-user-info">
+              <div class="auth-current-user-avatar">${currentUser.avatar ? `<img src="${currentUser.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : currentUser.name.slice(0, 1)}</div>
+              <div>
+                <div style="font-weight:800;font-size:1.05rem;color:#FFF;display:flex;align-items:center;gap:6px;">
+                  <span>${currentUser.name}</span>
+                  <span class="member-tier-badge" style="font-size:0.75rem;">✨ ${currentUser.tier || '結緣信士'}</span>
+                </div>
+                <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">
+                  ${currentUser.provider === 'line' ? '🟢 LINE 綁定帳號' : currentUser.provider === 'google' ? '🌐 Google 綁定帳號' : '✉️ 信箱帳號'} ｜ ${currentUser.email}
+                </div>
+              </div>
+            </div>
+            <div style="font-size:0.85rem;color:var(--gold-bright);font-weight:700;">
+              剩餘 <strong>${totalPoints}</strong> 次測算
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:4px;">
+            <button type="button" class="btn btn-gold btn-sm" id="authGoToMemberBtn" style="flex:1;">
+              👉 進入會員中心查看額度與購買方案
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="authLogoutBtn">
+              登出當前帳號
+            </button>
+          </div>
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">
+            💡 若需改用其他身分，可直接點選下方 LINE、Google 或輸入其他帳號登入，系統將自動為您切換。
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- 第三方快速登入 (LINE & Google) -->
+      <div class="social-auth-container">
+        <button type="button" class="btn-social-auth btn-line-auth" id="lineAuthBtn">
+          <svg class="social-auth-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M24 10.304c0-5.369-5.383-9.738-12-9.738-6.616 0-12 4.369-12 9.738 0 4.814 4.269 8.846 10.019 9.577.39.084.922.258 1.057.592.121.303.079.777.039 1.085l-.171 1.027c-.053.303-.242 1.186 1.039.646 1.281-.54 6.911-4.069 9.428-6.967 1.739-1.907 2.589-3.838 2.589-5.962z"/></svg>
+          <span>使用 LINE 帳號快速登入 / 註冊</span>
+        </button>
+
+        <button type="button" class="btn-social-auth btn-google-auth" id="googleAuthBtn">
+          <svg class="social-auth-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/><path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.98 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/></svg>
+          <span>使用 Google 帳號快速登入 / 註冊</span>
+        </button>
+      </div>
+
+      <div class="auth-divider">
+        <span>或使用信箱 / 密碼</span>
+      </div>
+
+      <!-- 傳統信箱密碼 Tab 表單 -->
+      <div class="auth-tabs-row">
+        <button type="button" class="auth-tab-btn ${formMode === 'login' ? 'active' : ''}" id="authPageTabLogin">信士登入</button>
+        <button type="button" class="auth-tab-btn ${formMode === 'register' ? 'active' : ''}" id="authPageTabRegister">免費註冊</button>
+      </div>
+
+      <form id="authPageForm" style="display:grid;gap:14px;">
+        ${formMode === 'register' ? `
+          <div class="auth-form-group">
+            <label class="auth-form-label">信士尊姓大名：</label>
+            <input type="text" id="pageAuthNameInput" class="auth-form-input" placeholder="例如：王信士" required value="王信士">
+          </div>
+        ` : ''}
+
+        <div class="auth-form-group">
+          <label class="auth-form-label">電子信箱或手機號碼：</label>
+          <input type="email" id="pageAuthEmailInput" class="auth-form-input" placeholder="name@example.com" required value="seeker@example.com">
+        </div>
+
+        <div class="auth-form-group">
+          <label class="auth-form-label">密碼：</label>
+          <input type="password" id="pageAuthPasswordInput" class="auth-form-input" placeholder="請輸入密碼" required value="123456">
+        </div>
+
+        <button type="submit" class="btn btn-gold" style="width:100%;margin-top:6px;">
+          ${formMode === 'login' ? '登入仙壇' : '立即免費註冊結緣'}
+        </button>
+      </form>
+
+      <!-- 一鍵示範體驗 -->
+      <div class="auth-demo-box">
+        <button type="button" class="btn btn-outline btn-sm" id="pageDemoLoginBtn" style="width:100%;">
+          ⚡ 一鍵免密碼體驗登入 (陳信士示範帳號)
+        </button>
+      </div>
+
+      <div class="auth-guarantee-badge">
+        <span>🔒</span>
+        <span>仙壇嚴格保障每位信士隱私，掌紋及個資不作商業轉售</span>
+      </div>
+    `;
+
+    // 事件綁定
+    document.getElementById('lineAuthBtn')?.addEventListener('click', openLineAuthDialog);
+    document.getElementById('googleAuthBtn')?.addEventListener('click', openGoogleAuthDialog);
+
+    document.getElementById('authPageTabLogin')?.addEventListener('click', () => renderAuthPage('login'));
+    document.getElementById('authPageTabRegister')?.addEventListener('click', () => renderAuthPage('register'));
+
+    document.getElementById('authGoToMemberBtn')?.addEventListener('click', () => switchTab('member'));
+    document.getElementById('authLogoutBtn')?.addEventListener('click', () => {
+      MemberManager.logout();
+      updateTopBarUserStatus();
+      renderAuthPage();
+    });
+
+    document.getElementById('pageDemoLoginBtn')?.addEventListener('click', () => {
+      MemberManager.loginDemo();
+      updateTopBarUserStatus();
+      if (typeof window.confetti === 'function') {
+        window.confetti({ particleCount: 40, spread: 50 });
+      }
+      switchTab('member');
+    });
+
+    document.getElementById('authPageForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = document.getElementById('pageAuthEmailInput').value.trim();
+      const pwd = document.getElementById('pageAuthPasswordInput').value;
+
+      if (formMode === 'login') {
+        MemberManager.login(email, pwd);
+      } else {
+        const name = document.getElementById('pageAuthNameInput')?.value.trim() || '信士';
+        MemberManager.register(email, name, pwd);
+      }
+
+      updateTopBarUserStatus();
+      if (typeof window.confetti === 'function') {
+        window.confetti({ particleCount: 50, spread: 60 });
+      }
+      switchTab('member');
+    });
+  }
+
+  // ============ 6. Render Member Dashboard & Wallet Center (白話化) ============
   function renderMemberCenter() {
     const user = MemberManager.getCurrentUser();
-    if (!user) {
-      openAuthModal();
-      return;
-    }
-
     const wallet = WalletManager.getPoints();
     let totalPoints = 0;
     Object.values(wallet).forEach((pts) => { totalPoints += pts; });
 
     // 1. Render Profile Card
     if (memberProfileContainer) {
-      memberProfileContainer.innerHTML = `
-        <div class="member-profile-card">
-          <div class="member-avatar-block">
-            <div class="member-large-avatar">${user.name.slice(0, 1)}</div>
-            <div class="member-info-col">
-              <h3>
-                <span>${user.name}</span>
-                <span class="member-tier-badge">✨ ${user.tier || '有緣信士'}</span>
-              </h3>
-              <div class="member-email-text">${user.email} ｜ 加入日期：${user.joinedAt || '2026-08-31'}</div>
-            </div>
-          </div>
-
-          <div style="display:flex;align-items:center;gap:16px;">
-            <div class="member-points-summary-box">
-              <span style="font-size:0.85rem;color:var(--text-muted);">總剩餘測算次數</span>
-              <span class="member-total-points-num">${totalPoints}</span>
-              <span style="font-size:0.85rem;color:var(--gold-bright);">次</span>
-            </div>
-
-            <button type="button" class="btn btn-outline btn-sm" id="memberLogoutBtn" title="登出當前帳號">
-              切換帳號
+      if (!user) {
+        memberProfileContainer.innerHTML = `
+          <div class="member-profile-card" style="text-align:center;padding:28px 20px;">
+            <div style="font-size:2.2rem;margin-bottom:8px;">👤</div>
+            <h3 style="color:var(--gold-bright);margin-bottom:8px;">您尚未登入仙壇帳號</h3>
+            <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:18px;max-width:480px;margin-left:auto;margin-right:auto;">
+              登入仙壇帳號後，系統將為您永久保存六大主題的測算次數、正緣模擬肖像與掌紋解讀報告。
+            </p>
+            <button type="button" class="btn btn-primary" id="memberGoAuthBtn">
+              👉 前往使用者登入 / 免費註冊 (支援 LINE · Google)
             </button>
           </div>
-        </div>
-      `;
+        `;
+        document.getElementById('memberGoAuthBtn')?.addEventListener('click', () => switchTab('auth'));
+      } else {
+        memberProfileContainer.innerHTML = `
+          <div class="member-profile-card">
+            <div class="member-avatar-block">
+              <div class="member-large-avatar">${user.avatar ? `<img src="${user.avatar}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">` : user.name.slice(0, 1)}</div>
+              <div class="member-info-col">
+                <h3>
+                  <span>${user.name}</span>
+                  <span class="member-tier-badge">✨ ${user.tier || '有緣信士'}</span>
+                </h3>
+                <div class="member-email-text">${user.email} ｜ 加入日期：${user.joinedAt || '2026-08-31'}</div>
+              </div>
+            </div>
 
-      document.getElementById('memberLogoutBtn').addEventListener('click', () => {
-        MemberManager.logout();
-        updateTopBarUserStatus();
-        switchTab('hub');
-      });
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+              <div class="member-points-summary-box">
+                <span style="font-size:0.85rem;color:var(--text-muted);">總剩餘測算次數</span>
+                <span class="member-total-points-num">${totalPoints}</span>
+                <span style="font-size:0.85rem;color:var(--gold-bright);">次</span>
+              </div>
+
+              <button type="button" class="btn btn-gold btn-sm" id="memberGoToAuthPageBtn" title="前往登入/註冊頁切換帳號">
+                👤 登入 / 註冊頁
+              </button>
+              <button type="button" class="btn btn-outline btn-sm" id="memberLogoutBtn" title="登出當前帳號">
+                登出
+              </button>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('memberGoToAuthPageBtn')?.addEventListener('click', () => {
+          switchTab('auth');
+        });
+
+        document.getElementById('memberLogoutBtn')?.addEventListener('click', () => {
+          MemberManager.logout();
+          updateTopBarUserStatus();
+          renderMemberCenter();
+        });
+      }
     }
+
 
     // 2. Render Independent Per-Theme Quota Matrix (白話清楚)
     if (memberThemesQuotaGrid) {
