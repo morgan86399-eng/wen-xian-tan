@@ -16,6 +16,8 @@ binding = "RL"
 id = "86894485cae2413e989bd361762d27e3"
 
 [vars]
+GEMINI_TEXT_MODEL = "gemini-3.6-flash"
+GEMINI_VISION_MODEL = "gemini-3.6-flash"
 GROQ_TEXT_MODEL = "llama-3.3-70b-versatile"
 GROQ_VISION_MODEL = "llama-4-scout-17b-16e-instruct"
 
@@ -37,5 +39,7 @@ binding = "RL"
 id = "86894485cae2413e989bd361762d27e3"
 
 [env.production.vars]
+GEMINI_TEXT_MODEL = "gemini-3.6-flash"
+GEMINI_VISION_MODEL = "gemini-3.6-flash"
 GROQ_TEXT_MODEL = "llama-3.3-70b-versatile"
 GROQ_VISION_MODEL = "llama-4-scout-17b-16e-instruct"

@@ -8,7 +8,7 @@ import {
   hasDb
 } from '../../lib/wxt/store.mjs';
 import { buildSystemPrompt, buildUserPrompt, scanForbidden, replaceForbidden } from '../../lib/wxt/forbidden.mjs';
-import { callGroqVision, generateReport } from '../../lib/wxt/ai.mjs';
+import { describePalm, generateReport } from '../../lib/wxt/ai.mjs';
 
 export const onRequest = postOnly(async ({ request, env }) => {
   if (!hasDb(env)) return json({ error: 'SERVICE_UNAVAILABLE' }, 503);
@@ -65,7 +65,7 @@ export const onRequest = postOnly(async ({ request, env }) => {
   const palmImageBase64 = String(body.palmImageBase64 || '').trim();
   if (palmImageBase64) {
     try {
-      const vision = await callGroqVision(env, palmImageBase64);
+      const vision = await describePalm(env, palmImageBase64);
       palmDescription = vision.text;
       visionTokens = vision.tokens;
     } catch {

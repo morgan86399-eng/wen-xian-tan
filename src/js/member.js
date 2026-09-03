@@ -39,6 +39,19 @@ async function readJson(res) {
   }
 }
 
+function mapSendCodeError(res, data) {
+  if (res.status === 429) return '操作太頻繁，請稍後再試';
+  if (res.status === 503) return '信箱服務暫時無法使用，請稍後再試';
+  if (data.error === 'INVALID_EMAIL') return '請輸入有效的電子信箱';
+  return '無法寄送驗證碼，請稍後再試';
+}
+
+function mapVerifyError(res) {
+  if (res.status === 429) return '嘗試次數過多，請稍後再試';
+  if (res.status === 503) return '服務暫時無法使用，請稍後再試';
+  return '驗證碼錯誤或已過期，請重新取得';
+}
+
 export const MemberManager = {
   _user: null,
   _credits: emptyCredits(),
@@ -99,7 +112,7 @@ export const MemberManager = {
       });
       const data = await readJson(res);
       if (!res.ok || data.ok === false) {
-        return { success: false, ok: false, message: data.error || data.message || '發送驗證碼失敗' };
+        return { success: false, ok: false, message: mapSendCodeError(res, data) };
       }
       return { success: true, ok: true };
     } catch {
@@ -122,7 +135,7 @@ export const MemberManager = {
       });
       const data = await readJson(res);
       if (!res.ok || data.ok === false) {
-        return { success: false, message: data.error || data.message || '驗證碼無效或已過期' };
+        return { success: false, message: mapVerifyError(res) };
       }
       if (data.user) this._user = normalizeUser(data.user);
       await this.refreshMe();

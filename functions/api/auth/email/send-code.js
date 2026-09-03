@@ -13,7 +13,7 @@ export const onRequest = postOnly(async ({ request, env }) => {
   if (!isEmail(email)) return json({ error: 'INVALID_EMAIL' }, 400);
 
   const limited = await authRateLimit(env, request, { email, perEmailLimit: 5, perIpLimit: 10 });
-  if (!limited.allowed) return json({ error: 'RATE_LIMITED' }, 429);
+  if (!limited.allowed) return json({ error: 'TRY_AGAIN_LATER' }, 429);
 
   let resend;
   try {
@@ -40,5 +40,6 @@ export const onRequest = postOnly(async ({ request, env }) => {
   }, 15000, 'Resend');
 
   if (!sendRes.ok) return json({ error: 'SERVICE_UNAVAILABLE' }, 503);
+  // 僅回 { ok: true }；驗證碼只經 Resend 寄出，絕不回傳給前端
   return json({ ok: true });
 });

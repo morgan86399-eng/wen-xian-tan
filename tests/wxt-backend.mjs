@@ -17,6 +17,7 @@ import {
 import { scanForbidden, replaceForbidden } from '../functions/lib/wxt/forbidden.mjs';
 import { getEcpayConfig, calculateCheckMacValue } from '../functions/lib/wxt/ecpay.mjs';
 import { signUserSession, sessionCookieHeader } from '../functions/lib/wxt/auth.mjs';
+import { generateReport } from '../functions/lib/wxt/ai.mjs';
 
 let passed = 0;
 
@@ -186,6 +187,72 @@ await check('已登入但缺點數回 402', async (env) => {
   }, { cookie: `wx_session=${token}` });
   assert.equal(status, 402);
   assert.equal(body.error, 'INSUFFICIENT_CREDITS');
+});
+
+console.log('\n[AI 呼叫順序]');
+
+await check('有 Gemini 時先打 Gemini', async (env) => {
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+    if (String(url).includes('generativelanguage.googleapis.com')) {
+      return {
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: '{"summary":"gemini-ok"}' }] } }],
+          usageMetadata: { totalTokenCount: 8 }
+        })
+      };
+    }
+    throw new Error(`不該打到 ${url}`);
+  };
+  try {
+    const result = await generateReport({
+      ...env,
+      GEMINI_API_KEY: 'AQ.test',
+      GROQ_API_KEY: 'gsk_test'
+    }, { systemPrompt: 's', userPrompt: 'u' });
+    assert.match(calls[0], /generativelanguage\.googleapis\.com/);
+    assert.equal(result.parsed.summary, 'gemini-ok');
+    assert.equal(result.model, 'gemini-3.6-flash');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+await check('Gemini 失敗才打 Groq', async (env) => {
+  const hosts = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    hosts.push(href);
+    if (href.includes('generativelanguage.googleapis.com')) {
+      return { ok: false, status: 429, text: async () => 'limit:0' };
+    }
+    if (href.includes('api.groq.com')) {
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: '{"summary":"groq-ok"}' } }],
+          usage: { total_tokens: 11 }
+        })
+      };
+    }
+    throw new Error(`不該打到 ${href}`);
+  };
+  try {
+    const result = await generateReport({
+      ...env,
+      GEMINI_API_KEY: 'AQ.test',
+      GROQ_API_KEY: 'gsk_test'
+    }, { systemPrompt: 's', userPrompt: 'u' });
+    assert.ok(hosts.some((item) => item.includes('generativelanguage.googleapis.com')));
+    assert.ok(hosts.some((item) => item.includes('api.groq.com')));
+    assert.equal(result.parsed.summary, 'groq-ok');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });
 
 console.log('\n[logout CSRF]');
