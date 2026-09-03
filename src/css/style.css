@@ -1756,6 +1756,208 @@ p {
   color: var(--text-muted);
 }
 
+/* ===================================================
+   6-Digit OTP Email Verification & Dialog Aesthetics
+   =================================================== */
+.otp-dialog-shell {
+  max-width: 460px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.otp-dialog-icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(220, 38, 38, 0.2));
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 14px;
+  font-size: 1.8rem;
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.2);
+}
+
+.otp-dialog-title {
+  color: var(--gold-bright);
+  font-size: 1.35rem;
+  font-family: 'Noto Serif TC', serif;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.otp-dialog-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.otp-target-email-badge {
+  color: #FDE68A;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.otp-inputs-grid {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 18px 0 20px;
+}
+
+.otp-digit-field {
+  width: 48px;
+  height: 56px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1.5px solid rgba(212, 175, 55, 0.3);
+  color: #FFF;
+  font-size: 1.6rem;
+  font-weight: 900;
+  text-align: center;
+  font-family: monospace, -apple-system;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.otp-digit-field:focus {
+  border-color: var(--gold-bright);
+  background: rgba(245, 158, 11, 0.12);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
+  transform: scale(1.06);
+}
+
+.otp-digit-field.filled {
+  border-color: rgba(212, 175, 55, 0.7);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.otp-digit-field.error {
+  border-color: #EF4444;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+  animation: otpShake 0.3s ease;
+}
+
+@keyframes otpShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.otp-resend-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.otp-countdown-tag {
+  color: var(--gold-bright);
+  font-weight: 700;
+}
+
+.otp-btn-resend {
+  background: none;
+  border: none;
+  color: var(--gold-bright);
+  cursor: pointer;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  padding: 0;
+  transition: opacity 0.2s ease;
+}
+
+.otp-btn-resend:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: none;
+}
+
+/* Simulated Celestial Letter Drawer */
+.celestial-letter-drawer {
+  background: rgba(18, 14, 34, 0.85);
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 16px;
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+}
+
+.celestial-letter-drawer::before {
+  content: "仙壇真言靈函";
+  position: absolute;
+  top: 8px;
+  right: -24px;
+  background: rgba(220, 38, 38, 0.85);
+  color: #FFF;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 28px;
+  transform: rotate(45deg);
+  letter-spacing: 1px;
+}
+
+.celestial-letter-header {
+  font-size: 0.82rem;
+  color: var(--gold-bright);
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.celestial-letter-body {
+  font-size: 0.8rem;
+  color: #D1D5DB;
+  line-height: 1.5;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+}
+
+.celestial-letter-code-pill {
+  display: inline-block;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid var(--gold-bright);
+  color: #FFF;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-right: 8px;
+}
+
+.celestial-letter-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* Google GSI Shell */
+.google-gsi-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.google-gsi-btn-slot {
+  min-height: 44px;
+  display: flex;
+  justify-content: center;
+}
+
+
 
 .decoding-stage {
   text-align: center;

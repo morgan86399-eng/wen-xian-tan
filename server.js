@@ -194,7 +194,79 @@ app.get('/api/config', (req, res) => {
     brandName: BRAND_NAME,
     provider: 'Portaly (傳送門)',
     portalyUrl: PORTALY_URL,
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '1029384756-wenxiantan.apps.googleusercontent.com',
+    lineChannelId: process.env.LINE_CHANNEL_ID || '2006888888',
+    hasResend: !!process.env.RESEND_API_KEY,
     isDevMode: process.env.NODE_ENV !== 'production'
+  });
+});
+
+// 7. 認證端點: 發送 6 碼驗證碼
+app.post('/api/auth/send-code', (req, res) => {
+  const email = (req.body.email || '').trim().toLowerCase();
+  const purpose = req.body.purpose || 'login';
+
+  if (!email || !email.includes('@')) {
+    return res.status(400).json({ success: false, message: '請提供有效的電子信箱地址' });
+  }
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = Date.now() + 5 * 60 * 1000;
+  const token = Buffer.from(JSON.stringify({ email, code, expiresAt, purpose })).toString('base64');
+
+  const subject = `【問仙壇】信士仙緣驗證碼：${code}`;
+  const html = `<p>信士您好，您的驗證碼為：<strong>${code}</strong>（5分鐘內有效）</p>`;
+
+  res.json({
+    success: true,
+    message: '仙壇靈函已生成安全驗證碼',
+    emailSent: false,
+    token,
+    expiresAt,
+    preview: { code, subject, html, timestamp: new Date().toISOString() }
+  });
+});
+
+// 8. 認證端點: 驗證 6 碼驗證碼
+app.post('/api/auth/verify-code', (req, res) => {
+  const { email, code, token } = req.body;
+  if (!email || !code || !token) {
+    return res.status(400).json({ success: false, message: '請輸入完整的 6 位數驗證碼' });
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(token, 'base64').toString('utf8'));
+    if (parsed.email !== email.trim().toLowerCase()) {
+      return res.status(400).json({ success: false, message: '電子信箱與驗證憑證不吻合' });
+    }
+    if (Date.now() > parsed.expiresAt) {
+      return res.status(400).json({ success: false, message: '驗證碼已逾期，請重新索取' });
+    }
+    if (parsed.code !== code.trim()) {
+      return res.status(400).json({ success: false, message: '驗證碼不正確，請仔細核對' });
+    }
+    return res.json({ success: true, verified: true, email, message: '信箱驗證成功！' });
+  } catch (err) {
+    return res.status(400).json({ success: false, message: '驗證憑證格式無效' });
+  }
+});
+
+// 9. 認證端點: LINE Token 交換
+app.post('/api/auth/line-token', (req, res) => {
+  const { code } = req.body;
+  if (!code) {
+    return res.status(400).json({ success: false, message: '授權代碼 (code) 不可為空' });
+  }
+  res.json({
+    success: true,
+    isMock: true,
+    message: 'LINE 授權已驗證通過',
+    profile: {
+      userId: 'U' + Math.random().toString(36).substring(2, 12),
+      displayName: 'LINE 結緣信士',
+      pictureUrl: '',
+      email: `line_${Date.now().toString(36)}@line.me`
+    }
   });
 });
 

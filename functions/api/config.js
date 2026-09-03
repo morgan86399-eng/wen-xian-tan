@@ -4,6 +4,9 @@ export async function onRequestGet({ env }) {
     brandName: env?.BRAND_NAME || '問仙壇 · 掌心解碼',
     provider: 'Portaly (傳送門)',
     portalyUrl: env?.PORTALY_URL || 'https://portaly.cc/kaiyun_ai',
+    googleClientId: env?.GOOGLE_CLIENT_ID || '1029384756-wenxiantan.apps.googleusercontent.com',
+    lineChannelId: env?.LINE_CHANNEL_ID || '2006888888',
+    hasResend: !!env?.RESEND_API_KEY,
     isDevMode: false
   }), {
     headers: {
