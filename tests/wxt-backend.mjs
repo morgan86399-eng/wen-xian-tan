@@ -275,7 +275,7 @@ await check('有 Gemini 時先打 Gemini', async (env) => {
     }, { systemPrompt: 's', userPrompt: 'u' });
     assert.match(calls[0], /generativelanguage\.googleapis\.com/);
     assert.equal(result.parsed.summary, 'gemini-ok');
-    assert.equal(result.model, 'gemini-3.6-flash');
+    assert.equal(result.model, 'gemini-3.5-flash');
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -338,7 +338,9 @@ await check('主力 Gemini 型號滿載時，同金鑰換次選型號，還不�
     const result = await generateReport({
       ...env,
       GEMINI_API_KEY: 'AQ.test',
-      GROQ_API_KEY: 'gsk_test'
+      GROQ_API_KEY: 'gsk_test',
+      GEMINI_TEXT_MODEL: 'gemini-3.6-flash',
+      GEMINI_TEXT_MODEL_FALLBACK: 'gemini-3.5-flash'
     }, { systemPrompt: 's', userPrompt: 'u' });
     assert.deepEqual(models, ['gemini-3.6-flash', 'gemini-3.5-flash']);
     assert.equal(result.model, 'gemini-3.5-flash');

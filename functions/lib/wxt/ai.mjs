@@ -3,10 +3,11 @@
 import { fetchWithTimeout } from './http.mjs';
 import { requireGroq } from './auth.mjs';
 
-/* gemini-3.7-flash 長期回 503（需求過載），主力改用實測穩定的 3.6-flash，再備 flash-latest */
-const GEMINI_TEXT_DEFAULT = 'gemini-3.6-flash';
-const GEMINI_VISION_DEFAULT = 'gemini-3.6-flash';
-const GEMINI_TEXT_FALLBACK_DEFAULT = 'gemini-3.5-flash';
+/* 3.7-flash 回 503、3.6-flash 從 Cloudflare 打過去每次逾時，實測 3.5-flash 穩定約 1.3 秒 */
+const GEMINI_TEXT_DEFAULT = 'gemini-3.5-flash';
+const GEMINI_VISION_DEFAULT = 'gemini-3.5-flash';
+/* 次選型號預設關閉：多掛一支只是多一輪逾時，主力失敗直接交給 Groq 比較快 */
+const GEMINI_TEXT_FALLBACK_DEFAULT = '';
 const TEXT_MODEL_DEFAULT = 'openai/gpt-oss-120b';
 const VISION_MODEL_DEFAULT = 'qwen/qwen3.8-27b';
 const WORKERS_AI_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
@@ -124,6 +125,7 @@ function geminiContentsFromMessages(messages) {
   };
 }
 
+/* 從 Cloudflare 打 Gemini 實測要 15 秒以上（本機只要 1.3 秒），逾時設 15 秒會全部落空，維持 25 秒 */
 async function callGeminiGenerate(env, { model, body, label }) {
   const apiKey = envText(env, 'GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY 未設定');
@@ -197,7 +199,7 @@ export async function callGroqText(env, messages, { model, maxTokens = 4096, tem
         messages
       })
     },
-    25000,
+    20000,
     'Groq'
   );
   if (!response.ok) {
@@ -231,7 +233,7 @@ export async function callGroqVision(env, imageBase64, { model } = {}) {
         }]
       })
     },
-    25000,
+    20000,
     'Groq Vision'
   );
   if (!response.ok) throw new Error(`Groq Vision 回應 ${response.status}`);
