@@ -247,12 +247,11 @@ body {
 .hero-art {
   --tilt-x: 0deg;
   --tilt-y: 0deg;
-  min-height: 420px;
+  min-height: 320px;
+  isolation: isolate;
   border-radius: 40px;
   border-color: rgba(143, 204, 255, .38);
-  background:
-    radial-gradient(circle at 50% 45%, rgba(53, 135, 255, .25), transparent 35%),
-    linear-gradient(145deg, rgba(8, 30, 84, .64), rgba(2, 7, 23, .92));
+  background: #030817;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), inset 0 -30px 80px rgba(0, 4, 22, .4), 0 28px 70px rgba(0, 2, 15, .5);
   transform: perspective(1100px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
   transform-style: preserve-3d;
@@ -266,9 +265,52 @@ body {
 }
 
 .hero-art::before,
-.hero-art::after { display: none; }
+.hero-art::after {
+  content: '';
+  display: block;
+  position: absolute;
+  pointer-events: none;
+}
+
+.hero-art::before {
+  z-index: 0;
+  inset: -3%;
+  background:
+    linear-gradient(145deg, rgba(25, 88, 177, .08), rgba(2, 7, 23, .16)),
+    url('../../assets/generated/hero-wenxian-v1.png') center / cover no-repeat;
+  transform: translate3d(-.4%, -.25%, 0) scale(1.035);
+  filter: saturate(.98) contrast(1.04) brightness(.98);
+  animation: sapphireHeroImage 12s ease-in-out infinite alternate;
+  will-change: transform, filter;
+}
+
+.hero-art::after {
+  z-index: 1;
+  inset: 0;
+  opacity: .6;
+  background:
+    radial-gradient(circle at 52% 48%, rgba(67, 159, 255, .18), transparent 28%),
+    linear-gradient(108deg, transparent 25%, rgba(255, 239, 184, .2) 42%, transparent 58%);
+  background-size: 100% 100%, 240% 100%;
+  background-position: center, 125% 0;
+  mix-blend-mode: screen;
+  animation: sapphireHeroLight 7.2s ease-in-out infinite;
+}
+
+@keyframes sapphireHeroImage {
+  0% { transform: translate3d(-.4%, -.25%, 0) scale(1.035); filter: saturate(.96) contrast(1.03) brightness(.96); }
+  55% { transform: translate3d(.55%, -.7%, 0) scale(1.075); filter: saturate(1.05) contrast(1.06) brightness(1.04); }
+  100% { transform: translate3d(-.15%, .45%, 0) scale(1.055); filter: saturate(1) contrast(1.05) brightness(1); }
+}
+
+@keyframes sapphireHeroLight {
+  0%, 20% { opacity: .32; background-position: center, 125% 0; }
+  52% { opacity: .68; }
+  82%, 100% { opacity: .38; background-position: center, -115% 0; }
+}
 
 .hero-art__prism {
+  z-index: 2;
   position: absolute;
   inset: 7%;
   border-radius: 50%;
@@ -280,13 +322,21 @@ body {
 @keyframes sapphirePrism { to { transform: rotate(360deg); } }
 
 .hero-celestial {
+  z-index: 3;
   position: absolute;
   inset: 4%;
   width: 92%;
   height: 92%;
   overflow: visible;
   transform: translateZ(34px);
+  opacity: .58;
 }
+
+.hero-celestial .palm-line,
+.hero-celestial .palm-marks,
+.hero-celestial .hero-jewel-halo,
+.hero-celestial .hero-jewel,
+.hero-art__seal { display: none; }
 
 .orbit { fill: none; stroke: rgba(151, 210, 255, .34); stroke-width: 1.4; stroke-dasharray: 4 8; transform-origin: 260px 260px; }
 .orbit--outer { animation: sapphireOrbit 36s linear infinite; }
@@ -416,73 +466,70 @@ body {
 }
 
 .theme-card-art {
+  position: relative;
   height: 124px;
+  isolation: isolate;
   border-bottom: 1px solid rgba(147, 206, 255, .18);
   background-color: #061334;
-  background-size: auto;
-  background-position: center;
+  background-image: none;
 }
 
-.theme-hub-card[data-theme='love'] .theme-card-art {
-  background:
-    radial-gradient(circle at 50% 56%, transparent 0 18px, rgba(227, 196, 126, .8) 19px 20px, transparent 21px),
-    radial-gradient(circle at 42% 52%, rgba(69, 155, 255, .78), transparent 28%),
-    radial-gradient(circle at 58% 52%, rgba(42, 85, 224, .7), transparent 28%),
-    linear-gradient(135deg, #07102c, #0c2b72 54%, #030919);
-}
-
-.theme-hub-card[data-theme='work'] .theme-card-art {
-  background:
-    linear-gradient(115deg, transparent 42%, rgba(235, 211, 144, .68) 42.5% 43.2%, transparent 43.7%),
-    linear-gradient(65deg, transparent 56%, rgba(100, 190, 255, .48) 56.5% 57.2%, transparent 57.7%),
-    radial-gradient(ellipse at 50% 110%, rgba(51, 139, 255, .52), transparent 58%),
-    linear-gradient(145deg, #030a20, #0c245d);
-}
-
-.theme-hub-card[data-theme='career'] .theme-card-art {
-  background:
-    conic-gradient(from 45deg at 50% 54%, transparent 0 11%, rgba(217, 190, 115, .44) 11.5% 12%, transparent 12.5% 24%, rgba(81, 170, 255, .38) 24.5% 25%, transparent 25.5% 100%),
-    radial-gradient(circle at 50% 54%, rgba(50, 128, 255, .68), transparent 9%, rgba(9, 29, 78, .4) 28%, transparent 48%),
-    linear-gradient(140deg, #030817, #0a2663);
-}
-
-.theme-hub-card[data-theme='wealth'] .theme-card-art {
-  background:
-    radial-gradient(ellipse at 50% 58%, transparent 0 22px, rgba(227, 202, 131, .68) 23px 25px, transparent 26px 34px, rgba(84, 175, 255, .38) 35px 36px, transparent 37px),
-    linear-gradient(155deg, #030917, #10408e 52%, #06102d);
-}
-
-.theme-hub-card[data-theme='family'] .theme-card-art {
-  background:
-    linear-gradient(135deg, transparent 45%, rgba(218, 193, 126, .7) 45.5% 46.4%, transparent 47%),
-    linear-gradient(45deg, transparent 50%, rgba(112, 201, 255, .48) 50.5% 51.4%, transparent 52%),
-    radial-gradient(ellipse at 50% 100%, rgba(54, 143, 255, .52), transparent 62%),
-    #040c25;
-}
-
-.theme-hub-card[data-theme='children'] .theme-card-art {
-  background:
-    radial-gradient(circle at 50% 44%, #f7e6ad 0 3px, rgba(97, 187, 255, .9) 4px 7px, transparent 8px),
-    radial-gradient(circle at 32% 62%, rgba(219, 195, 130, .72) 0 2px, transparent 3px),
-    radial-gradient(circle at 68% 66%, rgba(114, 198, 255, .72) 0 2px, transparent 3px),
-    radial-gradient(circle at 50% 54%, rgba(51, 137, 255, .5), transparent 36%),
-    linear-gradient(145deg, #030817, #0b2d70);
+.theme-card-art::before,
+.theme-card-art::after {
+  content: '';
+  display: block;
+  position: absolute;
+  pointer-events: none;
 }
 
 .theme-card-art::before {
-  display: block;
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 22%, rgba(158, 218, 255, .24) 48%, transparent 72%);
-  transform: translateX(-120%);
-  animation: sapphireArtSweep 7s ease-in-out infinite;
+  z-index: 0;
+  inset: -7%;
+  background-image:
+    linear-gradient(180deg, rgba(2, 9, 28, .02), rgba(2, 9, 28, .28)),
+    url('../../assets/generated/theme-atlas-wenxian-v1.png');
+  background-size: 100% 100%, 300% 200%;
+  background-position: center, var(--atlas-x) var(--atlas-y);
+  transform: translate3d(-.7%, -.4%, 0) scale(1.07);
+  transform-origin: var(--image-origin, center);
+  filter: saturate(.96) contrast(1.04);
+  animation: sapphireThemeImage 9s ease-in-out var(--image-delay, 0s) infinite alternate;
+  will-change: transform, filter;
 }
 
-@keyframes sapphireArtSweep {
-  0%, 62% { transform: translateX(-120%); }
-  82%, 100% { transform: translateX(120%); }
+.theme-card-art::after {
+  z-index: 1;
+  inset: 0;
+  opacity: .62;
+  background:
+    radial-gradient(circle at var(--glow-x, 28%) 46%, rgba(98, 184, 255, .34), transparent 9%),
+    linear-gradient(105deg, transparent 18%, rgba(255, 240, 187, .22) 35%, transparent 52%);
+  background-size: 100% 100%, 240% 100%;
+  background-position: center, 120% 0;
+  mix-blend-mode: screen;
+  animation: sapphireThemeLight 5.8s ease-in-out var(--image-delay, 0s) infinite;
 }
+
+@keyframes sapphireThemeImage {
+  0% { transform: translate3d(-.7%, -.4%, 0) scale(1.07); filter: saturate(.94) contrast(1.03) brightness(.96); }
+  55% { transform: translate3d(.8%, -.9%, 0) scale(1.105); filter: saturate(1.05) contrast(1.06) brightness(1.04); }
+  100% { transform: translate3d(-.2%, .8%, 0) scale(1.085); filter: saturate(1) contrast(1.05) brightness(1); }
+}
+
+@keyframes sapphireThemeLight {
+  0%, 18% { opacity: .35; background-position: center, 120% 0; }
+  52% { opacity: .78; }
+  78%, 100% { opacity: .42; background-position: center, -110% 0; }
+}
+
+.theme-hub-card:hover .theme-card-art::before { transform: translate3d(.4%, -.5%, 0) scale(1.14); }
+
+.theme-hub-card[data-theme='love'] .theme-card-art { --atlas-x: 0%; --atlas-y: 0%; --image-origin: 34% 48%; --glow-x: 30%; --image-delay: -1.1s; }
+.theme-hub-card[data-theme='work'] .theme-card-art { --atlas-x: 50%; --atlas-y: 0%; --image-origin: 52% 54%; --glow-x: 63%; --image-delay: -2.6s; }
+.theme-hub-card[data-theme='career'] .theme-card-art { --atlas-x: 100%; --atlas-y: 0%; --image-origin: 70% 42%; --glow-x: 76%; --image-delay: -4.2s; }
+.theme-hub-card[data-theme='wealth'] .theme-card-art { --atlas-x: 0%; --atlas-y: 100%; --image-origin: 38% 56%; --glow-x: 44%; --image-delay: -3.4s; }
+.theme-hub-card[data-theme='family'] .theme-card-art { --atlas-x: 50%; --atlas-y: 100%; --image-origin: 56% 48%; --glow-x: 62%; --image-delay: -5.1s; }
+.theme-hub-card[data-theme='children'] .theme-card-art { --atlas-x: 100%; --atlas-y: 100%; --image-origin: 48% 52%; --glow-x: 52%; --image-delay: -6.3s; }
 
 .theme-icon-box {
   border: 1px solid rgba(132, 197, 255, .24);
@@ -530,7 +577,7 @@ body {
   .hero-description { margin-top: 14px; line-height: 1.75; }
   .hero-actions { margin-top: 22px; }
   .hero-actions .btn { flex: 1 1 100%; }
-  .hero-art { min-height: 310px; border-radius: 28px; }
+  .hero-art { min-height: 220px; border-radius: 28px; }
   .hero-celestial { inset: 1%; width: 98%; height: 98%; }
   .hero-art__seal { width: 48px; height: 66px; right: 14px; bottom: 14px; }
   .sapphire-aurora { filter: blur(58px); opacity: .14; }
@@ -543,11 +590,13 @@ body {
   .motion-toggle { width: 44px; padding-inline: 0; }
   .motion-toggle__label { display: none; }
   .hero-slogan-capsule { font-size: .76rem; padding-inline: 11px; }
-  .hero-art { min-height: 282px; }
+  .hero-art { min-height: 205px; }
 }
 
 :root[data-motion='reduced'] .sapphire-aurora,
 :root[data-motion='reduced'] .sapphire-starfield i,
+:root[data-motion='reduced'] .hero-art::before,
+:root[data-motion='reduced'] .hero-art::after,
 :root[data-motion='reduced'] .brand-svg-icon,
 :root[data-motion='reduced'] .hero-slogan-gem,
 :root[data-motion='reduced'] .hero-art__prism,
