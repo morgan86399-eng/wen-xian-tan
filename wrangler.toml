@@ -18,8 +18,8 @@ id = "86894485cae2413e989bd361762d27e3"
 [vars]
 GEMINI_TEXT_MODEL = "gemini-3.7-flash"
 GEMINI_VISION_MODEL = "gemini-3.7-flash"
-GROQ_TEXT_MODEL = "llama-3.3-70b-versatile"
-GROQ_VISION_MODEL = "llama-4-scout-17b-16e-instruct"
+GROQ_TEXT_MODEL = "openai/gpt-oss-120b"
+GROQ_VISION_MODEL = "qwen/qwen3.8-27b"
 
 # Pages：頂層 bindings 不會繼承到 production，必須重寫一次
 [env.production]
@@ -41,5 +41,5 @@ id = "86894485cae2413e989bd361762d27e3"
 [env.production.vars]
 GEMINI_TEXT_MODEL = "gemini-3.7-flash"
 GEMINI_VISION_MODEL = "gemini-3.7-flash"
-GROQ_TEXT_MODEL = "llama-3.3-70b-versatile"
-GROQ_VISION_MODEL = "llama-4-scout-17b-16e-instruct"
+GROQ_TEXT_MODEL = "openai/gpt-oss-120b"
+GROQ_VISION_MODEL = "qwen/qwen3.8-27b"

@@ -562,6 +562,23 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </form>
 
+      <div class="auth-divider">
+        <span>測試帳號登入（開發用）</span>
+      </div>
+
+      <form id="devLoginForm" style="display:grid;gap:14px;">
+        <div class="auth-form-group">
+          <label class="auth-form-label" for="devLoginUsername">帳號：</label>
+          <input type="text" id="devLoginUsername" class="auth-form-input" placeholder="帳號" value="user">
+        </div>
+        <div class="auth-form-group">
+          <label class="auth-form-label" for="devLoginPassword">密碼：</label>
+          <input type="password" id="devLoginPassword" class="auth-form-input" placeholder="密碼" value="user123">
+        </div>
+        <div id="devLoginError" style="display:none;color:#EF4444;font-size:0.85rem;"></div>
+        <button type="submit" class="btn btn-outline" style="width:100%;">測試帳號登入</button>
+      </form>
+
       <div class="auth-guarantee-badge">
         <span>🔒</span>
         <span>仙壇嚴格保障每位信士隱私，掌紋及個資不作商業轉售</span>
@@ -587,6 +604,23 @@ document.addEventListener('DOMContentLoaded', () => {
       const email = document.getElementById('pageAuthEmailInput').value.trim();
       const name = document.getElementById('pageAuthNameInput')?.value.trim() || '';
       openEmailVerifyDialog(email, formMode, name);
+    });
+
+    document.getElementById('devLoginForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('devLoginUsername').value.trim();
+      const password = document.getElementById('devLoginPassword').value;
+      const errorEl = document.getElementById('devLoginError');
+      const btn = e.target.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = true; btn.textContent = '登入中…'; }
+      const res = await MemberManager.devLogin(username, password);
+      if (btn) { btn.disabled = false; btn.textContent = '測試帳號登入'; }
+      if (res.success) {
+        updateTopBarUserStatus();
+        switchTab('member');
+      } else {
+        if (errorEl) { errorEl.textContent = res.message; errorEl.style.display = 'block'; }
+      }
     });
   }
 

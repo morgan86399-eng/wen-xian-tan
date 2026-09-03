@@ -182,6 +182,26 @@ export const MemberManager = {
     }
   },
 
+  async devLogin(username, password) {
+    try {
+      const res = await fetch('/api/auth/dev-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password })
+      });
+      const data = await readJson(res);
+      if (!res.ok || data.ok === false) {
+        return { success: false, message: data.message || '帳號或密碼錯誤' };
+      }
+      if (data.user) this._user = normalizeUser(data.user);
+      await this.refreshMe();
+      return { success: true, user: this._user };
+    } catch {
+      return { success: false, message: '目前連不上伺服器，請稍後再試' };
+    }
+  },
+
   async logout() {
     try {
       await fetch('/api/logout', { method: 'POST', credentials: 'include' });

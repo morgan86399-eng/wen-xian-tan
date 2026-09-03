@@ -5,8 +5,8 @@ import { requireGroq } from './auth.mjs';
 
 const GEMINI_TEXT_DEFAULT = 'gemini-3.7-flash';
 const GEMINI_VISION_DEFAULT = 'gemini-3.7-flash';
-const TEXT_MODEL_DEFAULT = 'llama-3.3-70b-versatile';
-const VISION_MODEL_DEFAULT = 'llama-4-scout-17b-16e-instruct';
+const TEXT_MODEL_DEFAULT = 'openai/gpt-oss-120b';
+const VISION_MODEL_DEFAULT = 'qwen/qwen3.8-27b';
 const WORKERS_AI_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 const PALM_VISION_PROMPT = '只描述掌心線條走向與紋路特徵，不下結論、不給建議。';
 
