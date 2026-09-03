@@ -5,13 +5,27 @@
 const STORAGE_KEY_MEMBERS = 'wenxiantan_members_db_v2';
 const STORAGE_KEY_SESSION = 'wenxiantan_user_session_v2';
 
+export const TEST_USER_ACCOUNT = {
+  id: 'usr_test_user',
+  email: 'user',
+  name: '測試體驗員 (user)',
+  password: 'user123',
+  gender: 'female',
+  tier: '至尊測試信士 (全篇章各1000點)',
+  joinedAt: '2026-09-01'
+};
+
 export const MemberManager = {
   // 取得所有註冊會員
   getMembers() {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY_MEMBERS) || '{}');
+      const members = JSON.parse(localStorage.getItem(STORAGE_KEY_MEMBERS) || '{}');
+      if (!members['user']) {
+        members['user'] = TEST_USER_ACCOUNT;
+      }
+      return members;
     } catch (e) {
-      return {};
+      return { user: TEST_USER_ACCOUNT };
     }
   },
 
@@ -159,6 +173,26 @@ export const MemberManager = {
 
   // 登入
   login(email, password) {
+    const cleanAccount = (email || '').trim().toLowerCase();
+    const cleanPwd = (password || '').trim();
+
+    if ((cleanAccount === 'user' || cleanAccount === 'user@example.com') && cleanPwd === 'user123') {
+      this.setCurrentUser(TEST_USER_ACCOUNT);
+      try {
+        localStorage.setItem('wenxiantan_points_wallet_v2', JSON.stringify({
+          love: 1000,
+          work: 1000,
+          career: 1000,
+          wealth: 1000,
+          family: 1000,
+          children: 1000
+        }));
+      } catch (err) {
+        console.error('Failed to set test points', err);
+      }
+      return { success: true, user: TEST_USER_ACCOUNT };
+    }
+
     const members = this.getMembers();
     const user = members[email];
 

@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         role: 'single',
         roleCustom: '',
         question: '',
-        goal: 'timing',
+        goal: 'skip',
         goalCustom: '',
         palmDataUrl: null
       },
@@ -1032,7 +1032,7 @@ document.addEventListener('DOMContentLoaded', () => {
       role: roleConf.defaultRole || roleConf.options[0]?.id || 'single',
       roleCustom: '',
       question: '',
-      goal: 'timing',
+      goal: 'skip',
       goalCustom: '',
       palmDataUrl: null
     };
@@ -1159,7 +1159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="wizard-step-body">
           <div>
             <div class="wizard-question-title">6. 您最希望獲得怎樣的幫助與結果？</div>
-            <div class="wizard-question-sub">報告中將針對您的核心期望，給予具體的行動方向與時機建議</div>
+            <div class="wizard-question-sub">點選自訂輸入期望，或直接點選略過</div>
           </div>
           <div class="wizard-options-grid">
             ${renderOptionCards(DESIRED_OUTCOMES, answers.goal, answers.goalCustom, 'goalCustom')}
@@ -1538,6 +1538,134 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function generateDeepReportAnalysis(themeId, answers, genderLabel, ageLabel, relationLabel, roleLabel, goalLabel, theme) {
+    const q = (answers.question || '').trim();
+
+    // 1. 關鍵流年轉折 (動態依年齡計算)
+    let turnaroundYear = '今年秋冬至明年初 · 關鍵轉化期';
+    if (answers.age === '18-24') {
+      turnaroundYear = '22 ~ 25 歲 · 青年啟蒙與天賦奠定轉折';
+    } else if (answers.age === '25-34') {
+      turnaroundYear = '28 ~ 32 歲 · 適婚立業黃金翻轉期';
+    } else if (answers.age === '35-44') {
+      turnaroundYear = '39 ~ 43 歲 · 中流天花板突破與財祿高峰';
+    } else if (answers.age === '45-54') {
+      turnaroundYear = '48 ~ 53 歲 · 資產穩固與家運豐盛吉期';
+    } else if (answers.age === '55+') {
+      turnaroundYear = '58 ~ 65 歲 · 德澤安康與晚運圓滿期';
+    } else if (answers.ageCustom) {
+      turnaroundYear = `針對 ${answers.ageCustom} · 未來三至六個月關鍵樞紐`;
+    }
+
+    // 2. 貴人特徵與方位
+    let nobleGuide = '正南方 · 處事溫和細心之命定貴人';
+    if (/債|欠款|工程款|借貸|賠償|官司|法院|倒帳/.test(q)) {
+      nobleGuide = '正北方 · 懂法規契約的嚴謹女性 / 專業法務調解者';
+    } else if (/兒|女|孩子|小孩|叛逆|結婚|相親|催婚|念書|考/.test(q)) {
+      nobleGuide = '正東方 · 具同理心之長輩良師 / 溫暖慈祥長者';
+    } else if (/創業|融資|合夥|股權|老闆|投資|商機|SaaS/.test(q)) {
+      nobleGuide = '東北方 · 具產業資源的資深出資方 / 穩健合夥人';
+    } else if (/主管|換工作|跳槽|離職|實習|裁員|升遷|同事|架構|考考/.test(q)) {
+      nobleGuide = '西北方 · 具實權之長官前輩 / 踏實技術同儕';
+    } else if (/前任|復合|正緣|暗戀|曖昧|伴侶|夫妻|冷戰|離婚/.test(q)) {
+      nobleGuide = '東南方 · 溫和沉穩、性格互補之正緣善士';
+    } else if (/買房|新屋|頭期款|房貸|長輩|生病|身體|開刀/.test(q)) {
+      nobleGuide = '西南方 · 踏實房產專家 / 家族有福德之醫師長者';
+    }
+
+    // 3. 手相印證
+    let palmFeature = '吉星照會 · 氣場聚集生輝';
+    if (answers.palmDataUrl) {
+      if (themeId === 'love') palmFeature = '✋ 感情線末端向上延伸 · 正緣磁場清明';
+      else if (themeId === 'work') palmFeature = '✋ 智慧線深長無阻 · 天賦潛力即將啟動';
+      else if (themeId === 'career') palmFeature = '✋ 事業命運線貫穿掌心 · 商業巔峰可期';
+      else if (themeId === 'wealth') palmFeature = '✋ 水星丘飽滿微凸 · 先天財庫聚財有力';
+      else if (themeId === 'family') palmFeature = '✋ 金星丘厚實紅潤 · 家宅地基平穩祥和';
+      else if (themeId === 'children') palmFeature = '✋ 小指基部子女紋清晰 · 天賦靈性相生';
+    }
+
+    // 4. 深度病灶透視、具體破局之法、行動方向
+    let diagnosis = '';
+    let method = '';
+    let direction = '';
+
+    if (/兒|女|孩子|小孩|叛逆|催婚|不結婚|甩門|冷戰/.test(q)) {
+      diagnosis = '【因果病灶透視】：親密關係中的邊界感模糊，長年「以愛為名」的過度操心與催逼，在孩子心中形成了沉重的心理防衛與雙重束縛。越是急切想抓住對方的行蹤與婚配進度，越容易將至親推向沉默反鎖與冷戰對立的死結。';
+      method = '【破局化解方法】：實施「非暴力界線退後法」——第一，即刻停止言語催婚、說教或刺探私生活，給予彼此 3～6 個月的心理緩衝期；第二，將關心化為無條件的溫暖實質照顧（如準備其愛吃的飯菜或留簡短便箋，不帶說教尾巴）；第三，把注意力收回自身的生活與身心調養，當您自身的焦慮氣場平靜下來，家庭磁場自會轉向和諧。';
+      direction = '【轉折吉時方向】：今年農曆冬季至明年立春，為親子溝通破冰的關鍵契機。屆時以平輩朋友姿態溫和探問，對方的心防必將融化，迎來深度理解。';
+    } else if (/欠款|倒帳|工程款|借貸|還錢|賠償|官司|法院/.test(q)) {
+      diagnosis = '【因果病灶透視】：財庫因果受阻，昔日基於信任或江湖情義未立嚴謹書面防線，導致自身承受巨大債務反噬與催款高壓。若一味深陷情緒憤恨或私下爭吵，反而容易落入對方脫產與拖延戰術之陷阱。';
+      method = '【破局化解方法】：採取「法理雙軌止血法」——第一，立即將所有出入單據、匯款明細、對話紀錄與合約完整造冊，切忌意氣用事；第二，透過鄉鎮市調解委員會或專業律師發出存證信函，以「階段性還款協議 + 法律本票保全」建立防線，給對方階梯下的同時鎖定資產；第三，自身財庫採取絕對保守防禦，嚴禁病急亂投醫盲目借貸補洞。';
+      direction = '【轉折吉時方向】：農曆九月、十月為重要法律調解與財帛回流吉月，正北方將有法務或公信人士相助，有望打破僵局追回重要資金。';
+    } else if (/架構|技術|主管|換工作|跳槽|離職|裁員|試用期|實習|新鮮人|同事|小人|外銷|履歷/.test(q)) {
+      diagnosis = '【因果病灶透視】：身處職場新舊更替或階級夾心層的焦慮風暴中心。過度將精力內耗於非自身能控制的長官偏見、辦公室政治或年齡危機，忽視了自身核心天賦資產的深層變現價值。';
+      method = '【破局化解方法】：啟動「雙軌價值防禦網」——第一，在現職落實「量化留痕法」，將自身架構貢獻或日常執行成效轉化為白紙黑字的商業產出指標，不捲入口舌紛爭；第二，暗中啟動外部網絡，整理代表性成果作品集，在離職前盤點至少 2～3 個替代機會；第三，新人實習者切莫自我矮化，主動向資深前輩請益標準流程，將恐懼轉化為筆記習慣。';
+      direction = '【轉折吉時方向】：今年秋季末為蓄勢期，明年開春農曆正月至三月，西北方將出現貴人引路，迎來轉職高就或升遷轉正之關鍵良機。';
+    } else if (/合夥|融資|創業|Pre-A|MVP|SaaS|股權|老闆|營業額/.test(q)) {
+      diagnosis = '【因果病灶透視】：事業版圖擴張過猛遇上外在景氣寒冬，合夥人之間權責利益未徹底切割，導致現金流陷入過橋風險。此時若僅靠賭性硬撐，極易因合夥反目而重創基業。';
+      method = '【破局化解方法】：執行「精實造血與股權停損法」——第一，立即盤點近三個月真實現金流跑道（Runway），砍除非核心開銷，優先啟動自體造血營收模式；第二，對於意圖退場之合夥人，儘速依合理估值簽署分期股權回購或稀釋協議，避免決策癱瘓；第三，引進新外部資源時，著重具備產業落地的策略夥伴，而非單純財務投機方。';
+      direction = '【轉折吉時方向】：今年秋季中下旬（農曆八、九月）將迎來轉折契機，東北方將有懂您商業價值的實業貴人接洽，商業巔峰大運將在明年逐步鋪展。';
+    } else if (/簽字|合規|審計|稅務|異常|違規|法律責任/.test(q)) {
+      diagnosis = '【因果病灶透視】：體制灰色地帶試圖將系統性責任轉嫁予個人，面臨職業良知與飯碗生存的劇烈拉扯。任何妥協或抱持僥倖簽字，都將成為日後不可承受之連帶風險。';
+      method = '【破局化解方法】：落實「合規書面三防線」——第一，所有關鍵指示必須堅持以正式電子郵件或公文簽呈留痕存檔，不接受任何純口頭承諾；第二，針對疑慮交易啟動內部合規備忘錄（Memo），如實記載客觀事實與法規風險；第三，諮詢外部獨立法律或會計顧問，以合法專業之客觀報告作為自身職務免責的堅固盾牌。';
+      direction = '【轉折吉時方向】：堅持正道必得神明暗中庇佑，年底前組織內部人事將迎來自然更替洗牌，危機將化解於無形，保全自身令名與前途。';
+    } else if (/學姐|暗戀|曖昧|工具人|備胎|正緣|長相|復合|前任|冷戰|離婚/.test(q)) {
+      diagnosis = '【因果病灶透視】：情感磁場陷入「自我價值過度依附對方反饋」的失衡狀態。將自身幸福寄託於忽冷忽熱的曖昧對象或已逝舊情，導致自身靈魂頻率散亂、感情線受阻。';
+      method = '【破局化解方法】：實踐「自性圓滿吸引法則」——第一，立刻停止卑微討好或頻繁查看對方動態，收回投射在對方身上的過度關注；第二，重塑生活節奏與外在形象，在事業與興趣中找回自信光芒；第三，若處於伴侶冷戰中，嘗試以「我感到困頓脆弱」取代「你總是忽視我」的指責話術，開啟柔軟對話。';
+      direction = '【轉折吉時方向】：東南方將迎來紅鸞善星照耀，今年秋冬至明年初將迎來真正的正緣轉折——若為良緣則深層破冰，若為錯緣則清爽放下、迎來真正相知相惜的天命正緣。';
+    } else if (/出國|留學|OPT|H1B|簽證|海拒|異鄉|學貸/.test(q)) {
+      diagnosis = '【因果病灶透視】：文化拔根之生存焦慮與學貸重壓，讓靈魂處於高壓驚恐狀態。將短期政策或簽證困頓等同於整個人生的成敗，造成視野收窄與心力透支。';
+      method = '【破局化解方法】：採取「多維度身分與技能備案」——第一，擴大求職半徑，不限於單一特定產業，靈活運用跨國外包、學術研究或遠端職缺過渡身分；第二，主動向海外校友會與同鄉善士尋求推薦內推；第三，心態上接納「歸鄉亦是廣闊天地」，將留學歷練化為不可替代之雙語優勢，退路亦是進路。';
+      direction = '【轉折吉時方向】：未來三個月內西方與西北方將浮現轉機，貴人指引將為您打開一扇意料之外的門，順應因果必有立錐之地。';
+    } else if (/關在房間|不敢出門|外送|憂鬱|活著好累|社交恐懼|退縮/.test(q)) {
+      diagnosis = '【因果病灶透視】：心靈承受外界評價過載與存在性羞恥，啟動了極端的自我封閉防護罩。此時任何外界催逼都會加劇恐慌，您需要的不是立刻大步奔跑，而是靈魂深度的休養與接納。';
+      method = '【破局化解方法】：實施「微量生活錨定法」——第一，接納當下疲憊的自己，每天只設定一個極微小的目標（如開窗曬太陽 5 分鐘、喝一杯溫水），不評價自己的好壞；第二，不與任何人比較生活進度，阻絕外界雜音；第三，若需要求助，透過文字而非面對面方式尋求心理諮詢或信任之社福支持，仙佛永遠包容接納您的存在。';
+      direction = '【轉折吉時方向】：深冬過後必有暖陽，目前正處於蓄積生命能量之谷底修復期，明年開春氣場將逐步回溫，必能找回前行的微光與勇氣。';
+    } else if (/買房|新成屋|頭期款|房貸|置產/.test(q)) {
+      diagnosis = '【因果病灶透視】：購屋置產乃家宅立基之大計，過度焦慮於通膨與房價飆漲，容易在長輩期望與自身承受力之間陷入天人交戰，稍有不慎恐造成長年現金流緊繃。';
+      method = '【破局化解方法】：落實「精準壓力測試與分期置產心法」——第一，嚴格以家庭實質月收入之 35%～40% 為房貸上限，守住生活品質防線；第二，挑選具備實質交通軌道與抗跌剛需之成熟生活圈，不盲目追高重劃區炒作；第三，家宅合約嚴格載明驗屋與瑕疵擔保，謀定而後動。';
+      direction = '【轉折吉時方向】：西南方與正西方有吉星拱照，明後兩年市場將迎來絕佳之議價與挑選窗口，心儀良宅必將有緣結契。';
+    } else {
+      diagnosis = `【因果局勢透視】：信士（${genderLabel} · ${ageLabel} · 稱謂：${relationLabel} · 狀態：${roleLabel}）當前所處環境正值氣場重整之際。您所掛心的核心問題，表層雖為現實人事阻礙，實則為靈魂迎向下一階段躍遷之磨練課題。`;
+      method = `【破局化解之法】：第一，釐清主客觀界線，聚焦於自身能掌控之行動；第二，廣結善緣、心存正念，遇事不躁進，順應易學陰陽之道化剛為柔；第三，保持每日清心靜定，誠心向仙佛祈請智慧指引。`;
+      direction = `【前進方向與轉折】：關鍵轉折將在未來關鍵月份（尤其是今年秋末至明年初）開展，把握南方與身邊之善緣貴人，必能守得雲開見月明！`;
+    }
+
+    const formattedAdvice = `
+      <div class="report-deep-analysis">
+        <div class="advice-block-item">
+          <div style="color:var(--gold-bright);font-weight:800;font-size:0.96rem;margin-bottom:4px;">🔍 因果局勢與核心病灶透視：</div>
+          <div style="color:var(--text-secondary);line-height:1.75;margin-bottom:12px;">${diagnosis}</div>
+        </div>
+        
+        <div class="advice-block-item" style="border-top:1px dashed rgba(212,168,83,0.25);padding-top:10px;margin-top:10px;">
+          <div style="color:#34D399;font-weight:800;font-size:0.96rem;margin-bottom:4px;">🛠️ 仙佛指引：具體破局之法（心法＋實戰行動）：</div>
+          <div style="color:var(--text-secondary);line-height:1.75;margin-bottom:12px;">${method}</div>
+        </div>
+
+        <div class="advice-block-item" style="border-top:1px dashed rgba(212,168,83,0.25);padding-top:10px;margin-top:10px;">
+          <div style="color:var(--gold-gradient);font-weight:800;font-size:0.96rem;margin-bottom:4px;">🧭 前進方向與轉折吉時：</div>
+          <div style="color:var(--text-secondary);line-height:1.75;margin-bottom:12px;">${direction}</div>
+        </div>
+
+        <div class="advice-block-item" style="background:rgba(212,168,83,0.08);border-left:3px solid var(--gold-bright);padding:8px 12px;border-radius:4px;margin-top:12px;">
+          <strong style="color:var(--gold-bright);font-size:0.85rem;">✦ 手相命脈靈犀印證：</strong>
+          <span style="color:var(--text-gold);font-size:0.85rem;">${palmFeature}。信士誠心所至，仙佛自然作主護佑！</span>
+        </div>
+      </div>
+    `;
+
+    return {
+      turnaroundYear,
+      nobleGuide,
+      palmFeature,
+      diagnosis,
+      method,
+      direction,
+      formattedAdvice
+    };
+  }
+
   function showDecodedReport(themeId, answers, renderIntoModal = true) {
     const theme = THEMES.find((t) => t.id === themeId);
 
@@ -1564,7 +1692,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const goalLabel = (answers.goal === 'custom_goal' && answers.goalCustom)
       ? answers.goalCustom
-      : (DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || '掌握時機指引');
+      : (answers.goal === 'skip' || !answers.goal
+          ? '略過（由仙佛全方位推演指引）'
+          : (DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || '由仙佛全方位推演指引'));
 
     if (typeof confetti === 'function') {
       confetti({
@@ -1573,6 +1703,17 @@ document.addEventListener('DOMContentLoaded', () => {
         origin: { y: 0.5 }
       });
     }
+
+    const deepAnalysis = generateDeepReportAnalysis(
+      themeId,
+      answers,
+      genderLabel,
+      ageLabel,
+      relationLabel,
+      roleLabel,
+      goalLabel,
+      theme
+    );
 
     const reportData = {
       themeId,
@@ -1585,7 +1726,10 @@ document.addEventListener('DOMContentLoaded', () => {
       goal: goalLabel,
       question: answers.question || '一般運勢與未來時機指引',
       score: 92 + Math.floor(Math.random() * 7),
-      advice: `【${theme.name}深度指引】：信士（${genderLabel} · ${ageLabel} · 稱謂：${relationLabel} · 狀態：${roleLabel}）目前整體運勢氣場聚集向上。針對您所詢問的「${answers.question || theme.title}」與期待「${goalLabel}」，在未來的關鍵月份（尤其是今年秋季至明年初）將迎來重要的轉折契機。建議您保持信心、把握身邊的貴人善緣，順應時機積極行動，必能迎刃而解、心想事成！`,
+      turnaroundYear: deepAnalysis.turnaroundYear,
+      nobleGuide: deepAnalysis.nobleGuide,
+      palmFeature: deepAnalysis.palmFeature,
+      advice: deepAnalysis.formattedAdvice,
       hasPalm: Boolean(answers.palmDataUrl),
       matchedStories
     };
@@ -1613,26 +1757,24 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="report-dim-card">
             <div class="report-dim-label">關鍵流年轉折</div>
-            <div class="report-dim-val">29 - 32 歲</div>
+            <div class="report-dim-val" style="font-size:0.95rem;">${reportData.turnaroundYear}</div>
           </div>
           <div class="report-dim-card">
             <div class="report-dim-label">貴人特徵與方位</div>
-            <div class="report-dim-val">正南方 · 溫和細心</div>
+            <div class="report-dim-val" style="font-size:0.88rem;">${reportData.nobleGuide}</div>
           </div>
           <div class="report-dim-card">
             <div class="report-dim-label">手相命脈印證</div>
-            <div class="report-dim-val">${reportData.hasPalm ? '✋ 掌心靈犀已鎖定' : '吉星相照 · 貴人相助'}</div>
+            <div class="report-dim-val" style="font-size:0.88rem;">${reportData.palmFeature}</div>
           </div>
         </div>
 
         <div class="report-advice-box">
-          <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:6px;">
-            <strong>想了解的事：</strong> ${reportData.question}
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px;border-bottom:1px dashed var(--border);padding-bottom:8px;">
+            <div><strong>📌 信士叩問煩惱：</strong> ${reportData.question}</div>
+            <div style="margin-top:4px;color:var(--text-gold);"><strong>🎯 核心期待結果：</strong> ${reportData.goal}</div>
           </div>
-          <div style="font-size:0.82rem;color:var(--text-gold);margin-bottom:8px;">
-            <strong>期待的結果：</strong> ${reportData.goal}
-          </div>
-          <div style="line-height:1.7;">
+          <div style="line-height:1.75;">
             ${reportData.advice}
           </div>
         </div>

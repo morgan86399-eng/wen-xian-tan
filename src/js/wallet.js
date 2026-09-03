@@ -19,16 +19,62 @@ export const WalletManager = {
     };
   },
 
+  // 測試帳號專屬全篇章 1000 點錢包
+  getTestUserWallet() {
+    return {
+      love: 1000,
+      work: 1000,
+      career: 1000,
+      wealth: 1000,
+      family: 1000,
+      children: 1000
+    };
+  },
+
+  // 確保測試帳號擁有各篇章 1000 點額度
+  ensureTestPoints() {
+    const testWallet = this.getTestUserWallet();
+    this.savePoints(testWallet);
+    return testWallet;
+  },
+
   // 取得所有篇章的點數物件
   getPoints() {
     try {
+      const session = localStorage.getItem('wenxiantan_user_session_v2');
+      let isTestUser = false;
+      if (session) {
+        try {
+          const user = JSON.parse(session);
+          if (user && (user.email === 'user' || user.id === 'usr_test_user')) {
+            isTestUser = true;
+          }
+        } catch (err) {}
+      }
+
       const saved = localStorage.getItem(STORAGE_KEY_POINTS);
       if (!saved) {
-        const initial = this.getDefaultWallet();
+        const initial = isTestUser ? this.getTestUserWallet() : this.getDefaultWallet();
         this.savePoints(initial);
         return initial;
       }
-      return { ...this.getDefaultWallet(), ...JSON.parse(saved) };
+
+      const parsed = JSON.parse(saved);
+      if (isTestUser) {
+        let modified = false;
+        ['love', 'work', 'career', 'wealth', 'family', 'children'].forEach((k) => {
+          if (typeof parsed[k] !== 'number' || parsed[k] < 1) {
+            parsed[k] = 1000;
+            modified = true;
+          }
+        });
+        if (modified) {
+          this.savePoints(parsed);
+        }
+        return parsed;
+      }
+
+      return { ...this.getDefaultWallet(), ...parsed };
     } catch (e) {
       console.error('Failed to load wallet points', e);
       return this.getDefaultWallet();
