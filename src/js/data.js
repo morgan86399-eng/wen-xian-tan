@@ -409,7 +409,7 @@ export const MANIFESTATION_STORIES = [
   {
     id: 'story_19',
     themeId: 'love',
-    imageUrl: 'assets/stories/19.jpg',
+    imageUrl: '',
     title: '多年沒聯絡的知己好友，請仙佛幫忙後重新聯繫上解開心結',
     name: 'weiyo',
     category: '感情姻緣',
@@ -447,7 +447,7 @@ export const MANIFESTATION_STORIES = [
   {
     id: 'story_31',
     themeId: 'work',
-    imageUrl: 'assets/stories/22.jpg',
+    imageUrl: '',
     title: '回鄉找工作沒方向，指引電腦相關領域，第一家面試就錄取',
     name: '尤先生',
     category: '工作求職',
@@ -459,7 +459,7 @@ export const MANIFESTATION_STORIES = [
   {
     id: 'story_26',
     themeId: 'work',
-    imageUrl: 'assets/stories/01.jpg',
+    imageUrl: '',
     title: '請仙佛幫忙提升智慧，理解力明顯變好、工作步步順遂',
     name: 'weiyo',
     category: '工作求職',
@@ -683,7 +683,7 @@ export const MANIFESTATION_STORIES = [
   {
     id: 'story_08',
     themeId: 'children',
-    imageUrl: 'assets/stories/08.jpg',
+    imageUrl: '',
     title: '掌紋智慧線與事業線交叉處年份分析精準，提早避開破財陷阱',
     name: '周先生',
     category: '手相流年印證',

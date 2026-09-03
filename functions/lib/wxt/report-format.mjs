@@ -94,3 +94,51 @@ export function pickReportObject(apiResult) {
   }
   return apiResult.report || apiResult.content || nestedReading || apiResult || {};
 }
+
+/* 建設性建議：模型回的 actions 陣列，容忍字串或物件寫法 */
+export function extractActions(raw) {
+  if (!raw || typeof raw !== 'object') return [];
+  const source = raw.actions || raw.suggestions || raw.nextSteps || raw.advices || raw.todo;
+  const list = Array.isArray(source) ? source : (typeof source === 'string' ? [source] : []);
+  const out = [];
+  for (const item of list) {
+    let text = '';
+    if (typeof item === 'string') text = item;
+    else if (item && typeof item === 'object') {
+      text = String(item.text || item.body || item.content || item.action || item.title || '');
+    }
+    const cleaned = stripTags(text).replace(/^[\d]+[.、)]\s*/, '').trim();
+    if (cleaned) out.push(cleaned);
+  }
+  return out.slice(0, 5);
+}
+
+/* 未完成報告偵測：模型反過來跟使用者要資料時，不可以當成品 */
+const INCOMPLETE_HARD = [
+  '請提供七步',
+  '七步答案',
+  '缺少關鍵',
+  '需要您補充',
+  '需要你補充',
+  '請依序提供',
+  '請提供以下',
+  '無法完成解讀',
+  '資料不足',
+  '資訊不足'
+];
+
+const INCOMPLETE_TITLE = ['請提供', '請補充', '請告訴我', '缺少', '無法解讀'];
+
+export function isIncompleteReport(raw) {
+  if (!raw) return true;
+  const report = (typeof raw === 'object' && !Array.isArray(raw)) ? raw : { summary: String(raw || '') };
+  const title = stripTags(report.title || '');
+  const bodyText = formatAdviceFromReport(report);
+
+  if (INCOMPLETE_TITLE.some((word) => title.includes(word))) return true;
+
+  const dump = `${title}\n${bodyText}`;
+  if (INCOMPLETE_HARD.some((word) => dump.includes(word))) return true;
+
+  return !bodyText.trim();
+}

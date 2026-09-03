@@ -7,9 +7,15 @@ import {
   saveReading,
   hasDb
 } from '../../lib/wxt/store.mjs';
-import { buildSystemPrompt, buildUserPrompt, scanForbidden, replaceForbidden } from '../../lib/wxt/forbidden.mjs';
+import {
+  buildSystemPrompt,
+  buildUserPrompt,
+  scanForbidden,
+  replaceForbidden,
+  HARDENED_RETRY_HINT
+} from '../../lib/wxt/forbidden.mjs';
 import { describePalm, generateReport } from '../../lib/wxt/ai.mjs';
-import { withAdviceField } from '../../lib/wxt/report-format.mjs';
+import { withAdviceField, isIncompleteReport } from '../../lib/wxt/report-format.mjs';
 
 export const onRequest = postOnly(async ({ request, env }) => {
   if (!hasDb(env)) return json({ error: 'SERVICE_UNAVAILABLE' }, 503);
@@ -81,12 +87,22 @@ export const onRequest = postOnly(async ({ request, env }) => {
   let tokens = 0;
   let report = null;
 
+  // 模型若反過來跟使用者要資料，就是不合格輸出：加硬指令重試一次，仍不合格才判失敗
+  let retryHint = '';
+
   try {
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const outcome = await generateReport(env, { systemPrompt, userPrompt });
+      const outcome = await generateReport(env, {
+        systemPrompt,
+        userPrompt: `${userPrompt}${retryHint}`
+      });
       model = outcome.model;
       tokens = (outcome.tokens || 0) + visionTokens;
       const raw = outcome.parsed || { summary: outcome.text, sections: [] };
+      if (isIncompleteReport(raw)) {
+        retryHint = HARDENED_RETRY_HINT;
+        continue;
+      }
       const textDump = JSON.stringify(raw);
       const hits = scanForbidden(textDump);
       if (!hits.length) {

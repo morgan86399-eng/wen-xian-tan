@@ -16,7 +16,7 @@ import { showLegalModal } from './legal.js';
 import '../css/payment-modal.css';
 import '../css/sapphire.css';
 import './payment-sdk.js';
-import { formatAdviceFromReport, pickReportObject } from '../../functions/lib/wxt/report-format.mjs';
+import { formatAdviceFromReport, pickReportObject, extractActions } from '../../functions/lib/wxt/report-format.mjs';
 
 /**
  * 問仙壇 · 掌心解碼 App - 核心應用邏輯與白話問卷引導引擎
@@ -35,6 +35,23 @@ document.addEventListener('DOMContentLoaded', () => {
       return crypto.randomUUID();
     }
     return `n_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  // 站台設定：LINE 官方帳號網址由後台環境變數 LINE_OA_URL 提供，沒設定就不顯示諮詢按鈕
+  let siteConfigPromise = null;
+  function ensureSiteConfig() {
+    if (!siteConfigPromise) {
+      siteConfigPromise = fetch('/api/config', { credentials: 'include' })
+        .then((res) => (res.ok ? res.json() : {}))
+        .catch(() => ({}));
+    }
+    return siteConfigPromise;
+  }
+
+  function safeLineUrl(value) {
+    const url = String(value || '').trim();
+    if (!/^https:\/\/(lin\.ee|line\.me|page\.line\.me)\//i.test(url)) return '';
+    return url;
   }
 
   function requireLogin() {
@@ -1865,6 +1882,8 @@ document.addEventListener('DOMContentLoaded', () => {
           relationLabel: answers.relationCustom || (THEME_RELATION_CONFIG[activeThemeId]?.options.find(r => r.id === answers.relation)?.label || answers.relation),
           roleLabel: answers.roleCustom || (THEME_ROLE_CONFIG[activeThemeId]?.options.find(r => r.id === answers.role)?.label || answers.role),
           goalLabel: answers.goalCustom || (answers.goal === 'skip' ? '略過' : (DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || answers.goal)),
+          genderLabel: answers.genderCustom || (GENDER_OPTIONS.find(g => g.id === answers.gender)?.label || answers.gender),
+          ageLabel: answers.ageCustom || (AGE_OPTIONS.find(a => a.id === answers.age)?.label || answers.age),
           userName: (MemberManager.getCurrentUser() && MemberManager.getCurrentUser().name) || '信士'
         },
         nonce: createNonce()
@@ -1993,6 +2012,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const reportObj = pickReportObject(apiResult);
     const adviceText = formatAdviceFromReport(reportObj);
+    const reportActions = extractActions(reportObj);
     const finalThemeTitle = reportObj.title || (hasPalm ? theme.title : (theme.titleNoPalm || theme.title));
     const finalTurnaround = reportObj.turnaroundYear || '';
     const finalNoble = reportObj.nobleGuide || '';
@@ -2054,6 +2074,16 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="line-height:1.75;white-space:pre-wrap;">${escapeHtml(reportData.advice || '報告內容尚未回傳，請稍後到歷史紀錄簿查看。')}</div>
         </div>
 
+        ${reportActions.length ? `
+        <div class="report-actions-box">
+          <div class="report-actions-title">✦ 建設性建議 · 這週可以開始做 ✦</div>
+          <ol class="report-actions-list">
+            ${reportActions.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
+          </ol>
+        </div>` : ''}
+
+        <div class="report-consult-box" id="reportConsultBox" style="display:none;"></div>
+
         <div class="report-manifestation-section">
           <div class="manifestation-header">
             <span class="manifestation-tag">✦ 相關見證 ✦</span>
@@ -2062,6 +2092,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="manifestation-cards-list">
             ${reportData.matchedStories.map((story) => `
               <div class="manifestation-story-card">
+                ${story.imageUrl ? `
+                  <div class="story-card-banner">
+                    <img src="${story.imageUrl}" alt="${escapeHtml(story.title)}" loading="lazy" onerror="this.parentElement.style.display='none'">
+                    <span class="story-banner-tag">✦ 五路祈福金 ✦</span>
+                    <span class="story-banner-label">真實顯化見證</span>
+                  </div>
+                ` : ''}
                 <div class="story-card-meta">
                   <span class="story-card-title">${escapeHtml(story.title)}</span>
                   <span class="story-card-user">${escapeHtml(story.name)} · ${escapeHtml(story.category)}</span>
@@ -2083,6 +2120,21 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
     `;
+
+    const consultBox = document.getElementById('reportConsultBox');
+    ensureSiteConfig().then((cfg) => {
+      const lineUrl = safeLineUrl(cfg && cfg.lineOaUrl);
+      if (!lineUrl || !consultBox || !consultBox.isConnected) return;
+      consultBox.innerHTML = `
+        <div class="report-consult-title">還想問得更細嗎？</div>
+        <p class="report-consult-desc">這份報告依您填寫的七步資料推演。想針對自身處境一對一詳談，歡迎加入官方 LINE，由真人為您接續。</p>
+        <a class="report-consult-btn" href="${escapeHtml(lineUrl)}" target="_blank" rel="noopener noreferrer">
+          <span class="report-consult-icon">LINE</span>
+          <span>加入好友 ｜ 一對一煩惱諮詢</span>
+        </a>
+      `;
+      consultBox.style.display = 'block';
+    });
 
     document.getElementById('closeReportBtn')?.addEventListener('click', () => {
       readingModalBackdrop.classList.remove('show');

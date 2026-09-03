@@ -5,7 +5,8 @@ export async function onRequestGet({ env }) {
     provider: 'ECPay',
     hasResend: Boolean(env?.RESEND_API_KEY),
     hasLine: Boolean(env?.LINE_CHANNEL_ID && env?.LINE_CHANNEL_SECRET),
-    hasGoogle: Boolean(env?.GOOGLE_CLIENT_ID && env?.GOOGLE_CLIENT_SECRET)
+    hasGoogle: Boolean(env?.GOOGLE_CLIENT_ID && env?.GOOGLE_CLIENT_SECRET),
+    lineOaUrl: String(env?.LINE_OA_URL || '').trim()
   }), {
     headers: {
       'Content-Type': 'application/json; charset=utf-8',

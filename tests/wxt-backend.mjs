@@ -18,11 +18,23 @@ import {
   recordPaymentEvent,
   markOrderPaid
 } from '../functions/lib/wxt/store.mjs';
-import { scanForbidden, replaceForbidden } from '../functions/lib/wxt/forbidden.mjs';
+import {
+  scanForbidden,
+  replaceForbidden,
+  buildSystemPrompt,
+  buildUserPrompt,
+  THEME_SKELETONS
+} from '../functions/lib/wxt/forbidden.mjs';
 import { getEcpayConfig, calculateCheckMacValue } from '../functions/lib/wxt/ecpay.mjs';
 import { signUserSession, sessionCookieHeader } from '../functions/lib/wxt/auth.mjs';
 import { generateReport } from '../functions/lib/wxt/ai.mjs';
-import { formatAdviceFromReport, pickReportObject, withAdviceField } from '../functions/lib/wxt/report-format.mjs';
+import {
+  formatAdviceFromReport,
+  pickReportObject,
+  withAdviceField,
+  extractActions,
+  isIncompleteReport
+} from '../functions/lib/wxt/report-format.mjs';
 
 let passed = 0;
 
@@ -394,6 +406,166 @@ await check('跨站 POST /api/logout 回 403', async (env) => {
   });
   const response = await logout({ request, env });
   assert.equal(response.status, 403);
+});
+
+
+console.log('\n[報告合約：禁止追問]');
+
+const INCOMPLETE_SAMPLE = {
+  title: '缺少關鍵資訊，請提供七步答案以完成解讀',
+  summary: '請提供七步答案，以便完成個人化的感情解讀報告。',
+  sections: [{ heading: '需要您補充的資訊', body: '1. 您對自己的性格與核心價值的描述' }]
+};
+
+const GOOD_SAMPLE = {
+  title: '關係的穩定始於內心的從容',
+  summary: '先把相處節奏看清楚。',
+  sections: [{ heading: '對象輪廓與相處模式', body: '對方在意的是被理解，先從日常對話開始。' }],
+  actions: [
+    '這週挑一個平常的晚上，主動約對方吃一頓飯，只聊生活不談將來',
+    '把最近三次對話裡對方主動提起的事記下來，找出他真正在意的主題',
+    '週末之前把心裡最想確認的一件事，用一句話講給對方聽'
+  ]
+};
+
+await check('六篇 system prompt 都含禁止追問與自己那四段骨架', async () => {
+  for (const [themeId, skeleton] of Object.entries(THEME_SKELETONS)) {
+    const prompt = buildSystemPrompt(themeId);
+    assert.match(prompt, /嚴禁向使用者索取任何補充資料/, `${themeId} 少了禁止索取`);
+    assert.match(prompt, /嚴禁反問使用者/, `${themeId} 少了禁止反問`);
+    assert.match(prompt, /actions 必須有三條/, `${themeId} 少了建設性建議要求`);
+    assert.equal(skeleton.length, 4, `${themeId} 骨架不是四段`);
+    for (const heading of skeleton) {
+      assert.ok(prompt.includes(heading), `${themeId} prompt 少了骨架「${heading}」`);
+    }
+  }
+  const loveHeadings = THEME_SKELETONS.love.join('');
+  const wealthPrompt = buildSystemPrompt('wealth');
+  assert.ok(!wealthPrompt.includes(loveHeadings), '財運篇不該沿用感情篇骨架');
+});
+
+await check('buildUserPrompt 送白話標籤，略過期望寫成未指定並要求直接產出', async () => {
+  const prompt = buildUserPrompt({
+    themeId: 'love',
+    answers: {
+      gender: 'male',
+      age: '25-34',
+      relation: 'self_love',
+      role: 'single_seeking',
+      genderLabel: '男性 (乾造)',
+      ageLabel: '25 ~ 34 歲',
+      relationLabel: '本人自身',
+      roleLabel: '單身尋覓',
+      question: '目前這段感情是否能修成正果、邁入婚姻？',
+      goal: 'skip'
+    }
+  });
+  assert.match(prompt, /本人自身/);
+  assert.match(prompt, /單身尋覓/);
+  assert.match(prompt, /男性 \(乾造\)/);
+  assert.ok(!prompt.includes('self_love'), '不該把代碼送給模型');
+  assert.ok(!prompt.includes('single_seeking'), '不該把代碼送給模型');
+  assert.match(prompt, /期望方向：未指定，請全方位推演/);
+  assert.match(prompt, /本次未提供，改以前六項推演/);
+  assert.match(prompt, /請直接輸出完整報告，不得要求補充任何資料/);
+});
+
+await check('isIncompleteReport 擋掉追問文、放行正常報告', async () => {
+  assert.equal(isIncompleteReport(INCOMPLETE_SAMPLE), true);
+  assert.equal(isIncompleteReport(GOOD_SAMPLE), false);
+  assert.equal(isIncompleteReport({ title: '感情篇', summary: '', sections: [] }), true);
+});
+
+await check('extractActions 收出三條建設性建議', async () => {
+  assert.equal(extractActions(GOOD_SAMPLE).length, 3);
+  assert.equal(extractActions(INCOMPLETE_SAMPLE).length, 0);
+  assert.deepEqual(
+    extractActions({ actions: [{ text: '1. 先把帳單列出來' }] }),
+    ['先把帳單列出來']
+  );
+});
+
+async function seedUserWithCredit(env, email) {
+  const { id } = await upsertEmailUser(env, email);
+  const orderId = await createOrder(env, {
+    userId: id,
+    productId: 'single',
+    amount: 199,
+    themes: ['love'],
+    merchantTradeNo: `WXT${Date.now().toString().slice(-9)}${Math.random().toString(36).slice(2, 5)}`
+  });
+  await grantCreditsForOrder(env, {
+    userId: id,
+    orderId,
+    themes: ['love'],
+    creditsPerTheme: 3,
+    idempotencyPrefix: `order:${orderId}`
+  });
+  return id;
+}
+
+function groqReply(reportObj) {
+  return {
+    ok: true,
+    json: async () => ({
+      choices: [{ message: { content: JSON.stringify(reportObj) } }],
+      usage: { total_tokens: 9 }
+    })
+  };
+}
+
+await check('模型回追問文時自動加硬指令重試，第二次過關才入庫', async (env) => {
+  const id = await seedUserWithCredit(env, 'retry@example.test');
+  const token = await signUserSession(env, { uid: id, provider: 'email' });
+  const realFetch = globalThis.fetch;
+  const prompts = [];
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).includes('api.groq.com')) throw new Error(`不該打到 ${url}`);
+    const sent = JSON.parse(init.body);
+    prompts.push(sent.messages[1].content);
+    return groqReply(prompts.length === 1 ? INCOMPLETE_SAMPLE : GOOD_SAMPLE);
+  };
+  try {
+    const { status, body } = await postJson(generate, env, {
+      themeId: 'love',
+      requestId: 'nonce-retry-12345678',
+      answers: { question: '這段關係能否修成正果', goal: 'skip', relationLabel: '本人自身' }
+    }, { cookie: `wx_session=${token}` });
+    assert.equal(status, 200);
+    assert.equal(prompts.length, 2, '應該只重試一次');
+    assert.match(prompts[1], /重試指令/, '第二次要帶加硬指令');
+    assert.ok(!/請提供七步/.test(String(body.report.advice || '')), '追問文不可以當成品');
+    assert.match(String(body.report.advice || ''), /相處節奏/);
+    assert.equal((body.report.actions || []).length, 3);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+await check('兩次都回追問文就判失敗並退還點數', async (env) => {
+  const id = await seedUserWithCredit(env, 'fail@example.test');
+  const token = await signUserSession(env, { uid: id, provider: 'email' });
+  const realFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async (url) => {
+    if (!String(url).includes('api.groq.com')) throw new Error(`不該打到 ${url}`);
+    calls += 1;
+    return groqReply(INCOMPLETE_SAMPLE);
+  };
+  try {
+    const { status, body } = await postJson(generate, env, {
+      themeId: 'love',
+      requestId: 'nonce-fail-12345678',
+      answers: { question: '這段關係能否修成正果' }
+    }, { cookie: `wx_session=${token}` });
+    assert.equal(status, 503);
+    assert.equal(body.error, 'GENERATION_FAILED');
+    assert.equal(calls, 2);
+    const credits = await getCreditsMap(env, id);
+    assert.equal(credits.love, 3, '失敗要把點數退回去');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });
 
 console.log(`\n問仙壇後端測試通過 ${passed} 項`);

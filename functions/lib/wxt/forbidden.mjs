@@ -50,36 +50,108 @@ export function replaceForbidden(text) {
   return out.trim();
 }
 
+
+/* 六篇各自的四段骨架：heading 逐字給模型，禁止增減改名 */
 export const THEME_SKELETONS = {
   love: ['對象輪廓與相處模式', '這段關係目前的節奏', '適合主動或等待的時機', '自身要調整的互動習慣'],
-  wealth: ['正財偏財的傾向', '漏財的具體情境', '守財與開源的順序', '大額決策的時機判斷'],
-  work: ['現職局勢與位置', '優勢與缺口', '留任或轉換的節奏', '近期可做的下一步'],
-  career: ['生意位置與角色', '現金與合夥風險', '本階段可驗證的假設', '停或進的檢核點'],
-  family: ['家庭關係位置', '衝突節點', '一次只處理一件事的協調', '需要外人協助的界線'],
-  children: ['孩子階段與照顧者角色', '互動調整', '家庭與學校可觀察項', '專業協助警示']
+  work: ['現職局勢與您的位置', '天賦優勢與明顯缺口', '留任或轉換的節奏', '近期可驗證的下一步'],
+  career: ['事業定位與您的角色', '現金流與合夥風險', '本階段要驗證的假設', '收手或加碼的檢核點'],
+  wealth: ['正財偏財的傾向', '財務外流的具體情境', '守成與開源的先後順序', '大額決策的時機判斷'],
+  family: ['家庭關係裡的位置', '衝突節點與觸發情境', '一次處理一件事的協調順序', '需要外人協助的界線'],
+  children: ['孩子的階段與照顧者角色', '互動方式的調整', '家庭與學校可觀察的項目', '需要專業協助的警訊']
 };
 
+export const THEME_NAMES = {
+  love: '感情篇',
+  work: '工作篇',
+  career: '事業篇',
+  wealth: '財運篇',
+  family: '家庭篇',
+  children: '小孩篇'
+};
+
+/* 重試用的加硬指令：只有偵測到模型反過來要資料時才附加 */
+export const HARDENED_RETRY_HINT = [
+  '',
+  '【重試指令】上一次的輸出向使用者索取資料或列出待補清單，這是不合格的輸出。',
+  '本次禁止任何索取、反問、待補清單、流程說明，直接用上面已有的資料寫滿四段內文與三條行動建議。'
+].join('\n');
+
+function themeKey(themeId) {
+  return THEME_SKELETONS[themeId] ? themeId : 'love';
+}
+
 export function buildSystemPrompt(themeId) {
-  const skeleton = (THEME_SKELETONS[themeId] || THEME_SKELETONS.love).join(' → ');
+  const key = themeKey(themeId);
+  const skeleton = THEME_SKELETONS[key];
+  const headings = skeleton.map((item, index) => `${index + 1}. ${item}`).join('\n');
   return [
-    '你是問仙壇的個人化問答解讀顧問，依使用者七步答案產出繁體中文報告。',
-    '禁止排紫微八字、禁止百分比與倍數、禁止醫療療效宣稱、禁止絕對化保證。',
-    `本篇解讀骨架：${skeleton}。`,
-    '若有掌紋客觀描述，僅作參考素材，不可當成醫療診斷。',
-    '回傳 JSON：{ "title": "...", "sections": [{"heading":"...","body":"..."}], "summary": "..." }'
+    `你是問仙壇的${THEME_NAMES[key]}解讀顧問，為信眾產出繁體中文的完整解讀報告。`,
+    '',
+    '【資料狀態】使用者的七步問答已經全部完成，下方就是本次可用的全部資料。',
+    '欄位標示「未指定」代表使用者選擇不填，請依既有資料與常見情境自行推演，不因此停下。',
+    '',
+    '【最高禁令】',
+    '1. 嚴禁向使用者索取任何補充資料，嚴禁輸出「需要您補充的資訊」「請提供」「請依序提供」這類清單。',
+    '2. 嚴禁反問使用者，嚴禁表示自己缺少關鍵資訊、資料不足或無法完成解讀。',
+    '3. 嚴禁把待補清單、作業流程、步驟說明當成報告內容。',
+    '4. 本次一定要輸出一份可以直接閱讀的完整報告。',
+    '',
+    `【固定骨架】依序寫滿以下四段，heading 逐字使用，不可增減、不可改名：\n${headings}`,
+    '每段 body 至少 120 字，用一般人聽得懂的白話，扣住使用者填寫的問題與狀態，寫出具體情境與可以觀察的跡象。',
+    '',
+    '【建設性建議】actions 必須有三條，每條 30 到 60 字，是使用者這一週就能自己開始做的具體行動，',
+    '要寫出時機、對象與做法，不要只寫心態口號，也不要重複四段內文原句。',
+    '',
+    '【紅線】不排紫微八字、不出現百分比與倍數、不做醫療診斷或療效宣稱、不用一定會或保證這類絕對用語。',
+    '掌紋描述只當參考素材，不可當成醫療診斷。',
+    '',
+    '【輸出格式】只回傳 JSON，前後不要任何額外文字：',
+    '{"title":"一句話標題","sections":[{"heading":"...","body":"..."}],"actions":["...","...","..."],"summary":"120 字以內的總結"}'
   ].join('\n');
 }
 
+const GENDER_FALLBACK = {
+  female: '女性',
+  male: '男性',
+  other: '不透露'
+};
+
+function firstText(...values) {
+  for (const value of values) {
+    const text = String(value == null ? '' : value).trim();
+    if (text) return text;
+  }
+  return '';
+}
+
 export function buildUserPrompt({ themeId, answers, palmDescription = '' }) {
+  const data = (answers && typeof answers === 'object') ? answers : {};
+  const key = themeKey(themeId);
+
+  const gender = firstText(data.genderLabel, data.genderCustom, GENDER_FALLBACK[data.gender]) || '未指定';
+  const age = firstText(data.ageLabel, data.ageCustom, data.age) || '未指定';
+  const relation = firstText(data.relationLabel, data.relationCustom) || '未指定';
+  const role = firstText(data.roleLabel, data.roleCustom) || '未指定';
+  const question = firstText(data.question) || '未指定，請就本篇最常見的處境給出解讀';
+
+  const rawGoal = firstText(data.goalLabel, data.goalCustom);
+  const skipped = !rawGoal || rawGoal === '略過' || data.goal === 'skip';
+  const goal = skipped ? '未指定，請全方位推演' : rawGoal;
+
   const lines = [
-    `篇章：${themeId}`,
-    `性別：${answers.gender || ''}`,
-    `年齡：${answers.age || ''}`,
-    `關係狀態：${answers.relation || ''}`,
-    `角色：${answers.role || ''}`,
-    `主要問題：${answers.question || ''}`,
-    `期望方向：${answers.goal || ''}`
+    `篇章：${THEME_NAMES[key]}`,
+    '七步問答結果（已完整，這是本次的全部資料）：',
+    `1. 性別：${gender}`,
+    `2. 年齡：${age}`,
+    `3. 稱謂／對象關係：${relation}`,
+    `4. 目前狀態：${role}`,
+    `5. 本次主要問題：${question}`,
+    `6. 期望方向：${goal}`,
+    `7. 掌紋：${palmDescription ? '已提供，客觀描述如下' : '本次未提供，改以前六項推演'}`
   ];
   if (palmDescription) lines.push(`掌紋線條客觀描述：${palmDescription}`);
+  lines.push('');
+  lines.push('以上七步資料已齊，請直接輸出完整報告，不得要求補充任何資料，不得反問使用者。');
   return lines.join('\n');
 }
