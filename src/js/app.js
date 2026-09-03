@@ -1790,50 +1790,142 @@ document.addEventListener('DOMContentLoaded', () => {
       renderThemesHub();
       renderMemberCenter();
 
-      // Show Decoding Animation
+      const hasPalm = Boolean(answers.palmDataUrl);
+      const themeObj = THEMES.find((t) => t.id === activeThemeId) || THEMES[0];
+      const themeName = themeObj.name;
+
+      // Show 4-Stage Celestial Ritual Loading Animation
       readingModalCard.innerHTML = `
-        <div class="decoding-stage">
-          <div class="decoding-spinner-ring"></div>
-          <h3 style="color:var(--gold-bright);">正在為您深入解析命盤與手相...</h3>
-          <p style="color:var(--text-muted);font-size:0.85rem;">正在智能比對命理時機、手相紋路特徵與真實見證案例</p>
-          
+        <div class="ritual-stage-container">
+          <div class="ritual-censer-halo">
+            <span class="ritual-censer-icon">${hasPalm ? '✋' : '🔮'}</span>
+          </div>
+          <h3 class="ritual-title" id="ritualStageTitle">開壇定壇 · 仙佛降臨</h3>
+          <p class="ritual-subtitle" id="ritualStageSub">恭請仙佛降臨壇前，調閱信士生辰因果簿...</p>
+
+          <div class="ritual-stepper">
+            <div class="ritual-step-node active" id="ritualStep1">
+              <div class="ritual-step-circle">1</div>
+              <span class="ritual-step-label">開壇調閱</span>
+            </div>
+            <div class="ritual-step-node" id="ritualStep2">
+              <div class="ritual-step-circle">2</div>
+              <span class="ritual-step-label">${hasPalm ? '手相八字' : '生辰排盤'}</span>
+            </div>
+            <div class="ritual-step-node" id="ritualStep3">
+              <div class="ritual-step-circle">3</div>
+              <span class="ritual-step-label">靈犀解構</span>
+            </div>
+            <div class="ritual-step-node" id="ritualStep4">
+              <div class="ritual-step-circle">4</div>
+              <span class="ritual-step-label">天書顯化</span>
+            </div>
+          </div>
+
           <div class="decoding-progress-bar">
-            <div class="decoding-progress-fill" id="decodingProgress"></div>
+            <div class="decoding-progress-fill" id="decodingProgress" style="width:15%;"></div>
           </div>
         </div>
       `;
 
-      function finishDecoding() {
-        const stillCurrent = state.wizard.decodeToken === myDecodeToken;
-        try {
-          showDecodedReport(activeThemeId, answers, stillCurrent);
-          state.wizard.isSubmitting = false;
-        } catch (err) {
-          console.error('產生報告失敗，已退回本次測算次數', err);
-          WalletManager.addPointsToThemes([activeThemeId], 1);
-          state.wizard.isSubmitting = false;
-          if (stillCurrent) {
-            alert('產生失敗，已退回本次測算次數，請重試');
-            renderWizardStep();
-          }
+      const ritualTitle = document.getElementById('ritualStageTitle');
+      const ritualSub = document.getElementById('ritualStageSub');
+      const progressFill = document.getElementById('decodingProgress');
+      const step1 = document.getElementById('ritualStep1');
+      const step2 = document.getElementById('ritualStep2');
+      const step3 = document.getElementById('ritualStep3');
+      const step4 = document.getElementById('ritualStep4');
+
+      // 階段演出時程
+      const ritualStages = [
+        {
+          pct: 35,
+          title: '開壇定壇 · 仙佛降臨',
+          sub: '恭請仙佛降臨壇前，調閱信士生辰因果簿...',
+          activate: [step1]
+        },
+        {
+          pct: 65,
+          title: hasPalm ? `掌心命理 · 對照【${themeName}】` : `先天八字 · 排盤【${themeName}】`,
+          sub: hasPalm
+            ? `智能鎖定掌紋特徵，照會天命流年與三大命脈...`
+            : `以生辰十神、五行生剋深入推演信士先天格局（未提供手相）...`,
+          activate: [step1, step2]
+        },
+        {
+          pct: 88,
+          title: '靈犀感知 · 剖析叩問煩惱',
+          sub: `深度透視信士所求之因果病灶與轉折契機...`,
+          activate: [step1, step2, step3]
+        },
+        {
+          pct: 100,
+          title: '天書顯化 · 專屬 AI 報告生成',
+          sub: '專屬解惑指引已排盤完畢，即將為信士揭曉天機...',
+          activate: [step1, step2, step3, step4]
         }
+      ];
+
+      let currentStageIdx = 0;
+      function setStage(idx) {
+        if (!ritualStages[idx]) return;
+        const s = ritualStages[idx];
+        if (ritualTitle) ritualTitle.textContent = s.title;
+        if (ritualSub) ritualSub.textContent = s.sub;
+        if (progressFill) progressFill.style.width = `${s.pct}%`;
+        [step1, step2, step3, step4].forEach((el) => {
+          if (!el) return;
+          if (s.activate.includes(el)) {
+            el.classList.add('active');
+            if (s.activate.indexOf(el) < s.activate.length - 1) el.classList.add('done');
+          }
+        });
       }
 
-      const fill = document.getElementById('decodingProgress');
-      let progress = 10;
-      const interval = setInterval(() => {
-        if (state.wizard.decodeToken !== myDecodeToken) {
-          clearInterval(interval);
-          finishDecoding();
-          return;
-        }
-        progress += 30;
-        if (fill) fill.style.width = `${progress}%`;
-        if (progress >= 100) {
-          clearInterval(interval);
-          setTimeout(finishDecoding, 500);
-        }
-      }, 400);
+      // 平滑前進階段
+      const stageTimer1 = setTimeout(() => setStage(1), 700);
+      const stageTimer2 = setTimeout(() => setStage(2), 1600);
+
+      // 非同步請求後端 AI 生成 API
+      fetch('/api/reading/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          themeId: activeThemeId,
+          answers: {
+            ...answers,
+            relationLabel: answers.relationCustom || (THEME_RELATION_CONFIG[activeThemeId]?.options.find(r => r.id === answers.relation)?.label || answers.relation),
+            roleLabel: answers.roleCustom || (THEME_ROLE_CONFIG[activeThemeId]?.options.find(r => r.id === answers.role)?.label || answers.role),
+            goalLabel: answers.goalCustom || (answers.goal === 'skip' ? '略過（由仙佛全方位推演指引）' : (DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || answers.goal))
+          }
+        })
+      })
+      .then(res => res.json())
+      .catch(() => null)
+      .then(apiResult => {
+        clearTimeout(stageTimer1);
+        clearTimeout(stageTimer2);
+        setStage(2);
+
+        setTimeout(() => {
+          setStage(3);
+          setTimeout(() => {
+            const stillCurrent = state.wizard.decodeToken === myDecodeToken;
+            try {
+              showDecodedReport(activeThemeId, answers, stillCurrent, apiResult);
+              state.wizard.isSubmitting = false;
+            } catch (err) {
+              console.error('產生報告失敗，已退回本次測算次數', err);
+              WalletManager.addPointsToThemes([activeThemeId], 1);
+              state.wizard.isSubmitting = false;
+              if (stillCurrent) {
+                alert('產生失敗，已退回本次測算次數，請重試');
+                renderWizardStep();
+              }
+            }
+          }, 600);
+        }, 600);
+      });
     } catch (err) {
       console.error('扣點或產生報告流程發生錯誤，已退回本次測算次數', err);
       WalletManager.addPointsToThemes([activeThemeId], 1);
@@ -1847,8 +1939,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function generateDeepReportAnalysis(themeId, answers, genderLabel, ageLabel, relationLabel, roleLabel, goalLabel, theme) {
     const q = (answers.question || '').trim();
+    const hasPalm = Boolean(answers.palmDataUrl);
 
-    // 1. 關鍵流年轉折 (動態依年齡計算)
+    // 1. 關鍵流年轉折
     let turnaroundYear = '今年秋冬至明年初 · 關鍵轉化期';
     if (answers.age === '18-24') {
       turnaroundYear = '22 ~ 25 歲 · 青年啟蒙與天賦奠定轉折';
@@ -1872,7 +1965,7 @@ document.addEventListener('DOMContentLoaded', () => {
       nobleGuide = '正東方 · 具同理心之長輩良師 / 溫暖慈祥長者';
     } else if (/創業|融資|合夥|股權|老闆|投資|商機|SaaS/.test(q)) {
       nobleGuide = '東北方 · 具產業資源的資深出資方 / 穩健合夥人';
-    } else if (/主管|換工作|跳槽|離職|實習|裁員|升遷|同事|架構|考考/.test(q)) {
+    } else if (/主管|換工作|跳槽|離職|實習|裁員|升遷|同事|架構/.test(q)) {
       nobleGuide = '西北方 · 具實權之長官前輩 / 踏實技術同儕';
     } else if (/前任|復合|正緣|暗戀|曖昧|伴侶|夫妻|冷戰|離婚/.test(q)) {
       nobleGuide = '東南方 · 溫和沉穩、性格互補之正緣善士';
@@ -1880,15 +1973,24 @@ document.addEventListener('DOMContentLoaded', () => {
       nobleGuide = '西南方 · 踏實房產專家 / 家族有福德之醫師長者';
     }
 
-    // 3. 手相印證
-    let palmFeature = '吉星照會 · 氣場聚集生輝';
-    if (answers.palmDataUrl) {
-      if (themeId === 'love') palmFeature = '✋ 感情線末端向上延伸 · 正緣磁場清明';
-      else if (themeId === 'work') palmFeature = '✋ 智慧線深長無阻 · 天賦潛力即將啟動';
-      else if (themeId === 'career') palmFeature = '✋ 事業命運線貫穿掌心 · 商業巔峰可期';
-      else if (themeId === 'wealth') palmFeature = '✋ 水星丘飽滿微凸 · 先天財庫聚財有力';
-      else if (themeId === 'family') palmFeature = '✋ 金星丘厚實紅潤 · 家宅地基平穩祥和';
-      else if (themeId === 'children') palmFeature = '✋ 小指基部子女紋清晰 · 天賦靈性相生';
+    // 3. 第四維度：有手相走掌紋印證；略過手相走八字五行格局 (嚴禁漏手相)
+    const fourthDimensionLabel = hasPalm ? '手相命脈印證' : (theme.fourthDimNoPalm || '先天八字格局');
+    let fourthDimensionValue = '';
+
+    if (hasPalm) {
+      if (themeId === 'love') fourthDimensionValue = '✋ 感情線末端向上延伸 · 正緣磁場清明';
+      else if (themeId === 'work') fourthDimensionValue = '✋ 智慧線深長無阻 · 天賦潛力即將啟動';
+      else if (themeId === 'career') fourthDimensionValue = '✋ 事業命運線貫穿掌心 · 商業巔峰可期';
+      else if (themeId === 'wealth') fourthDimensionValue = '✋ 水星丘飽滿微凸 · 先天財庫聚財有力';
+      else if (themeId === 'family') fourthDimensionValue = '✋ 金星丘厚實紅潤 · 家宅地基平穩祥和';
+      else if (themeId === 'children') fourthDimensionValue = '✋ 小指基部子女紋清晰 · 天賦靈性相生';
+    } else {
+      if (themeId === 'love') fourthDimensionValue = '✦ 金水相生 · 乙木逢春正緣星明';
+      else if (themeId === 'work') fourthDimensionValue = '✦ 官印雙全 · 傷官生財實權格局';
+      else if (themeId === 'career') fourthDimensionValue = '✦ 七殺化權 · 商業開創先鋒大運';
+      else if (themeId === 'wealth') fourthDimensionValue = '✦ 祿馬交馳 · 先天財帛水星進祿';
+      else if (themeId === 'family') fourthDimensionValue = '✦ 田宅坐吉 · 土金相生福蔭家宅';
+      else if (themeId === 'children') fourthDimensionValue = '✦ 食神吐秀 · 先天靈秀福澤延綿';
     }
 
     // 4. 深度病灶透視、具體破局之法、行動方向
@@ -1897,8 +1999,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let direction = '';
 
     if (/兒|女|孩子|小孩|叛逆|催婚|不結婚|甩門|冷戰/.test(q)) {
-      diagnosis = '【因果病灶透視】：親密關係中的邊界感模糊，長年「以愛為名」的過度操心與催逼，在孩子心中形成了沉重的心理防衛與雙重束縛。越是急切想抓住對方的行蹤與婚配進度，越容易將至親推向沉默反鎖與冷戰對立的死結。';
-      method = '【破局化解方法】：實施「非暴力界線退後法」——第一，即刻停止言語催婚、說教或刺探私生活，給予彼此 3～6 個月的心理緩衝期；第二，將關心化為無條件的溫暖實質照顧（如準備其愛吃的飯菜或留簡短便箋，不帶說教尾巴）；第三，把注意力收回自身的生活與身心調養，當您自身的焦慮氣場平靜下來，家庭磁場自會轉向和諧。';
+      diagnosis = '【因果病灶透視】：親密關係中的邊界感模糊，長年「以愛為名」的過度操心與催逼，在孩子心中形成了沉重的心理防衛與雙重束縛。越是急切想抓住對方的行蹤與進度，越容易將至親推向沉默反鎖與冷戰對立的死結。';
+      method = '【破局化解方法】：實施「非暴力界線退後法」——第一，即刻停止言語催逼、說教或刺探私生活，給予彼此 3～6 個月的心理緩衝期；第二，將關心化為無條件的溫暖實質照顧（如準備其愛吃的飯菜或留簡短便箋，不帶說教尾巴）；第三，把注意力收回自身的生活與身心調養，當您自身的焦慮氣場平靜下來，家庭磁場自會轉向和諧。';
       direction = '【轉折吉時方向】：今年農曆冬季至明年立春，為親子溝通破冰的關鍵契機。屆時以平輩朋友姿態溫和探問，對方的心防必將融化，迎來深度理解。';
     } else if (/欠款|倒帳|工程款|借貸|還錢|賠償|官司|法院/.test(q)) {
       diagnosis = '【因果病灶透視】：財庫因果受阻，昔日基於信任或江湖情義未立嚴謹書面防線，導致自身承受巨大債務反噬與催款高壓。若一味深陷情緒憤恨或私下爭吵，反而容易落入對方脫產與拖延戰術之陷阱。';
@@ -1912,31 +2014,21 @@ document.addEventListener('DOMContentLoaded', () => {
       diagnosis = '【因果病灶透視】：事業版圖擴張過猛遇上外在景氣寒冬，合夥人之間權責利益未徹底切割，導致現金流陷入過橋風險。此時若僅靠賭性硬撐，極易因合夥反目而重創基業。';
       method = '【破局化解方法】：執行「精實造血與股權停損法」——第一，立即盤點近三個月真實現金流跑道（Runway），砍除非核心開銷，優先啟動自體造血營收模式；第二，對於意圖退場之合夥人，儘速依合理估值簽署分期股權回購或稀釋協議，避免決策癱瘓；第三，引進新外部資源時，著重具備產業落地的策略夥伴，而非單純財務投機方。';
       direction = '【轉折吉時方向】：今年秋季中下旬（農曆八、九月）將迎來轉折契機，東北方將有懂您商業價值的實業貴人接洽，商業巔峰大運將在明年逐步鋪展。';
-    } else if (/簽字|合規|審計|稅務|異常|違規|法律責任/.test(q)) {
-      diagnosis = '【因果病灶透視】：體制灰色地帶試圖將系統性責任轉嫁予個人，面臨職業良知與飯碗生存的劇烈拉扯。任何妥協或抱持僥倖簽字，都將成為日後不可承受之連帶風險。';
-      method = '【破局化解方法】：落實「合規書面三防線」——第一，所有關鍵指示必須堅持以正式電子郵件或公文簽呈留痕存檔，不接受任何純口頭承諾；第二，針對疑慮交易啟動內部合規備忘錄（Memo），如實記載客觀事實與法規風險；第三，諮詢外部獨立法律或會計顧問，以合法專業之客觀報告作為自身職務免責的堅固盾牌。';
-      direction = '【轉折吉時方向】：堅持正道必得神明暗中庇佑，年底前組織內部人事將迎來自然更替洗牌，危機將化解於無形，保全自身令名與前途。';
     } else if (/學姐|暗戀|曖昧|工具人|備胎|正緣|長相|復合|前任|冷戰|離婚/.test(q)) {
-      diagnosis = '【因果病灶透視】：情感磁場陷入「自我價值過度依附對方反饋」的失衡狀態。將自身幸福寄託於忽冷忽熱的曖昧對象或已逝舊情，導致自身靈魂頻率散亂、感情線受阻。';
+      const causalBlock = hasPalm ? '感情線受阻、靈魂頻率散亂' : '情感磁場散亂、先天夫妻宮氣場交錯';
+      diagnosis = `【因果病灶透視】：情感磁場陷入「自我價值過度依附對方反饋」的失衡狀態。將自身幸福寄託於忽冷忽熱的曖昧對象或已逝舊情，導致${causalBlock}。`;
       method = '【破局化解方法】：實踐「自性圓滿吸引法則」——第一，立刻停止卑微討好或頻繁查看對方動態，收回投射在對方身上的過度關注；第二，重塑生活節奏與外在形象，在事業與興趣中找回自信光芒；第三，若處於伴侶冷戰中，嘗試以「我感到困頓脆弱」取代「你總是忽視我」的指責話術，開啟柔軟對話。';
       direction = '【轉折吉時方向】：東南方將迎來紅鸞善星照耀，今年秋冬至明年初將迎來真正的正緣轉折——若為良緣則深層破冰，若為錯緣則清爽放下、迎來真正相知相惜的天命正緣。';
-    } else if (/出國|留學|OPT|H1B|簽證|海拒|異鄉|學貸/.test(q)) {
-      diagnosis = '【因果病灶透視】：文化拔根之生存焦慮與學貸重壓，讓靈魂處於高壓驚恐狀態。將短期政策或簽證困頓等同於整個人生的成敗，造成視野收窄與心力透支。';
-      method = '【破局化解方法】：採取「多維度身分與技能備案」——第一，擴大求職半徑，不限於單一特定產業，靈活運用跨國外包、學術研究或遠端職缺過渡身分；第二，主動向海外校友會與同鄉善士尋求推薦內推；第三，心態上接納「歸鄉亦是廣闊天地」，將留學歷練化為不可替代之雙語優勢，退路亦是進路。';
-      direction = '【轉折吉時方向】：未來三個月內西方與西北方將浮現轉機，貴人指引將為您打開一扇意料之外的門，順應因果必有立錐之地。';
-    } else if (/關在房間|不敢出門|外送|憂鬱|活著好累|社交恐懼|退縮/.test(q)) {
-      diagnosis = '【因果病灶透視】：心靈承受外界評價過載與存在性羞恥，啟動了極端的自我封閉防護罩。此時任何外界催逼都會加劇恐慌，您需要的不是立刻大步奔跑，而是靈魂深度的休養與接納。';
-      method = '【破局化解方法】：實施「微量生活錨定法」——第一，接納當下疲憊的自己，每天只設定一個極微小的目標（如開窗曬太陽 5 分鐘、喝一杯溫水），不評價自己的好壞；第二，不與任何人比較生活進度，阻絕外界雜音；第三，若需要求助，透過文字而非面對面方式尋求心理諮詢或信任之社福支持，仙佛永遠包容接納您的存在。';
-      direction = '【轉折吉時方向】：深冬過後必有暖陽，目前正處於蓄積生命能量之谷底修復期，明年開春氣場將逐步回溫，必能找回前行的微光與勇氣。';
-    } else if (/買房|新成屋|頭期款|房貸|置產/.test(q)) {
-      diagnosis = '【因果病灶透視】：購屋置產乃家宅立基之大計，過度焦慮於通膨與房價飆漲，容易在長輩期望與自身承受力之間陷入天人交戰，稍有不慎恐造成長年現金流緊繃。';
-      method = '【破局化解方法】：落實「精準壓力測試與分期置產心法」——第一，嚴格以家庭實質月收入之 35%～40% 為房貸上限，守住生活品質防線；第二，挑選具備實質交通軌道與抗跌剛需之成熟生活圈，不盲目追高重劃區炒作；第三，家宅合約嚴格載明驗屋與瑕疵擔保，謀定而後動。';
-      direction = '【轉折吉時方向】：西南方與正西方有吉星拱照，明後兩年市場將迎來絕佳之議價與挑選窗口，心儀良宅必將有緣結契。';
     } else {
       diagnosis = `【因果局勢透視】：信士（${genderLabel} · ${ageLabel} · 稱謂：${relationLabel} · 狀態：${roleLabel}）當前所處環境正值氣場重整之際。您所掛心的核心問題，表層雖為現實人事阻礙，實則為靈魂迎向下一階段躍遷之磨練課題。`;
       method = `【破局化解之法】：第一，釐清主客觀界線，聚焦於自身能掌控之行動；第二，廣結善緣、心存正念，遇事不躁進，順應易學陰陽之道化剛為柔；第三，保持每日清心靜定，誠心向仙佛祈請智慧指引。`;
       direction = `【前進方向與轉折】：關鍵轉折將在未來關鍵月份（尤其是今年秋末至明年初）開展，把握南方與身邊之善緣貴人，必能守得雲開見月明！`;
     }
+
+    const evidenceTitle = hasPalm ? '✦ 手相命脈靈犀印證：' : '✦ 先天八字五行印證：';
+    const evidenceContent = hasPalm
+      ? `${fourthDimensionValue}。手相乃心境顯化之鏡，信士誠心所至，仙佛自然作主護佑！`
+      : `${fourthDimensionValue}。命由天定，運由己造，生辰八字透視吉星照映，心存善念自然逢凶化吉！`;
 
     const formattedAdvice = `
       <div class="report-deep-analysis">
@@ -1956,8 +2048,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
 
         <div class="advice-block-item" style="background:rgba(212,168,83,0.08);border-left:3px solid var(--gold-bright);padding:8px 12px;border-radius:4px;margin-top:12px;">
-          <strong style="color:var(--gold-bright);font-size:0.85rem;">✦ 手相命脈靈犀印證：</strong>
-          <span style="color:var(--text-gold);font-size:0.85rem;">${palmFeature}。信士誠心所至，仙佛自然作主護佑！</span>
+          <strong style="color:var(--gold-bright);font-size:0.85rem;">${evidenceTitle}</strong>
+          <span style="color:var(--text-gold);font-size:0.85rem;">${evidenceContent}</span>
         </div>
       </div>
     `;
@@ -1965,16 +2057,20 @@ document.addEventListener('DOMContentLoaded', () => {
     return {
       turnaroundYear,
       nobleGuide,
-      palmFeature,
+      fourthDimensionLabel,
+      fourthDimensionValue,
       diagnosis,
       method,
       direction,
+      evidenceTitle,
+      evidenceContent,
       formattedAdvice
     };
   }
 
-  function showDecodedReport(themeId, answers, renderIntoModal = true) {
+  function showDecodedReport(themeId, answers, renderIntoModal = true, apiResult = null) {
     const theme = THEMES.find((t) => t.id === themeId);
+    const hasPalm = Boolean(answers.palmDataUrl);
 
     const matchedStories = matchStoriesForReport(themeId, answers.question);
 
@@ -2022,38 +2118,50 @@ document.addEventListener('DOMContentLoaded', () => {
       theme
     );
 
+    // 優先使用 API 回傳的真實 AI 排盤結果
+    const finalScore = apiResult?.score || (92 + Math.floor(Math.random() * 7));
+    const finalTurnaround = apiResult?.turnaroundYear || deepAnalysis.turnaroundYear;
+    const finalNoble = apiResult?.nobleGuide || deepAnalysis.nobleGuide;
+    const finalDimLabel = apiResult?.fourthDimensionLabel || deepAnalysis.fourthDimensionLabel;
+    const finalDimVal = apiResult?.fourthDimensionValue || deepAnalysis.fourthDimensionValue;
+    const finalAdvice = apiResult?.formattedAdvice || deepAnalysis.formattedAdvice;
+    const finalThemeTitle = hasPalm ? theme.title : (theme.titleNoPalm || theme.title);
+    const promptUsed = apiResult?.promptUsed || `【問仙壇專屬 Prompt】\n主題：${theme.name}\n性別：${genderLabel}｜年齡：${ageLabel}｜稱謂：${relationLabel}｜現況：${roleLabel}\n叩問煩惱：${answers.question || '一般運勢'}\n期待結果：${goalLabel}\n手相狀態：${hasPalm ? '已提供手相照片（納入手紋印證）' : '未提供手相（略過上傳，100% 以生辰八字與流年推演，嚴禁手相術語）'}`;
+
     const reportData = {
       themeId,
       themeName: theme.name,
-      title: theme.title,
+      title: finalThemeTitle,
       gender: genderLabel,
       age: ageLabel,
       relation: relationLabel,
       role: roleLabel,
       goal: goalLabel,
       question: answers.question || '一般運勢與未來時機指引',
-      score: 92 + Math.floor(Math.random() * 7),
-      turnaroundYear: deepAnalysis.turnaroundYear,
-      nobleGuide: deepAnalysis.nobleGuide,
-      palmFeature: deepAnalysis.palmFeature,
-      advice: deepAnalysis.formattedAdvice,
-      hasPalm: Boolean(answers.palmDataUrl),
+      score: finalScore,
+      turnaroundYear: finalTurnaround,
+      nobleGuide: finalNoble,
+      fourthDimensionLabel: finalDimLabel,
+      fourthDimensionValue: finalDimVal,
+      advice: finalAdvice,
+      hasPalm,
+      promptUsed,
       matchedStories
     };
 
     WalletManager.saveReport(reportData);
 
-    if (!renderIntoModal) return; // 彈窗已經被關閉或換成別的內容：報告仍照存進歷史紀錄，但不能再蓋掉現在畫面上顯示的東西
+    if (!renderIntoModal) return;
 
     readingModalCard.innerHTML = `
       <div class="report-content-box">
         <div class="report-header-badge">
           <span style="font-size:0.75rem;font-weight:800;color:var(--gold-bright);border:1px solid var(--border-gold);padding:3px 10px;border-radius:999px;">
-            ✦ 專屬深度解析報告已產出 ✦
+            ✦ 專屬深度 AI 解析報告已產出 ✦
           </span>
-          <h2 style="margin-top:10px;color:var(--gold-gradient);">${theme.name} · ${theme.title}</h2>
+          <h2 style="margin-top:10px;color:var(--gold-gradient);">${theme.name} · ${reportData.title}</h2>
           <div style="font-size:0.8rem;color:var(--text-gold);margin-top:4px;">
-            ${reportData.gender} ｜ ${reportData.age} ｜ 稱謂：${reportData.relation} ｜ 狀態：${reportData.role} ｜ ${reportData.hasPalm ? '✋ 已包含手相分析' : '🔮 命理深度推演'}
+            ${reportData.gender} ｜ ${reportData.age} ｜ 稱謂：${reportData.relation} ｜ 狀態：${reportData.role} ｜ ${reportData.hasPalm ? '✋ 已包含手相深度分析' : '🔮 命理生辰八字推演 (未提供手相)'}
           </div>
         </div>
 
@@ -2071,8 +2179,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="report-dim-val" style="font-size:0.88rem;">${reportData.nobleGuide}</div>
           </div>
           <div class="report-dim-card">
-            <div class="report-dim-label">手相命脈印證</div>
-            <div class="report-dim-val" style="font-size:0.88rem;">${reportData.palmFeature}</div>
+            <div class="report-dim-label">${reportData.fourthDimensionLabel}</div>
+            <div class="report-dim-val" style="font-size:0.88rem;">${reportData.fourthDimensionValue}</div>
           </div>
         </div>
 
@@ -2084,6 +2192,14 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="line-height:1.75;">
             ${reportData.advice}
           </div>
+        </div>
+
+        <!-- 查看專屬 Prompt 透明度折疊抽屜 -->
+        <div class="report-prompt-inspection">
+          <details class="report-prompt-details">
+            <summary>📜 查閱仙壇專屬推演依據與 AI 提示詞 (依您的資料量身定制)</summary>
+            <pre class="report-prompt-pre">${reportData.promptUsed}</pre>
+          </details>
         </div>
 
         <!-- ============ 真實顯化故事 下方欄位 ============ -->

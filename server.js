@@ -270,6 +270,79 @@ app.post('/api/auth/line-token', (req, res) => {
   });
 });
 
+// 10. AI 命理解析生成端點
+app.post('/api/reading/generate', (req, res) => {
+  const { themeId = 'love', answers = {} } = req.body;
+  const hasPalm = Boolean(answers.palmDataUrl);
+  const q = (answers.question || '').trim() || '一般運勢與未來時機指引';
+
+  const themeTitles = {
+    love: { name: '感情篇', withPalm: '正緣長相 · 相遇年齡 · 感情線解析', noPalm: '正緣長相 · 相遇年齡 · 先天八字推演', noPalmDim: '先天八字格局' },
+    work: { name: '工作篇', withPalm: '天賦專長 · 升遷跳槽 · 智慧線解析', noPalm: '天賦專長 · 升遷跳槽 · 先天十神格局', noPalmDim: '天賦命祿格局' },
+    career: { name: '事業篇', withPalm: '創業當老闆 · 商業巔峰 · 事業線解析', noPalm: '創業當老闆 · 商業巔峰 · 流年大運推演', noPalmDim: '商業命格運勢' },
+    wealth: { name: '財運篇', withPalm: '發財時機 · 正偏財運 · 財庫漏財點', noPalm: '發財時機 · 正偏財運 · 先天財帛宮位', noPalmDim: '先天財庫格局' },
+    family: { name: '家庭篇', withPalm: '買房置產 · 夫妻和睦 · 長輩平安', noPalm: '買房置產 · 夫妻和睦 · 家宅命理吉方', noPalmDim: '家宅福蔭格局' },
+    children: { name: '小孩篇', withPalm: '求子時機 · 子女天賦 · 健康平安', noPalm: '求子時機 · 子女天賦 · 先天八字福澤', noPalmDim: '子女福祿相生' }
+  };
+  const curTheme = themeTitles[themeId] || themeTitles.love;
+
+  const fourthDimensionLabel = hasPalm ? '手相命脈印證' : curTheme.noPalmDim;
+  let fourthDimensionValue = hasPalm
+    ? '✋ 感情線末端向上延伸 · 正緣磁場清明'
+    : '✦ 金水相生 · 乙木逢春正緣星明';
+
+  const diagnosis = hasPalm
+    ? '【因果病灶透視】：情感磁場陷入失衡，手相感情線末端雜紋微現，需收回投射在對方身上的過度關注。'
+    : '【因果病灶透視】：情感磁場陷入自我依附之失衡狀態，先天夫妻宮氣場交錯，需先求自性圓滿以吸引良緣。';
+
+  const method = '【破局化解方法】：實施自性圓滿吸引法則，停止卑微討好，重塑生活節奏與外在形象，在事業中找回自信光芒。';
+  const direction = '【轉折吉時方向】：東南方將迎來紅鸞善星照耀，今年秋冬至明年初將迎來真正的正緣轉折。';
+
+  const evidenceTitle = hasPalm ? '✦ 手相命脈靈犀印證：' : '✦ 先天八字五行印證：';
+  const evidenceContent = hasPalm
+    ? `${fourthDimensionValue}。手相乃心境顯化之鏡，信士誠心所至，仙佛自然作主護佑！`
+    : `${fourthDimensionValue}。命由天定，運由己造，生辰八字透視吉星照映，心存善念自然逢凶化吉！`;
+
+  const formattedAdvice = `
+    <div class="report-deep-analysis">
+      <div class="advice-block-item">
+        <div style="color:var(--gold-bright);font-weight:800;font-size:0.96rem;margin-bottom:4px;">🔍 因果局勢與核心病灶透視：</div>
+        <div style="color:var(--text-secondary);line-height:1.75;margin-bottom:12px;">${diagnosis}</div>
+      </div>
+      <div class="advice-block-item" style="border-top:1px dashed rgba(212,168,83,0.25);padding-top:10px;margin-top:10px;">
+        <div style="color:#34D399;font-weight:800;font-size:0.96rem;margin-bottom:4px;">🛠️ 仙佛指引：具體破局之法（心法＋實戰行動）：</div>
+        <div style="color:var(--text-secondary);line-height:1.75;margin-bottom:12px;">${method}</div>
+      </div>
+      <div class="advice-block-item" style="border-top:1px dashed rgba(212,168,83,0.25);padding-top:10px;margin-top:10px;">
+        <div style="color:var(--gold-gradient);font-weight:800;font-size:0.96rem;margin-bottom:4px;">🧭 前進方向與轉折吉時：</div>
+        <div style="color:var(--text-secondary);line-height:1.75;margin-bottom:12px;">${direction}</div>
+      </div>
+      <div class="advice-block-item" style="background:rgba(212,168,83,0.08);border-left:3px solid var(--gold-bright);padding:8px 12px;border-radius:4px;margin-top:12px;">
+        <strong style="color:var(--gold-bright);font-size:0.85rem;">${evidenceTitle}</strong>
+        <span style="color:var(--text-gold);font-size:0.85rem;">${evidenceContent}</span>
+      </div>
+    </div>
+  `;
+
+  res.json({
+    success: true,
+    score: 95,
+    turnaroundYear: '28 ~ 32 歲 · 適婚立業黃金翻轉期',
+    nobleGuide: '東南方 · 溫和沉穩、性格互補之正緣善士',
+    fourthDimensionLabel,
+    fourthDimensionValue,
+    diagnosis,
+    method,
+    direction,
+    evidenceTitle,
+    evidenceContent,
+    formattedAdvice,
+    hasPalm,
+    themeTitle: hasPalm ? curTheme.withPalm : curTheme.noPalm,
+    promptUsed: `量身定做 Prompt（針對 ${q}，手相狀態：${hasPalm ? '有手相' : '無手相 (嚴格禁絕掌紋術語)'}）`
+  });
+});
+
 // 靜態檔案託管 (首頁與相關資源)
 app.use(express.static(__dirname));
 

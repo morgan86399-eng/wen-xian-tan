@@ -476,6 +476,25 @@
     .celestial-letter-code-pill { display: inline-block; background: rgba(245, 158, 11, 0.2); border: 1px solid var(--gold-bright); color: #FFF; font-size: 1.1rem; font-weight: 900; letter-spacing: 2px; padding: 2px 8px; border-radius: 6px; margin-right: 8px; }
     .google-gsi-container { display: flex; flex-direction: column; align-items: center; gap: 12px; margin: 16px 0; }
     .google-gsi-btn-slot { min-height: 44px; display: flex; justify-content: center; }
+    .ritual-stage-container { padding: 30px 16px; text-align: center; max-width: 480px; margin: 0 auto; }
+    .ritual-censer-halo { width: 86px; height: 86px; border-radius: 50%; border: 3px solid rgba(212, 175, 55, 0.25); border-top-color: var(--gold-bright); border-right-color: #EC4899; margin: 0 auto 20px; position: relative; display: flex; align-items: center; justify-content: center; animation: ritualSpin 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite; box-shadow: 0 0 24px rgba(212, 175, 55, 0.25); }
+    @keyframes ritualSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .ritual-censer-icon { font-size: 2.2rem; }
+    .ritual-title { color: var(--gold-bright); font-size: 1.25rem; font-family: 'Noto Serif TC', serif; font-weight: 800; margin-bottom: 8px; }
+    .ritual-subtitle { color: #D1D5DB; font-size: 0.86rem; line-height: 1.6; min-height: 42px; margin-bottom: 24px; }
+    .ritual-stepper { display: flex; justify-content: space-between; position: relative; margin: 0 10px 24px; }
+    .ritual-stepper::before { content: ''; position: absolute; top: 14px; left: 20px; right: 20px; height: 2px; background: rgba(255, 255, 255, 0.1); z-index: 1; }
+    .ritual-step-node { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; }
+    .ritual-step-circle { width: 30px; height: 30px; border-radius: 50%; background: #151228; border: 1.5px solid rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; font-size: 0.82rem; color: var(--text-muted); transition: all 0.3s ease; }
+    .ritual-step-node.active .ritual-step-circle { border-color: var(--gold-bright); background: rgba(245, 158, 11, 0.2); color: #FFF; box-shadow: 0 0 12px rgba(245, 158, 11, 0.5); transform: scale(1.15); }
+    .ritual-step-node.done .ritual-step-circle { border-color: #10B981; background: rgba(16, 185, 129, 0.2); color: #34D399; }
+    .ritual-step-label { font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; }
+    .ritual-step-node.active .ritual-step-label { color: var(--gold-bright); font-weight: 700; }
+    .ritual-step-node.done .ritual-step-label { color: #34D399; }
+    .report-prompt-inspection { margin-top: 18px; border-top: 1px dashed rgba(255, 255, 255, 0.12); padding-top: 12px; text-align: left; }
+    .report-prompt-details { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(212, 175, 55, 0.25); border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; }
+    .report-prompt-details summary { cursor: pointer; color: var(--gold-bright); font-weight: 700; outline: none; }
+    .report-prompt-pre { margin-top: 10px; font-family: monospace; font-size: 0.75rem; color: #D1D5DB; background: rgba(0, 0, 0, 0.4); padding: 10px; border-radius: 6px; white-space: pre-wrap; word-break: break-all; line-height: 1.5; max-height: 180px; overflow-y: auto; }
   </style>
 </head>
 <body>
@@ -964,12 +983,12 @@
       };
 
       var THEMES = [
-        { id: "love", name: "感情篇", title: "正緣長相 · 相遇年齡 · 感情線解析", desc: "算出未來伴侶的性格長相、幾歲會遇到，並透過手相感情線看您的正緣運勢", color: "#F43F5E", icon: '<path d="M24 38 C10 28 6 18 14 12 C19 8 24 11 24 16 C24 11 29 8 34 12 C42 18 38 28 24 38 Z"/>', promptPills: ["想知道我大約幾歲會遇到對的正緣？", "目前這段感情是否能修成正果？", "跟前任還有沒有機會復合？", "如何避開爛桃花與感情內耗？"] },
-        { id: "work", name: "工作篇", title: "天賦專長 · 升遷跳槽 · 智慧線解析", desc: "算出您最適合發揮的工作類型、跳槽加薪黃金期，結合智慧線發掘個人潛力", color: "#3B82F6", icon: '<path d="M10 20 h28 v16 a2 2 0 0 1-2 2 H12 a2 2 0 0 1-2-2 Z"/><path d="M18 20 v-4 a2 2 0 0 1 2-2 h8 a2 2 0 0 1 2 2 v4"/><path d="M10 26 h28"/>', promptPills: ["近期適不適合換工作或轉職跳槽？", "什麼時候有升遷加薪的機會？", "我天生適合做什麼樣的工作？", "在職場上遇到小人該怎麼化解？"] },
-        { id: "career", name: "事業篇", title: "創業當老闆 · 商業巔峰 · 事業線解析", desc: "算出您適合獨資還是合夥、事業何時迎來高峰期，結合事業線掌握發展契機", color: "#A855F7", icon: '<path d="M8 34 L18 20 L26 28 L40 10"/><path d="M32 10 h8 v8"/>', promptPills: ["我適合自己創業當老闆，還是跟人合夥？", "我的事業大概在幾歲會迎來巔峰？", "目前手上的新投資/新項目該不該投入？", "公司團隊遇到瓶頸，該如何突破？"] },
-        { id: "wealth", name: "財運篇", title: "發財時機 · 正偏財運 · 財庫漏財點", desc: "算出何時財運最旺、容易在哪裡漏財，結合手相財富紋指引聚財方向", color: "#EAB308", icon: '<ellipse cx="24" cy="18" rx="12" ry="6"/><path d="M12 18 v10 c0 3 5 6 12 6 s12-3 12-6 V18"/><path d="M12 23 c0 3 5 6 12 6 s12-3 12-6"/>', promptPills: ["我一生中的正財還是偏財比較旺？", "我最大的漏財弱點在哪裡？如何守財？", "借出去的錢或被拖欠的款項何時能拿回？", "這兩年適不適合買房或做重大投資？"] },
-        { id: "family", name: "家庭篇", title: "買房置產 · 夫妻和睦 · 長輩平安", desc: "算出何時適合買房換屋、如何改善家人相處，結合手相掌丘守護家宅安泰", color: "#10B981", icon: '<path d="M8 24 L24 10 L40 24"/><path d="M13 21 V38 h22 V21"/><path d="M21 38 V27 h6 v11"/>', promptPills: ["何時是買房換屋或搬新家的最佳時機？", "夫妻之間常有摩擦冷戰，該如何化解？", "家裡長輩最近身體微恙，如何祈求平安？", "如何讓全家人相處更融洽和睦？"] },
-        { id: "children", name: "小孩篇", title: "求子時機 · 子女天賦 · 健康平安", desc: "備孕算出何時容易懷孕得子；已有孩子可算出天生天賦與教養指南", color: "#06B6D4", icon: '<circle cx="24" cy="14" r="5"/><path d="M14 38 c0-8 4-14 10-14 s10 6 10 14"/><path d="M10 30 l4-2 M38 30 l-4-2"/>', promptPills: ["正在備孕，想知道什麼時候最容易順利得子？", "孩子天生適合往哪個領域或科系培養？", "小孩容易受驚哭鬧，如何安神定心？", "如何增進跟孩子之間的溝通與信任？"] }
+        { id: "love", name: "感情篇", title: "正緣長相 · 相遇年齡 · 感情線解析", titleNoPalm: "正緣長相 · 相遇年齡 · 先天八字推演", fourthDimWithPalm: "手相命脈印證", fourthDimNoPalm: "先天八字格局", desc: "算出未來伴侶的性格長相、幾歲會遇到，並透過手相感情線看您的正緣運勢", color: "#F43F5E", icon: '<path d="M24 38 C10 28 6 18 14 12 C19 8 24 11 24 16 C24 11 29 8 34 12 C42 18 38 28 24 38 Z"/>', promptPills: ["想知道我大約幾歲會遇到對的正緣？", "目前這段感情是否能修成正果？", "跟前任還有沒有機會復合？", "如何避開爛桃花與感情內耗？"] },
+        { id: "work", name: "工作篇", title: "天賦專長 · 升遷跳槽 · 智慧線解析", titleNoPalm: "天賦專長 · 升遷跳槽 · 先天十神格局", fourthDimWithPalm: "手相命脈印證", fourthDimNoPalm: "天賦命祿格局", desc: "算出您最適合發揮的工作類型、跳槽加薪黃金期，結合智慧線發掘個人潛力", color: "#3B82F6", icon: '<path d="M10 20 h28 v16 a2 2 0 0 1-2 2 H12 a2 2 0 0 1-2-2 Z"/><path d="M18 20 v-4 a2 2 0 0 1 2-2 h8 a2 2 0 0 1 2 2 v4"/><path d="M10 26 h28"/>', promptPills: ["近期適不適合換工作或轉職跳槽？", "什麼時候有升遷加薪的機會？", "我天生適合做什麼樣的工作？", "在職場上遇到小人該怎麼化解？"] },
+        { id: "career", name: "事業篇", title: "創業當老闆 · 商業巔峰 · 事業線解析", titleNoPalm: "創業當老闆 · 商業巔峰 · 流年大運推演", fourthDimWithPalm: "手相命脈印證", fourthDimNoPalm: "商業命格運勢", desc: "算出您適合獨資還是合夥、事業何時迎來高峰期，結合事業線掌握發展契機", color: "#A855F7", icon: '<path d="M8 34 L18 20 L26 28 L40 10"/><path d="M32 10 h8 v8"/>', promptPills: ["我適合自己創業當老闆，還是跟人合夥？", "我的事業大概在幾歲會迎來巔峰？", "目前手上的新投資/新項目該不該投入？", "公司團隊遇到瓶頸，該如何突破？"] },
+        { id: "wealth", name: "財運篇", title: "發財時機 · 正偏財運 · 財庫漏財點", titleNoPalm: "發財時機 · 正偏財運 · 先天財帛宮位", fourthDimWithPalm: "手相命脈印證", fourthDimNoPalm: "先天財庫格局", desc: "算出何時財運最旺、容易在哪裡漏財，結合手相財富紋指引聚財方向", color: "#EAB308", icon: '<ellipse cx="24" cy="18" rx="12" ry="6"/><path d="M12 18 v10 c0 3 5 6 12 6 s12-3 12-6 V18"/><path d="M12 23 c0 3 5 6 12 6 s12-3 12-6"/>', promptPills: ["我一生中的正財還是偏財比較旺？", "我最大的漏財弱點在哪裡？如何守財？", "借出去的錢或被拖欠的款項何時能拿回？", "這兩年適不適合買房或做重大投資？"] },
+        { id: "family", name: "家庭篇", title: "買房置產 · 夫妻和睦 · 長輩平安", titleNoPalm: "買房置產 · 夫妻和睦 · 家宅命理吉方", fourthDimWithPalm: "手相命脈印證", fourthDimNoPalm: "家宅福蔭格局", desc: "算出何時適合買房換屋、如何改善家人相處，結合手相掌丘守護家宅安泰", color: "#10B981", icon: '<path d="M8 24 L24 10 L40 24"/><path d="M13 21 V38 h22 V21"/><path d="M21 38 V27 h6 v11"/>', promptPills: ["何時是買房換屋或搬新家的最佳時機？", "夫妻之間常有摩擦冷戰，該如何化解？", "家裡長輩最近身體微恙，如何祈求平安？", "如何讓全家人相處更融洽和睦？"] },
+        { id: "children", name: "小孩篇", title: "求子時機 · 子女天賦 · 健康平安", titleNoPalm: "求子時機 · 子女天賦 · 先天八字福澤", fourthDimWithPalm: "手相命脈印證", fourthDimNoPalm: "子女福祿相生", desc: "備孕算出何時容易懷孕得子；已有孩子可算出天生天賦與教養指南", color: "#06B6D4", icon: '<circle cx="24" cy="14" r="5"/><path d="M14 38 c0-8 4-14 10-14 s10 6 10 14"/><path d="M10 30 l4-2 M38 30 l-4-2"/>', promptPills: ["正在備孕，想知道什麼時候最容易順利得子？", "孩子天生適合往哪個領域或科系培養？", "小孩容易受驚哭鬧，如何安神定心？", "如何增進跟孩子之間的溝通與信任？"] }
       ];
 
       var PLANS = [
@@ -2754,28 +2773,80 @@
         renderThemesHub();
         renderMemberCenter();
 
+        var hasPalm = Boolean(wiz.answers.palmDataUrl);
+        var themeObj = THEMES.filter(function(t) { return t.id === wiz.activeThemeId; })[0] || THEMES[0];
+        var themeName = themeObj.name;
+
         readingModalCard.innerHTML =
-          '<div class="decoding-stage">' +
-            '<div class="decoding-spinner-ring"></div>' +
-            '<h3 style="color:var(--gold-bright);">正在為您深入解析命盤與手相...</h3>' +
-            '<p style="color:var(--text-muted);font-size:0.85rem;">正在智能比對命理時機、手相紋路特徵與真實見證案例</p>' +
-            '<div class="decoding-progress-bar"><div class="decoding-progress-fill" id="decodingProgress"></div></div>' +
+          '<div class="ritual-stage-container">' +
+            '<div class="ritual-censer-halo"><span class="ritual-censer-icon">' + (hasPalm ? '✋' : '🔮') + '</span></div>' +
+            '<h3 class="ritual-title" id="ritualStageTitle">開壇定壇 · 仙佛降臨</h3>' +
+            '<p class="ritual-subtitle" id="ritualStageSub">恭請仙佛降臨壇前，調閱信士生辰因果簿...</p>' +
+            '<div class="ritual-stepper">' +
+              '<div class="ritual-step-node active" id="ritualStep1"><div class="ritual-step-circle">1</div><span class="ritual-step-label">開壇調閱</span></div>' +
+              '<div class="ritual-step-node" id="ritualStep2"><div class="ritual-step-circle">2</div><span class="ritual-step-label">' + (hasPalm ? '手相八字' : '生辰排盤') + '</span></div>' +
+              '<div class="ritual-step-node" id="ritualStep3"><div class="ritual-step-circle">3</div><span class="ritual-step-label">靈犀解構</span></div>' +
+              '<div class="ritual-step-node" id="ritualStep4"><div class="ritual-step-circle">4</div><span class="ritual-step-label">天書顯化</span></div>' +
+            '</div>' +
+            '<div class="decoding-progress-bar"><div class="decoding-progress-fill" id="decodingProgress" style="width:15%;"></div></div>' +
           '</div>';
 
-        var fill = document.getElementById('decodingProgress');
-        var progress = 10;
-        var interval = setInterval(function() {
-          progress += 30;
-          if (fill) fill.style.width = progress + '%';
-          if (progress >= 100) {
-            clearInterval(interval);
-            setTimeout(function() { showDecodedReport(wiz.activeThemeId, wiz.answers); }, 500);
-          }
-        }, 400);
+        var ritualTitle = document.getElementById('ritualStageTitle');
+        var ritualSub = document.getElementById('ritualStageSub');
+        var progressFill = document.getElementById('decodingProgress');
+        var step1 = document.getElementById('ritualStep1');
+        var step2 = document.getElementById('ritualStep2');
+        var step3 = document.getElementById('ritualStep3');
+        var step4 = document.getElementById('ritualStep4');
+
+        var stages = [
+          { pct: 35, title: '開壇定壇 · 仙佛降臨', sub: '恭請仙佛降臨壇前，調閱信士生辰因果簿...', activate: [step1] },
+          { pct: 65, title: hasPalm ? ('掌心命理 · 對照【' + themeName + '】') : ('先天八字 · 排盤【' + themeName + '】'), sub: hasPalm ? '智能鎖定掌紋特徵，照會天命流年與三大命脈...' : '以生辰十神、五行生剋深入推演信士先天格局（未提供手相）...', activate: [step1, step2] },
+          { pct: 88, title: '靈犀感知 · 剖析叩問煩惱', sub: '深度透視信士所求之因果病灶與轉折契機...', activate: [step1, step2, step3] },
+          { pct: 100, title: '天書顯化 · 專屬 AI 報告生成', sub: '專屬解惑指引已排盤完畢，即將為信士揭曉天機...', activate: [step1, step2, step3, step4] }
+        ];
+
+        function setStage(idx) {
+          if (!stages[idx]) return;
+          var s = stages[idx];
+          if (ritualTitle) ritualTitle.textContent = s.title;
+          if (ritualSub) ritualSub.textContent = s.sub;
+          if (progressFill) progressFill.style.width = s.pct + '%';
+          [step1, step2, step3, step4].forEach(function(el) {
+            if (!el) return;
+            if (s.activate.indexOf(el) !== -1) {
+              el.classList.add('active');
+              if (s.activate.indexOf(el) < s.activate.length - 1) el.classList.add('done');
+            }
+          });
+        }
+
+        var t1 = setTimeout(function() { setStage(1); }, 700);
+        var t2 = setTimeout(function() { setStage(2); }, 1500);
+
+        fetch('/api/reading/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ themeId: wiz.activeThemeId, answers: wiz.answers })
+        })
+        .then(function(res) { return res.json(); })
+        .catch(function() { return null; })
+        .then(function(apiResult) {
+          clearTimeout(t1);
+          clearTimeout(t2);
+          setStage(2);
+          setTimeout(function() {
+            setStage(3);
+            setTimeout(function() {
+              showDecodedReport(wiz.activeThemeId, wiz.answers, apiResult);
+            }, 600);
+          }, 600);
+        });
       }
 
-      function showDecodedReport(themeId, answers) {
+      function showDecodedReport(themeId, answers, apiResult) {
         var theme = THEMES.filter(function(t) { return t.id === themeId; })[0];
+        var hasPalm = Boolean(answers.palmDataUrl);
         var matchedStories = matchStoriesForReport(themeId, answers.question);
 
         var relConf = THEME_RELATION_CONFIG[themeId] || THEME_RELATION_CONFIG.love;
@@ -2807,19 +2878,52 @@
           confetti({ particleCount: 80, spread: 60, origin: { y: 0.5 } });
         }
 
+        var finalThemeTitle = hasPalm ? theme.title : (theme.titleNoPalm || theme.title);
+        var fourthDimLabel = apiResult && apiResult.fourthDimensionLabel ? apiResult.fourthDimensionLabel : (hasPalm ? '手相命脈印證' : (theme.fourthDimNoPalm || '先天八字格局'));
+        var fourthDimVal = apiResult && apiResult.fourthDimensionValue ? apiResult.fourthDimensionValue : (hasPalm ? '✋ 感情線末端向上延伸 · 正緣磁場清明' : '✦ 金水相生 · 乙木逢春正緣星明');
+        var finalAdvice = apiResult && apiResult.formattedAdvice ? apiResult.formattedAdvice : (
+          '<div class="report-deep-analysis">' +
+            '<div class="advice-block-item">' +
+              '<div style="color:var(--gold-bright);font-weight:800;font-size:0.96rem;margin-bottom:4px;">🔍 因果局勢與核心病灶透視：</div>' +
+              '<div style="color:var(--text-secondary);line-height:1.75;margin-bottom:12px;">信士（' + genderLabel + ' · ' + ageLabel + ' · 稱謂：' + relationLabel + ' · 狀態：' + roleLabel + '）' + (hasPalm ? '手相顯現氣場正在收束調整，需收回投射在對方身上的過度關注。' : '先天生辰八字透視夫妻宮氣場交錯，宜先自性圓滿方能吸引真正良緣。') + '</div>' +
+            '</div>' +
+            '<div class="advice-block-item" style="border-top:1px dashed rgba(212,168,83,0.25);padding-top:10px;margin-top:10px;">' +
+              '<div style="color:#34D399;font-weight:800;font-size:0.96rem;margin-bottom:4px;">🛠️ 仙佛指引：具體破局之法（心法＋實戰行動）：</div>' +
+              '<div style="color:var(--text-secondary);line-height:1.75;margin-bottom:12px;">實施自性圓滿吸引法則，停止卑微討好，在事業與生活中找回自信光芒。</div>' +
+            '</div>' +
+            '<div class="advice-block-item" style="border-top:1px dashed rgba(212,168,83,0.25);padding-top:10px;margin-top:10px;">' +
+              '<div style="color:var(--gold-gradient);font-weight:800;font-size:0.96rem;margin-bottom:4px;">🧭 前進方向與轉折吉時：</div>' +
+              '<div style="color:var(--text-secondary);line-height:1.75;margin-bottom:12px;">東南方將有紅鸞星照耀，今年秋冬至明年初將迎來真正的正緣轉折。</div>' +
+            '</div>' +
+            '<div class="advice-block-item" style="background:rgba(212,168,83,0.08);border-left:3px solid var(--gold-bright);padding:8px 12px;border-radius:4px;margin-top:12px;">' +
+              '<strong style="color:var(--gold-bright);font-size:0.85rem;">' + (hasPalm ? '✦ 手相命脈靈犀印證：' : '✦ 先天八字五行印證：') + '</strong>' +
+              '<span style="color:var(--text-gold);font-size:0.85rem;">' + fourthDimVal + '。信士誠心所至，仙佛自然作主護佑！</span>' +
+            '</div>' +
+          '</div>'
+        );
+
+        var promptUsed = (apiResult && apiResult.promptUsed) ? apiResult.promptUsed : (
+          '【問仙壇專屬 Prompt】\n主題：' + theme.name + '\n性別：' + genderLabel + '｜年齡：' + ageLabel + '｜稱謂：' + relationLabel + '｜現況：' + roleLabel + '\n叩問煩惱：' + (answers.question || '一般運勢') + '\n期待結果：' + goalLabel + '\n手相狀態：' + (hasPalm ? '已提供手相照片（納入手紋印證）' : '未提供手相（略過上傳，100% 以生辰八字與流年推演，嚴禁手相術語）')
+        );
+
         var reportData = {
           themeId: themeId,
           themeName: theme.name,
-          title: theme.title,
+          title: finalThemeTitle,
           gender: genderLabel,
           age: ageLabel,
           relation: relationLabel,
           role: roleLabel,
           goal: goalLabel,
           question: answers.question || '一般運勢與未來時機指引',
-          score: 92 + Math.floor(Math.random() * 7),
-          advice: '【' + theme.name + '深度指引】：信士（' + genderLabel + ' · ' + ageLabel + ' · 稱謂：' + relationLabel + ' · 狀態：' + roleLabel + '）目前整體運勢氣場聚集向上。針對您所詢問的「' + (answers.question || theme.title) + '」與期待「' + goalLabel + '」，在未來的關鍵月份（尤其是今年秋季至明年初）將迎來重要的轉折契機。建議您保持信心、把握身邊的貴人善緣，順應時機積極行動，必能迎刃而解、心想事成！',
-          hasPalm: Boolean(answers.palmDataUrl),
+          score: (apiResult && apiResult.score) ? apiResult.score : (92 + Math.floor(Math.random() * 7)),
+          turnaroundYear: (apiResult && apiResult.turnaroundYear) ? apiResult.turnaroundYear : '28 ~ 32 歲 · 適婚立業黃金期',
+          nobleGuide: (apiResult && apiResult.nobleGuide) ? apiResult.nobleGuide : '東南方 · 溫和沉穩善士',
+          fourthDimensionLabel: fourthDimLabel,
+          fourthDimensionValue: fourthDimVal,
+          advice: finalAdvice,
+          hasPalm: hasPalm,
+          promptUsed: promptUsed,
           matchedStories: matchedStories
         };
 
@@ -2828,22 +2932,28 @@
         readingModalCard.innerHTML =
           '<div class="report-content-box">' +
             '<div class="report-header-badge">' +
-              '<span style="font-size:0.75rem;font-weight:800;color:var(--gold-bright);border:1px solid var(--border-gold);padding:3px 10px;border-radius:999px;">✦ 專屬深度解析報告已產出 ✦</span>' +
-              '<h2 style="margin-top:10px;">' + theme.name + ' · ' + theme.title + '</h2>' +
+              '<span style="font-size:0.75rem;font-weight:800;color:var(--gold-bright);border:1px solid var(--border-gold);padding:3px 10px;border-radius:999px;">✦ 專屬深度 AI 解析報告已產出 ✦</span>' +
+              '<h2 style="margin-top:10px;">' + theme.name + ' · ' + reportData.title + '</h2>' +
               '<div style="font-size:0.8rem;color:var(--text-gold);margin-top:4px;">' +
-                reportData.gender + ' ｜ ' + reportData.age + ' ｜ 稱謂：' + reportData.relation + ' ｜ 狀態：' + reportData.role + ' ｜ ' + (reportData.hasPalm ? '✋ 已包含手相分析' : '🔮 命理深度推演') +
+                reportData.gender + ' ｜ ' + reportData.age + ' ｜ 稱謂：' + reportData.relation + ' ｜ 狀態：' + reportData.role + ' ｜ ' + (reportData.hasPalm ? '✋ 已包含手相深度分析' : '🔮 命理生辰八字推演 (未提供手相)') +
               '</div>' +
             '</div>' +
             '<div class="report-dimension-grid">' +
               '<div class="report-dim-card"><div class="report-dim-label">天命靈犀契合度</div><div class="report-dim-val">' + reportData.score + ' %</div></div>' +
-              '<div class="report-dim-card"><div class="report-dim-label">關鍵流年轉折</div><div class="report-dim-val">29 - 32 歲</div></div>' +
-              '<div class="report-dim-card"><div class="report-dim-label">貴人特徵與方位</div><div class="report-dim-val">正南方 · 溫和細心</div></div>' +
-              '<div class="report-dim-card"><div class="report-dim-label">手相命脈印證</div><div class="report-dim-val">' + (reportData.hasPalm ? '✋ 掌心靈犀已鎖定' : '吉星相照 · 貴人相助') + '</div></div>' +
+              '<div class="report-dim-card"><div class="report-dim-label">關鍵流年轉折</div><div class="report-dim-val" style="font-size:0.95rem;">' + reportData.turnaroundYear + '</div></div>' +
+              '<div class="report-dim-card"><div class="report-dim-label">貴人特徵與方位</div><div class="report-dim-val" style="font-size:0.88rem;">' + reportData.nobleGuide + '</div></div>' +
+              '<div class="report-dim-card"><div class="report-dim-label">' + reportData.fourthDimensionLabel + '</div><div class="report-dim-val" style="font-size:0.88rem;">' + reportData.fourthDimensionValue + '</div></div>' +
             '</div>' +
             '<div class="report-advice-box">' +
               '<div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:6px;"><strong>想了解的事：</strong> ' + reportData.question + '</div>' +
               '<div style="font-size:0.82rem;color:var(--text-gold);margin-bottom:8px;"><strong>期待的結果：</strong> ' + reportData.goal + '</div>' +
-              '<div style="line-height:1.7;">' + reportData.advice + '</div>' +
+              '<div style="line-height:1.75;">' + reportData.advice + '</div>' +
+            '</div>' +
+            '<div class="report-prompt-inspection">' +
+              '<details class="report-prompt-details">' +
+                '<summary>📜 查閱仙壇專屬推演依據與 AI 提示詞 (依您的資料量身定制)</summary>' +
+                '<pre class="report-prompt-pre">' + reportData.promptUsed + '</pre>' +
+              '</details>' +
             '</div>' +
             '<div class="report-manifestation-section">' +
               '<div class="manifestation-header">' +
