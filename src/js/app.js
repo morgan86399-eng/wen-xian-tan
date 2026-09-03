@@ -1089,12 +1089,18 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function startGuidedWizard(themeId) {
+    if (!requireLogin()) return;
+    if (WalletManager.getThemePoints(themeId) < 1) {
+      handleThemeClick(themeId);
+      return;
+    }
     const relConf = THEME_RELATION_CONFIG[themeId] || THEME_RELATION_CONFIG.love;
     const roleConf = THEME_ROLE_CONFIG[themeId] || THEME_ROLE_CONFIG.love;
 
     state.wizard.activeThemeId = themeId;
     state.wizard.currentStep = 1;
     state.wizard.totalSteps = 7;
+    state.wizard.isSubmitting = false;
     state.wizard.answers = {
       gender: 'female',
       genderCustom: '',
@@ -1107,7 +1113,9 @@ document.addEventListener('DOMContentLoaded', () => {
       question: '',
       goal: 'skip',
       goalCustom: '',
-      palmDataUrl: null
+      palmDataUrl: null,
+      palmImageBase64: '',
+      palmConsent: false
     };
 
     renderWizardStep();
@@ -1287,6 +1295,10 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `}
           </div>
+          <label style="display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-size:0.82rem;color:var(--text-secondary);line-height:1.55;cursor:pointer;">
+            <input type="checkbox" id="wizardPalmConsent" ${answers.palmConsent ? 'checked' : ''} style="margin-top:3px;accent-color:var(--gold-bright);">
+            <span>我同意將掌紋影像送 AI 分析，分析完成後不保存原圖。未勾選不能上傳或送出照片；略過拍照仍可繼續。</span>
+          </label>
         </div>
       `;
     }
@@ -1341,6 +1353,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const { answers, activeThemeId } = state.wizard;
     const relConf = THEME_RELATION_CONFIG[activeThemeId] || THEME_RELATION_CONFIG.love;
     const roleConf = THEME_ROLE_CONFIG[activeThemeId] || THEME_ROLE_CONFIG.love;
+
+    if (currentStep === 5) {
+      return String(answers.question || '').trim().length > 0;
+    }
 
     const stepConfig = {
       1: { options: GENDER_OPTIONS, value: answers.gender, custom: answers.genderCustom },
@@ -1439,6 +1455,7 @@ document.addEventListener('DOMContentLoaded', () => {
         textarea.addEventListener('input', (e) => {
           answers.question = e.target.value;
           updateCounter();
+          updateNextBtnState();
         });
       }
 
@@ -1449,6 +1466,7 @@ document.addEventListener('DOMContentLoaded', () => {
             textarea.value = text.slice(0, 500);
             answers.question = textarea.value;
             updateCounter();
+            updateNextBtnState();
           }
         });
       });
@@ -1456,20 +1474,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (currentStep === 7) {
       const targetHand = answers.gender === 'female' ? 'right' : 'left';
+      const consentBox = document.getElementById('wizardPalmConsent');
+      if (consentBox) {
+        consentBox.checked = Boolean(answers.palmConsent);
+        consentBox.addEventListener('change', () => {
+          answers.palmConsent = consentBox.checked;
+        });
+      }
+
+      const requirePalmConsent = () => {
+        answers.palmConsent = Boolean(document.getElementById('wizardPalmConsent')?.checked);
+        if (answers.palmConsent) return true;
+        alert('要上傳或送出掌紋照片，請先勾選同意將影像送 AI 分析。若不想拍照，請改點略過。');
+        return false;
+      };
 
       document.getElementById('wizardOpenCameraBtn')?.addEventListener('click', () => {
+        if (!requirePalmConsent()) return;
         openCamera(targetHand);
       });
 
       document.getElementById('wizardOpenAlbumBtn')?.addEventListener('click', () => {
+        if (!requirePalmConsent()) return;
         openFilePicker(targetHand);
       });
 
       document.getElementById('wizardRetakePalmBtn')?.addEventListener('click', () => {
+        if (!requirePalmConsent()) return;
         openCamera(targetHand);
       });
 
       document.getElementById('wizardChangeAlbumBtn')?.addEventListener('click', () => {
+        if (!requirePalmConsent()) return;
         openFilePicker(targetHand);
       });
 
@@ -1477,14 +1513,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (skipBtn) {
         skipBtn.addEventListener('click', () => {
           answers.palmDataUrl = null;
-          executeDecodingFlow();
+          answers.palmImageBase64 = '';
+          executeDecodingFlow({ skipPalm: true });
         });
       }
 
       const submitBtn = document.getElementById('wizardSubmitBtn');
       if (submitBtn) {
         submitBtn.addEventListener('click', () => {
-          executeDecodingFlow();
+          if (answers.palmDataUrl || answers.palmImageBase64) {
+            if (!requirePalmConsent()) return;
+          }
+          executeDecodingFlow({ skipPalm: false });
         });
       }
     }
@@ -1522,41 +1562,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ============ 12. Execute Decoding & Show Report (白話溫暖) ============
-  function executeDecodingFlow() {
+  function executeDecodingFlow(options = {}) {
     if (state.wizard.isSubmitting) return;
-    state.wizard.isSubmitting = true;
+    if (!requireLogin()) {
+      state.wizard.isSubmitting = false;
+      return;
+    }
 
     const { activeThemeId, answers } = state.wizard;
+    const themeObj = THEMES.find((t) => t.id === activeThemeId) || THEMES[0];
+    const themeName = themeObj.name;
+    const skipPalm = Boolean(options.skipPalm);
+    const liveBase64 = window.KaiyunPalmCapture && window.KaiyunPalmCapture.lastBase64;
+    if (liveBase64) answers.palmImageBase64 = liveBase64;
+
+    const sendPalm = !skipPalm && Boolean(answers.palmConsent) && Boolean(answers.palmImageBase64);
+    if (!skipPalm && (answers.palmDataUrl || answers.palmImageBase64) && !answers.palmConsent) {
+      alert('要送出掌紋照片，請先勾選同意。若不想送出，請改點略過拍照。');
+      return;
+    }
+    if (WalletManager.getThemePoints(activeThemeId) < 1) {
+      triggerEcpayCheckout(
+        { id: 'single', label: `單項方案【${themeName}】`, price: 199, requiredCount: 1 },
+        [activeThemeId]
+      );
+      return;
+    }
+
+    state.wizard.isSubmitting = true;
     const myDecodeToken = ++state.wizard.decodeToken;
+    const hasPalm = sendPalm;
 
     try {
-      const consumeRes = WalletManager.consumePoint(activeThemeId, 1);
-      if (!consumeRes.success) {
-        state.wizard.isSubmitting = false;
-        const themeObj = THEMES.find((t) => t.id === activeThemeId);
-        const themeName = themeObj ? themeObj.name : '此主題';
-
-        if (window.PaymentSDK) {
-          triggerPortalyCheckout(
-            { id: 'single', label: `單項供養方案【${themeName}】`, price: 199, pointsReward: 3 },
-            [activeThemeId],
-            () => {
-              // 付款/模擬成功後，自動延續解析報告流程！
-              executeDecodingFlow();
-            }
-          );
-        } else {
-          alert(`您的【${themeName}】測算次數不足，請先至會員中心開通點數！`);
-        }
-        renderWizardStep();
-        return;
-      }
-
-      renderThemesHub();
-      renderMemberCenter();
-
-      const hasPalm = Boolean(answers.palmDataUrl);
       const themeObj = THEMES.find((t) => t.id === activeThemeId) || THEMES[0];
       const themeName = themeObj.name;
 
@@ -1576,7 +1613,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="ritual-step-node" id="ritualStep2">
               <div class="ritual-step-circle">2</div>
-              <span class="ritual-step-label">${hasPalm ? '手相八字' : '生辰排盤'}</span>
+              <span class="ritual-step-label">${hasPalm ? '掌紋對照' : '問答解析'}</span>
             </div>
             <div class="ritual-step-node" id="ritualStep3">
               <div class="ritual-step-circle">3</div>
@@ -1612,10 +1649,10 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         {
           pct: 65,
-          title: hasPalm ? `掌心命理 · 對照【${themeName}】` : `先天八字 · 排盤【${themeName}】`,
+          title: hasPalm ? `掌心對照 · 【${themeName}】` : `問答解析 · 【${themeName}】`,
           sub: hasPalm
-            ? `智能鎖定掌紋特徵，照會天命流年與三大命脈...`
-            : `以生辰十神、五行生剋深入推演信士先天格局（未提供手相）...`,
+            ? `正在把掌紋影像送出分析...`
+            : `正在依您填寫的問答整理解析...`,
           activate: [step1, step2]
         },
         {
@@ -1653,52 +1690,100 @@ document.addEventListener('DOMContentLoaded', () => {
       const stageTimer2 = setTimeout(() => setStage(2), 1600);
 
       // 非同步請求後端 AI 生成 API
+      const payload = {
+        themeId: activeThemeId,
+        answers: {
+          gender: answers.gender,
+          genderCustom: answers.genderCustom,
+          age: answers.age,
+          ageCustom: answers.ageCustom,
+          relation: answers.relation,
+          relationCustom: answers.relationCustom,
+          role: answers.role,
+          roleCustom: answers.roleCustom,
+          question: answers.question,
+          goal: answers.goal,
+          goalCustom: answers.goalCustom,
+          relationLabel: answers.relationCustom || (THEME_RELATION_CONFIG[activeThemeId]?.options.find(r => r.id === answers.relation)?.label || answers.relation),
+          roleLabel: answers.roleCustom || (THEME_ROLE_CONFIG[activeThemeId]?.options.find(r => r.id === answers.role)?.label || answers.role),
+          goalLabel: answers.goalCustom || (answers.goal === 'skip' ? '略過' : (DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || answers.goal)),
+          userName: (MemberManager.getCurrentUser() && MemberManager.getCurrentUser().name) || '信士'
+        },
+        nonce: createNonce()
+      };
+      if (sendPalm) {
+        payload.palmImageBase64 = answers.palmImageBase64;
+      }
+
       fetch('/api/reading/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          themeId: activeThemeId,
-          answers: {
-            ...answers,
-            relationLabel: answers.relationCustom || (THEME_RELATION_CONFIG[activeThemeId]?.options.find(r => r.id === answers.relation)?.label || answers.relation),
-            roleLabel: answers.roleCustom || (THEME_ROLE_CONFIG[activeThemeId]?.options.find(r => r.id === answers.role)?.label || answers.role),
-            goalLabel: answers.goalCustom || (answers.goal === 'skip' ? '略過（由仙佛全方位推演指引）' : (DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || answers.goal)),
-            userName: (MemberManager.getCurrentUser() && MemberManager.getCurrentUser().name) || '信士'
-          }
-        })
+        credentials: 'include',
+        body: JSON.stringify(payload)
       })
-      .then(res => res.json())
-      .catch(() => null)
-      .then(apiResult => {
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        return { res, data };
+      })
+      .then(async ({ res, data }) => {
         clearTimeout(stageTimer1);
         clearTimeout(stageTimer2);
-        setStage(2);
+        const stillCurrent = state.wizard.decodeToken === myDecodeToken;
+        await MemberManager.refreshMe();
+        renderThemesHub();
+        renderMemberCenter();
+        updateTopBarUserStatus();
 
+        if (res.status === 401 || data.error === 'UNAUTHENTICATED') {
+          state.wizard.isSubmitting = false;
+          if (stillCurrent) {
+            readingModalBackdrop.classList.remove('show');
+            switchTab('auth');
+          }
+          return;
+        }
+        if (!res.ok || data.ok === false || data.error) {
+          state.wizard.isSubmitting = false;
+          if (stillCurrent) {
+            const msg = data.error === 'INSUFFICIENT_CREDITS' || data.error === 'NO_CREDITS'
+              ? '此篇章次數不足，請先購買後再試'
+              : (data.message || data.error || '報告產生失敗，請稍後再試');
+            alert(msg);
+            if (data.error === 'INSUFFICIENT_CREDITS' || data.error === 'NO_CREDITS') {
+              triggerEcpayCheckout(
+                { id: 'single', label: `單項方案【${themeName}】`, price: 199, requiredCount: 1 },
+                [activeThemeId]
+              );
+            } else {
+              renderWizardStep();
+            }
+          }
+          return;
+        }
+
+        setStage(2);
         setTimeout(() => {
           setStage(3);
           setTimeout(() => {
-            const stillCurrent = state.wizard.decodeToken === myDecodeToken;
             try {
-              showDecodedReport(activeThemeId, answers, stillCurrent, apiResult);
+              showDecodedReport(activeThemeId, answers, stillCurrent, data);
+            } finally {
               state.wizard.isSubmitting = false;
-            } catch (err) {
-              console.error('產生報告失敗，已退回本次測算次數', err);
-              WalletManager.addPointsToThemes([activeThemeId], 1);
-              state.wizard.isSubmitting = false;
-              if (stillCurrent) {
-                alert('產生失敗，已退回本次測算次數，請重試');
-                renderWizardStep();
-              }
             }
-          }, 600);
-        }, 600);
+          }, 400);
+        }, 400);
+      })
+      .catch(() => {
+        state.wizard.isSubmitting = false;
+        if (state.wizard.decodeToken === myDecodeToken) {
+          alert('目前連不上伺服器，報告尚未產生，點數以伺服器為準');
+          renderWizardStep();
+        }
       });
     } catch (err) {
-      console.error('扣點或產生報告流程發生錯誤，已退回本次測算次數', err);
-      WalletManager.addPointsToThemes([activeThemeId], 1);
       state.wizard.isSubmitting = false;
       if (state.wizard.decodeToken === myDecodeToken) {
-        alert('產生失敗，已退回本次測算次數，請重試');
+        alert('報告尚未產生，請稍後再試');
         renderWizardStep();
       }
     }
@@ -1874,28 +1959,24 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    const deepAnalysis = generateDeepReportAnalysis(
-      themeId,
-      answers,
-      genderLabel,
-      ageLabel,
-      relationLabel,
-      roleLabel,
-      goalLabel,
-      theme
-    );
-
-    // 優先使用 API 回傳的真實 AI 排盤結果
-    const finalScore = apiResult?.score || (92 + Math.floor(Math.random() * 7));
-    const finalTurnaround = apiResult?.turnaroundYear || deepAnalysis.turnaroundYear;
-    const finalNoble = apiResult?.nobleGuide || deepAnalysis.nobleGuide;
-    const finalDimLabel = apiResult?.fourthDimensionLabel || deepAnalysis.fourthDimensionLabel;
-    const finalDimVal = apiResult?.fourthDimensionValue || deepAnalysis.fourthDimensionValue;
-    const finalAdvice = apiResult?.formattedAdvice || deepAnalysis.formattedAdvice;
-    const finalThemeTitle = hasPalm ? theme.title : (theme.titleNoPalm || theme.title);
-    const promptUsed = apiResult?.promptUsed || `【問仙壇專屬 Prompt】\n主題：${theme.name}\n性別：${genderLabel}｜年齡：${ageLabel}｜稱謂：${relationLabel}｜現況：${roleLabel}\n叩問煩惱：${answers.question || '一般運勢'}\n期待結果：${goalLabel}\n手相狀態：${hasPalm ? '已提供手相照片（納入手紋印證）' : '未提供手相（略過上傳，100% 以生辰八字與流年推演，嚴禁手相術語）'}`;
+    const reading = apiResult?.reading || apiResult?.report || apiResult || {};
+    const reportObj = reading.report && typeof reading.report === 'object' ? reading.report : reading;
+    const adviceText = String(
+      reportObj.advice
+      || reportObj.body
+      || reportObj.content
+      || reportObj.text
+      || reportObj.formattedAdvice
+      || ''
+    ).replace(/<[^>]+>/g, ' ').trim();
+    const finalThemeTitle = reportObj.title || (hasPalm ? theme.title : (theme.titleNoPalm || theme.title));
+    const finalTurnaround = reportObj.turnaroundYear || '';
+    const finalNoble = reportObj.nobleGuide || '';
+    const finalDimLabel = reportObj.fourthDimensionLabel || (hasPalm ? theme.fourthDimWithPalm : theme.fourthDimNoPalm);
+    const finalDimVal = reportObj.fourthDimensionValue || '';
 
     const reportData = {
+      id: reading.id || reportObj.id,
       themeId,
       themeName: theme.name,
       title: finalThemeTitle,
@@ -1904,90 +1985,69 @@ document.addEventListener('DOMContentLoaded', () => {
       relation: relationLabel,
       role: roleLabel,
       goal: goalLabel,
-      question: answers.question || '一般運勢與未來時機指引',
-      score: finalScore,
+      question: answers.question || reportObj.question || '',
       turnaroundYear: finalTurnaround,
       nobleGuide: finalNoble,
       fourthDimensionLabel: finalDimLabel,
       fourthDimensionValue: finalDimVal,
-      advice: finalAdvice,
-      hasPalm,
-      promptUsed,
+      advice: adviceText,
+      hasPalm: Boolean(hasPalm || reading.has_palm || reading.hasPalm),
       matchedStories
     };
 
-    WalletManager.saveReport(reportData);
-
     if (!renderIntoModal) return;
+
+    const dimCards = [];
+    if (reportData.turnaroundYear) {
+      dimCards.push(`<div class="report-dim-card"><div class="report-dim-label">關鍵轉折</div><div class="report-dim-val" style="font-size:0.95rem;">${escapeHtml(reportData.turnaroundYear)}</div></div>`);
+    }
+    if (reportData.nobleGuide) {
+      dimCards.push(`<div class="report-dim-card"><div class="report-dim-label">貴人特徵與方位</div><div class="report-dim-val" style="font-size:0.88rem;">${escapeHtml(reportData.nobleGuide)}</div></div>`);
+    }
+    if (reportData.fourthDimensionValue) {
+      dimCards.push(`<div class="report-dim-card"><div class="report-dim-label">${escapeHtml(reportData.fourthDimensionLabel)}</div><div class="report-dim-val" style="font-size:0.88rem;">${escapeHtml(reportData.fourthDimensionValue)}</div></div>`);
+    }
 
     readingModalCard.innerHTML = `
       <div class="report-content-box">
         <div class="report-header-badge">
           <span style="font-size:0.75rem;font-weight:800;color:var(--gold-bright);border:1px solid var(--border-gold);padding:3px 10px;border-radius:999px;">
-            ✦ 專屬深度 AI 解析報告已產出 ✦
+            ✦ 解析報告 �-bright);border:1px solid var(--border-gold);padding:3px 10px;border-radius:999px;">
+            ✦ 解析報告 ✦
           </span>
-          <h2 style="margin-top:10px;color:var(--gold-gradient);">${theme.name} · ${reportData.title}</h2>
+          <h2 style="margin-top:10px;color:var(--gold-gradient);">${escapeHtml(theme.name)} · ${escapeHtml(reportData.title)}</h2>
           <div style="font-size:0.8rem;color:var(--text-gold);margin-top:4px;">
-            ${reportData.gender} ｜ ${reportData.age} ｜ 稱謂：${reportData.relation} ｜ 狀態：${reportData.role} ｜ ${reportData.hasPalm ? '✋ 已包含手相深度分析' : '🔮 命理生辰八字推演 (未提供手相)'}
+            ${escapeHtml(reportData.gender)} ｜ ${escapeHtml(reportData.age)} ｜ 稱謂：${escapeHtml(reportData.relation)} ｜ 狀態：${escapeHtml(reportData.role)} ｜ ${reportData.hasPalm ? '已含掌紋分析' : '本次未送出掌紋'}
           </div>
         </div>
 
-        <div class="report-dimension-grid">
-          <div class="report-dim-card">
-            <div class="report-dim-label">天命靈犀契合度</div>
-            <div class="report-dim-val">${reportData.score} %</div>
-          </div>
-          <div class="report-dim-card">
-            <div class="report-dim-label">關鍵流年轉折</div>
-            <div class="report-dim-val" style="font-size:0.95rem;">${reportData.turnaroundYear}</div>
-          </div>
-          <div class="report-dim-card">
-            <div class="report-dim-label">貴人特徵與方位</div>
-            <div class="report-dim-val" style="font-size:0.88rem;">${reportData.nobleGuide}</div>
-          </div>
-          <div class="report-dim-card">
-            <div class="report-dim-label">${reportData.fourthDimensionLabel}</div>
-            <div class="report-dim-val" style="font-size:0.88rem;">${reportData.fourthDimensionValue}</div>
-          </div>
-        </div>
+        ${dimCards.length ? `<div class="report-dimension-grid">${dimCards.join('')}</div>` : ''}
 
         <div class="report-advice-box">
           <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px;border-bottom:1px dashed var(--border);padding-bottom:8px;">
-            <div><strong>📌 信士叩問煩惱：</strong> ${reportData.question}</div>
-            <div style="margin-top:4px;color:var(--text-gold);"><strong>🎯 核心期待結果：</strong> ${reportData.goal}</div>
+            <div><strong>本次問題：</strong> ${escapeHtml(reportData.question)}</div>
+            <div style="margin-top:4px;color:var(--text-gold);"><strong>期望：</strong> ${escapeHtml(reportData.goal)}</div>
           </div>
-          <div style="line-height:1.75;">
-            ${reportData.advice}
-          </div>
+          <div style="line-height:1.75;white-space:pre-wrap;">${escapeHtml(reportData.advice || '報告內容尚未回傳，請稍後到歷史紀錄簿查看。')}</div>
         </div>
 
-        <!-- 查看專屬 Prompt 透明度折疊抽屜 -->
-        <div class="report-prompt-inspection">
-          <details class="report-prompt-details">
-            <summary>📜 查閱仙壇專屬推演依據與 AI 提示詞 (依您的資料量身定制)</summary>
-            <pre class="report-prompt-pre">${reportData.promptUsed}</pre>
-          </details>
-        </div>
-
-        <!-- ============ 真實顯化故事 下方欄位 ============ -->
         <div class="report-manifestation-section">
           <div class="manifestation-header">
-            <span class="manifestation-tag">✦ 真實見證故事 ✦</span>
-            <h4>看看其他信眾的真實經歷（與您的問題最相近）：</h4>
+            <span class="manifestation-tag">✦ 相關見證 ✦</span>
+            <h4>與這次問題較相近的公開見證：</h4>
           </div>
-
           <div class="manifestation-cards-list">
             ${reportData.matchedStories.map((story) => `
               <div class="manifestation-story-card">
                 <div class="story-card-meta">
-                  <span class="story-card-title">${story.title}</span>
-                  <span class="story-card-user">${story.name} · ${story.category}</span>
+                  <span class="story-card-title">${escapeHtml(story.title)}</span>
+                  <span class="story-card-user">${escapeHtml(story.name)} · ${escapeHtml(story.category)}</span>
                 </div>
-                <div class="story-card-summary">${story.summary}</div>
-                <div class="story-card-result-badge">✓ ${story.result}</div>
+                <div class="story-card-summary">${escapeHtml(story.summary)}</div>
+                <div class="story-card-result-badge">✓ ${escapeHtml(story.result)}</div>
                 <details class="story-full-details">
-                  <summary>點擊展開閱讀完整見證故事</summary>
-                  <p style="margin-top:8px;font-size:0.84rem;line-height:1.75;color:var(--text-muted);">${story.full.replace(/\n\n/g, '<br><br>')}</p>
+                  <summary>展開完整見證</summary>
+                  <p style="margin-top:8px;font-size:0.84rem;line-height:1.75;color:var(--text-muted);white-space:pre-wrap;">${escapeHtml(story.full)}</p>
                 </details>
               </div>
             `).join('')}
@@ -2001,14 +2061,13 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    document.getElementById('closeReportBtn').addEventListener('click', () => {
+    document.getElementById('closeReportBtn')?.addEventListener('click', () => {
       readingModalBackdrop.classList.remove('show');
     });
 
-    document.getElementById('viewAllReportsBtn').addEventListener('click', () => {
+    document.getElementById('viewAllReportsBtn')?.addEventListener('click', () => {
       readingModalBackdrop.classList.remove('show');
-      state.activeTab = 'history';
-      updateActiveTab();
+      switchTab('history');
     });
 
     readingModalBackdrop.classList.add('show');
