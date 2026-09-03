@@ -700,6 +700,24 @@
     (function() {
       "use strict";
 
+      try {
+        var rawSession = localStorage.getItem('wenxiantan_user_session_v2');
+        if (rawSession && rawSession.indexOf('陳信士') !== -1) {
+          var parsed = JSON.parse(rawSession);
+          parsed.name = '信士';
+          if (parsed.email === 'chen.blessed@example.com') parsed.email = 'seeker@example.com';
+          localStorage.setItem('wenxiantan_user_session_v2', JSON.stringify(parsed));
+        }
+        var rawDb = localStorage.getItem('wenxiantan_members_db_v2');
+        if (rawDb && rawDb.indexOf('陳信士') !== -1) {
+          localStorage.setItem('wenxiantan_members_db_v2', rawDb.replace(/陳信士/g, '信士').replace(/chen\.blessed@example\.com/g, 'seeker@example.com'));
+        }
+        var rawReports = localStorage.getItem('wenxiantan_reports_history_v2');
+        if (rawReports && (rawReports.indexOf('陳信士') !== -1 || rawReports.indexOf('陳先生') !== -1 || rawReports.indexOf('陳小姐') !== -1)) {
+          localStorage.setItem('wenxiantan_reports_history_v2', rawReports.replace(/陳信士/g, '信士').replace(/陳先生/g, '周先生').replace(/陳小姐/g, '李小姐'));
+        }
+      } catch (e) {}
+
       var STORAGE_KEY_POINTS = 'wenxiantan_points_wallet_v2';
       var STORAGE_KEY_HISTORY = 'wenxiantan_reports_history_v2';
       var STORAGE_KEY_SESSION = 'wenxiantan_user_session_v2';
@@ -716,7 +734,15 @@
         getCurrentUser: function() {
           try {
             var session = localStorage.getItem(STORAGE_KEY_SESSION);
-            if (session) return JSON.parse(session);
+            if (session) {
+              var u = JSON.parse(session);
+              if (u && (u.name === '陳信士' || u.id === 'usr_demo')) {
+                u.name = '信士';
+                u.email = 'seeker@example.com';
+                this.setCurrentUser(u);
+              }
+              return u;
+            }
             return null;
           } catch(e) { return null; }
         },
@@ -1204,7 +1230,7 @@
       var MANIFESTATION_STORIES = [
         { id: 'story_14', themeId: 'love', imageUrl: 'assets/stories/14.jpg', title: '感情長年陷入暴力與柔情拉扯，請仙佛指引後看清離開', name: '張小姐', category: '感情姻緣', keywords: ['感情', '男友', '伴侶', '分手', '復合', '正緣', '家暴', '花心'], summary: '過去與男友交往常受傷卻難割捨。求問仙佛指引並對照手相感情線後看清不合適關係果斷放手，現在找到體貼融洽的新對象。', result: '放下錯的人，順利遇到真正良緣', full: '張小姐過去跟公司男同事交往，周遭朋友都勸她分手。求問指引後終於下定決心分手，如今遇見真正懂珍惜她的新伴侶，相處融洽。' },
         { id: 'story_19', themeId: 'love', imageUrl: 'assets/stories/19.jpg', title: '多年沒聯絡的知己好友，請仙佛幫忙後重新聯繫上解開心結', name: 'weiyo', category: '感情姻緣', keywords: ['知己', '聯絡', '朋友', '訊息', '遺憾', '重新聯繫', '好感', '舊情人'], summary: '曾有一位友達以上知己因誤會冷戰失聯多年。祈求指引後兩天，對方主動傳訊息問候，把話說開重續善緣。', result: '解開多年心結，重續美好善緣', full: '當年因為價值觀不同在冷戰中失聯。祈求仙佛幫忙後兩天，對方主動傳訊息問候，約出來見面後把話說開，重回知心好友。' },
-        { id: 'story_27', themeId: 'love', imageUrl: 'assets/stories/09.jpg', title: '夫妻互動三個月內翻轉，從冷淡隔閡到攜手同心', name: '陳先生', category: '感情姻緣', keywords: ['夫妻', '太太', '先生', '冷戰', '吵架', '心結', '家宅', '和睦'], summary: '夫妻常年因小事冷戰互不理睬。求問指引後化解心結，太太態度大幅轉變，開始主動關心先生，家庭重回溫暖。', result: '夫妻冰釋前嫌，重拾溫暖默契', full: '過去太太看我的眼神總帶著防備與抱怨。求問指引後我調整了溝通方式，太太態度明顯變了，會主動跟我聊天關心，家庭重拾溫暖。' },
+        { id: 'story_27', themeId: 'love', imageUrl: 'assets/stories/09.jpg', title: '夫妻互動三個月內翻轉，從冷淡隔閡到攜手同心', name: '林信士', category: '感情姻緣', keywords: ['夫妻', '太太', '先生', '冷戰', '吵架', '心結', '家宅', '和睦'], summary: '夫妻常年因小事冷戰互不理睬。求問指引後化解心結，太太態度大幅轉變，開始主動關心先生，家庭重回溫暖。', result: '夫妻冰釋前嫌，重拾溫暖默契', full: '過去太太看我的眼神總帶著防備與抱怨。求問指引後我調整了溝通方式，太太態度明顯變了，會主動跟我聊天關心，家庭重拾溫暖。' },
         { id: 'story_18', themeId: 'work', imageUrl: 'assets/stories/18.jpg', title: '想換工作求職受阻，指引後貴人相助，快速錄取心儀好工作', name: '呂小姐', category: '工作求職', keywords: ['換工作', '找工作', '求職', '面試', '貴人', '履歷', '轉職', '跳槽'], summary: '想換工作一直不順利。透過測算找出盲點並調整履歷，面試貴人相助，很快錄取待遇好、家人稱讚的好公司。', result: '求職貴人相助，快速錄取好缺', full: '求問指引後點出個性盲點與面試呈現方式。我聽話照做，那陣子找工作覺得貴人特別多，很快找到心儀的好工作。' },
         { id: 'story_31', themeId: 'work', imageUrl: 'assets/stories/22.jpg', title: '回鄉找工作沒方向，指引電腦相關領域，第一家面試就錄取', name: '尤先生', category: '工作求職', keywords: ['迷惘', '方向', '第一家', '錄取', '電腦', '履歷', '上班'], summary: '剛回鄉找工作陷入迷惘。得到指引往電腦數位領域發揮，投遞第一家面試當天即錄取，隔天開心上班。', result: '第一家面試即錄取，找到方向', full: '剛回到家鄉完全沒方向。得到指引往電腦相關工作投遞，第一家面試當天就錄取，隔天開始上班。' },
         { id: 'story_26', themeId: 'work', imageUrl: 'assets/stories/01.jpg', title: '請仙佛幫忙提升智慧，理解力明顯變好、工作步步順遂', name: 'weiyo', category: '工作求職', keywords: ['理解力', '智慧', '重點', '工作', '溝通', '表達'], summary: '以前在聆聽與表達上有很大困難。求問提升智慧後，對方還沒講完腦中就能浮現重點，工作表現大受肯定。', result: '思路清晰明朗，溝通得心應手', full: '自從請仙佛幫忙提升智慧後，能更快掌握輕重緩急與結論重點，工作表現大幅提升。' },
@@ -1214,15 +1240,15 @@
         { id: 'story_12', themeId: 'wealth', imageUrl: 'assets/stories/12.jpg', title: '二十年前舊債務官司壓在身上，指引後法院判決不用賠償', name: '吳先生', category: '官司債務', keywords: ['官司', '債務', '法院', '賠償', '千萬', '律師', '勝訴'], summary: '家裡突然收到法院通知追討九百多萬舊債務。求問指引後心安定下來，後續律師細心協助，法院判決確定不需賠償。', result: '近千萬官司圓滿化解，免除賠償', full: '開庭過程順利，法院判決認定對方無法證明債務關係，我們完全不需賠償，壓在身上半年的大石頭終於放下。' },
         { id: 'story_22', themeId: 'wealth', imageUrl: 'assets/stories/22.jpg', title: '祈求提升財運，意外收回一筆擱置許久的舊報價款', name: '一位設計師', category: '經濟財務', keywords: ['加薪', '財運', '款項', '入帳', '報價', '意外之財'], summary: '機械設計工作求問財運時浮現天道酬勤。隔沒多久，數月前談不攏的客戶突然主動匯款，分毫不差！', result: '舊款意外全數入帳，感應天道酬勤', full: '數個月前報價不了了之的客戶，突然主動通知全額匯款入帳，深刻感受心念做對、財福自來的道理。' },
         { id: 'story_17', themeId: 'family', imageUrl: 'assets/stories/17.jpg', title: '想買新房一直猶豫不決，指引後順利在預算內買到心儀好宅', name: '林太太', category: '買房置產', keywords: ['買房', '置產', '新成屋', '頭期款', '房子', '新家', '入厝'], summary: '想換屋苦於頭期款。指引後先生主動提議看房、長輩願意資助，在預算內順利買下第一眼就喜歡的新屋！', result: '預算內順利買進心儀新家', full: '求問指引後先生主動提議看房，長輩也主動願意幫忙周轉購屋金，最後在預算內順利買下心儀附車位好房！' },
-        { id: 'story_03', themeId: 'family', imageUrl: 'assets/stories/03.jpg', title: '高齡母親心臟瓣膜出問題，祈求化金後同一天明顯改善', name: '陳小姐', category: '長輩安康', keywords: ['長輩', '母親', '開刀', '生病', '孝親', '心臟'], summary: '母親七十九歲虛弱醫生建議開刀。請仙佛幫忙後一天內明顯好轉，從原本走不到廁所到能一次走完且安眠。', result: '長輩體力精神好轉，全家安心', full: '化金前後一天就有這麼大的差異，讓我真實感受到請仙佛幫忙的力量。' },
+        { id: 'story_03', themeId: 'family', imageUrl: 'assets/stories/03.jpg', title: '高齡母親心臟瓣膜出問題，祈求化金後同一天明顯改善', name: '李信士', category: '長輩安康', keywords: ['長輩', '母親', '開刀', '生病', '孝親', '心臟'], summary: '母親七十九歲虛弱醫生建議開刀。請仙佛幫忙後一天內明顯好轉，從原本走不到廁所到能一次走完且安眠。', result: '長輩體力精神好轉，全家安心', full: '化金前後一天就有這麼大的差異，讓我真實感受到請仙佛幫忙的力量。' },
         { id: 'story_04', themeId: 'family', imageUrl: 'assets/stories/04.jpg', title: '母親例行追蹤疑似復發，祈求大事化小後斷層掃描平安過關', name: '林小姐', category: '長輩安康', keywords: ['檢查', '母親', '腫瘤', '醫院', '大事化小', '平安'], summary: '母親例行檢查疑似肺部復發且腦部有狀況。分階段請仙佛大事化小，後續斷層掃描確認腦部無擴散。', result: '大事化小逢凶化吉，化險為夷', full: '斷層掃描確認母親腦部沒有擴散的跡象，肺部也成功取得標靶藥物治療，非常感謝仙佛妥善安排。' },
         { id: 'story_05', themeId: 'family', imageUrl: 'assets/stories/05.jpg', title: '九十三歲高齡阿嬤車禍骨裂，三週內從輪椅到自主行走', name: '黃小姐', category: '長輩安康', keywords: ['阿嬤', '車禍', '骨裂', '輪椅', '助行器', '行走'], summary: '阿嬤九十三歲車禍左腳掌骨裂坐輪椅三個月。為阿嬤祈求仙佛加持加速復原，三週內阿嬤脫離輪椅自理行走。', result: '高齡阿嬤骨傷康復，重拾行動力', full: '第三週阿嬤左腳完全消腫，已經可以自由行動，家人都無比感激。' },
         { id: 'story_06', themeId: 'family', imageUrl: 'assets/stories/06.jpg', title: '大姊高齡手術心懸掛，祈求仙佛慈悲作主，手術順利平安轉病房', name: '李先生', category: '手足安泰', keywords: ['大姊', '手術', '心臟', '開刀', '保佑', '平安'], summary: '從小帶我長大的七十九歲大姊心臟手術。祈求仙佛作主後，手術當天內心湧上安定感，大姊手術圓滿脫離險境。', result: '手術圓滿順利，手足平安康泰', full: '手術非常順利，大姊脫離險境轉到普通病房，還在群組報平安，再次感受神明護佑。' },
         { id: 'story_20', themeId: 'family', imageUrl: 'assets/stories/20.jpg', title: '父親病重不願就醫，祈求後脾氣收斂主動配合住院轉危為安', name: '黃先生', category: '孝親關懷', keywords: ['父親', '生病', '住院', '脾氣', '醫師'], summary: '父親重病身體積水脾氣暴躁拒絕就醫。求問仙佛庇佑後，父親脾氣奇蹟緩和答應住院，狀況轉穩。', result: '父親轉念配合治療，病情穩定', full: '平日很沒耐心的父親答應住院，假日沒值班的主治醫師也特地趕來看診，真實感受仙佛力量。' },
         { id: 'story_23', themeId: 'family', imageUrl: 'assets/stories/23.jpg', title: '陪母親走完人生最後一程，從抗拒心結到釋懷圓滿', name: '許先生', category: '孝親釋懷', keywords: ['母親', '人生終點', '釋懷', '心結', '安詳'], summary: '面對母親病重無法接受。求問仙佛後轉念放下插管搶救的痛苦執著，母親安詳無痛苦離去，心中滿懷感恩。', result: '轉念釋懷放下執念，生死皆安', full: '轉念為母親祈求後，母親安詳、沒有痛苦地圓滿離世，心中得到極大安慰。' },
         { id: 'story_15', themeId: 'children', imageUrl: 'assets/stories/15.jpg', title: '妻子破水超過十二小時未陣痛，祈求後手術順利母子均安', name: '周先生', category: '備孕求子', keywords: ['懷孕', '生產', '小孩', '備孕', '生子', '破水', '寶寶'], summary: '妻子生產破水十二小時未陣痛開始發燒。求問保佑順利生產，剖腹手術非常順利母子平安，寶寶健康少跑醫院。', result: '順利生產母子平安，寶寶健康活潑', full: '剖腹手術過程順利母子均安。如今小孩子滿六個月了，是個健康寶寶，妻子復原良好。' },
-        { id: 'story_02', themeId: 'children', imageUrl: 'assets/stories/02.jpg', title: '小女兒板機指多年無法伸直，求問祈福後手指奇蹟自癒康復', name: '陳先生', category: '子女健朗', keywords: ['女兒', '手指', '板機指', '受傷', '自責', '康復'], summary: '小女兒夾傷手指無法伸直看遍中西醫無果。求問仙佛庇佑照顧多年後，小學暑假早晨手指奇蹟完全康復！', result: '手指完全康復活動自如，放下多年自責', full: '看著孩子天真笑容和正常運作的手指，心中壓了好多年的自責終於放下，忍不住激動落淚。' },
-        { id: 'story_07', themeId: 'children', imageUrl: 'assets/stories/07.jpg', title: '小女兒先天右眼畏光，求問仙佛照看後狀況穩定不再惡化', name: '陳先生', category: '子女健朗', keywords: ['女兒', '眼睛', '畏光', '遺傳', '太陽眼鏡'], summary: '家族遺傳右眼球橢圓畏光無藥可醫。求問仙佛照顧後，上學不再喊刺眼也不需戴太陽眼鏡，追蹤六年未曾惡化。', result: '視力狀況穩定受控，未再惡化', full: '追蹤多年右眼狀況沒有惡化，一直維持在當初檢查的樣子，早請仙佛幫忙影響越小。' },
+        { id: 'story_02', themeId: 'children', imageUrl: 'assets/stories/02.jpg', title: '小女兒板機指多年無法伸直，求問祈福後手指奇蹟自癒康復', name: '周信士', category: '子女健朗', keywords: ['女兒', '手指', '板機指', '受傷', '自責', '康復'], summary: '小女兒夾傷手指無法伸直看遍中西醫無果。求問仙佛庇佑照顧多年後，小學暑假早晨手指奇蹟完全康復！', result: '手指完全康復活動自如，放下多年自責', full: '看著孩子天真笑容和正常運作的手指，心中壓了好多年的自責終於放下，忍不住激動落淚。' },
+        { id: 'story_07', themeId: 'children', imageUrl: 'assets/stories/07.jpg', title: '小女兒先天右眼畏光，求問仙佛照看後狀況穩定不再惡化', name: '郭信士', category: '子女健朗', keywords: ['女兒', '眼睛', '畏光', '遺傳', '太陽眼鏡'], summary: '家族遺傳右眼球橢圓畏光無藥可醫。求問仙佛照顧後，上學不再喊刺眼也不需戴太陽眼鏡，追蹤六年未曾惡化。', result: '視力狀況穩定受控，未再惡化', full: '追蹤多年右眼狀況沒有惡化，一直維持在當初檢查的樣子，早請仙佛幫忙影響越小。' },
         { id: 'story_10', themeId: 'children', imageUrl: 'assets/stories/10.jpg', title: '創業夥伴長年茹素自我療癒，求問仙佛圓滿無緣孩子心靈釋懷', name: '周小姐', category: '子女福澤', keywords: ['小孩', '圓滿', '心靈', '流產', '平靜'], summary: '創業夥伴年輕曾流產掛心多年。為無緣孩子祈福圓滿後，心中湧現前所未有的安定與溫暖平靜。', result: '長年掛念化為平靜，心靈深層釋懷', full: '這幾天心裡多了一份說不出的安定與平靜，先前掛心的事已經徹底放下，是很好的轉變。' },
         { id: 'story_21', themeId: 'children', imageUrl: 'assets/stories/21.jpg', title: '孩子受困電梯留下陰影怕了一年多，請仙佛安神後不再恐懼', name: '一位媽媽', category: '孩童安神', keywords: ['孩子', '害怕', '電梯', '陰影', '哭鬧', '安神'], summary: '大女兒遇電梯故障陰影嚴重怕了一年多。寫祈福金請仙佛幫忙清理害怕記憶安神，兩天後主動搭電梯拿包裹！', result: '徹底擺脫恐懼陰影，孩子安神定心', full: '原來請仙佛幫忙不只能幫人恢復健康，還能幫孩子安神定心，一年多的恐懼圓滿化解。' },
         { id: 'story_08', themeId: 'children', imageUrl: 'assets/stories/08.jpg', title: '掌紋智慧線與事業線交叉處年份分析精準，提早避開破財陷阱', name: '周先生', category: '手相流年印證', keywords: ['手相', '掌紋', '智慧線', '年份'], summary: '測算中上傳手相，掌紋智慧線與事業線交叉處年份分析跟過去經歷完全吻合，提早防範避開破財！', result: '手相流年神準驗證，及時避開財務大坑', full: '報告特別提醒我在特定年齡段容易有合約與破財陷阱，讓我提早防範，順利避開重大損失！' }

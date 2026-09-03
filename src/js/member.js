@@ -23,6 +23,11 @@ export const MemberManager = {
       if (!members['user']) {
         members['user'] = TEST_USER_ACCOUNT;
       }
+      Object.keys(members).forEach(k => {
+        if (members[k] && members[k].name === '陳信士') {
+          members[k].name = '信士';
+        }
+      });
       return members;
     } catch (e) {
       return { user: TEST_USER_ACCOUNT };
@@ -42,7 +47,13 @@ export const MemberManager = {
     try {
       const session = localStorage.getItem(STORAGE_KEY_SESSION);
       if (session) {
-        return JSON.parse(session);
+        const user = JSON.parse(session);
+        if (user && (user.name === '陳信士' || user.id === 'usr_demo')) {
+          user.name = '信士';
+          user.email = 'seeker@example.com';
+          this.setCurrentUser(user);
+        }
+        return user;
       }
       return null;
     } catch (e) {

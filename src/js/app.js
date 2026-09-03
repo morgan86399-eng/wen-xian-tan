@@ -20,6 +20,25 @@ import './payment-sdk.js';
  * 問仙壇 · 掌心解碼 App - 核心應用邏輯與白話問卷引導引擎
  */
 document.addEventListener('DOMContentLoaded', () => {
+  // 自動清洗並遷移用戶瀏覽器中任何殘留的「陳信士」歷史 Session / DB
+  try {
+    const rawSession = localStorage.getItem('wenxiantan_user_session_v2');
+    if (rawSession && rawSession.includes('陳信士')) {
+      const parsed = JSON.parse(rawSession);
+      parsed.name = '信士';
+      if (parsed.email === 'chen.blessed@example.com') parsed.email = 'seeker@example.com';
+      localStorage.setItem('wenxiantan_user_session_v2', JSON.stringify(parsed));
+    }
+    const rawDb = localStorage.getItem('wenxiantan_members_db_v2');
+    if (rawDb && rawDb.includes('陳信士')) {
+      localStorage.setItem('wenxiantan_members_db_v2', rawDb.replaceAll('陳信士', '信士').replaceAll('chen.blessed@example.com', 'seeker@example.com'));
+    }
+    const rawReports = localStorage.getItem('wenxiantan_reports_history_v2');
+    if (rawReports && (rawReports.includes('陳信士') || rawReports.includes('陳先生') || rawReports.includes('陳小姐'))) {
+      localStorage.setItem('wenxiantan_reports_history_v2', rawReports.replaceAll('陳信士', '信士').replaceAll('陳先生', '周先生').replaceAll('陳小姐', '李小姐'));
+    }
+  } catch (e) {}
+
   // ============ Application State ============
   const state = {
     currentTab: 'hub',       // 'hub' | 'member' | 'stories' | 'history'
