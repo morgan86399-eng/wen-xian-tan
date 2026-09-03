@@ -1,0 +1,249 @@
+/* ==========================================================================
+   算命問仙專案 - Portaly (傳送門) 獨立金流彈窗樣式 (暗黑科技奢華風)
+   所有 class 皆以 kyp- 為前綴，絕對不與主專案 CSS 產生命名衝突
+   ========================================================================== */
+
+.kyp-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 10, 18, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: kypFadeIn 0.25s ease-out;
+}
+
+@keyframes kypFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.kyp-modal-card {
+  width: 100%;
+  max-width: 440px;
+  background: linear-gradient(165deg, #181926 0%, #11121d 100%);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 25px rgba(251, 191, 36, 0.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: #F3F4F6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.kyp-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.kyp-modal-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #FCD34D;
+}
+
+.kyp-modal-close {
+  background: none;
+  border: none;
+  color: #9CA3AF;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.kyp-modal-close:hover {
+  color: #FFFFFF;
+}
+
+.kyp-modal-body {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kyp-order-box {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.kyp-order-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13.5px;
+  color: #D1D5DB;
+}
+
+.kyp-order-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 10px 0;
+}
+
+.kyp-total-row {
+  font-size: 15px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+.kyp-gold-text {
+  color: #FBBF24;
+  font-weight: 700;
+}
+
+.kyp-id-badge {
+  margin-top: 10px;
+  font-size: 11px;
+  color: #9CA3AF;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.kyp-id-badge strong {
+  color: #60A5FA;
+  font-family: monospace;
+}
+
+.kyp-portaly-card {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+}
+
+.kyp-badge-title {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #34D399;
+  margin-bottom: 6px;
+}
+
+.kyp-portaly-desc {
+  font-size: 12.5px;
+  color: #E5E7EB;
+  line-height: 1.5;
+  margin: 0 0 14px 0;
+}
+
+.kyp-btn-portaly {
+  width: 100%;
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 13px 18px;
+  font-size: 14.5px;
+  font-weight: 700;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.kyp-btn-portaly:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+  background: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+}
+
+.kyp-polling-text {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #60A5FA;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.kyp-spinner {
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(96, 165, 250, 0.3);
+  border-top-color: #60A5FA;
+  border-radius: 50%;
+  animation: kypSpin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes kypSpin {
+  to { transform: rotate(360deg); }
+}
+
+.kyp-dev-box {
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px dashed rgba(245, 158, 11, 0.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.kyp-btn-mock {
+  width: 100%;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #FCD34D;
+  padding: 9px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.kyp-btn-mock:hover {
+  background: rgba(245, 158, 11, 0.35);
+  color: #FFFFFF;
+}
+
+.kyp-input {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #FFFFFF;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  outline: none;
+}
+
+.kyp-input:focus {
+  border-color: #FBBF24;
+}
+
+.kyp-btn-sub {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.kyp-btn-sub:hover {
+  background: rgba(255, 255, 255, 0.2);
+}

@@ -13,6 +13,8 @@ import { WalletManager } from './wallet.js';
 import { MemberManager } from './member.js';
 import { openCamera, openFilePicker, ensurePalmCaptureDom } from './palm_capture.js';
 import { showLegalModal } from './legal.js';
+import '../css/payment-modal.css';
+import './payment-sdk.js';
 
 /**
  * 問仙壇 · 掌心解碼 App - 核心應用邏輯與白話問卷引導引擎
@@ -589,7 +591,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (confirmPurchaseBtn) {
       confirmPurchaseBtn.disabled = !isValid;
       confirmPurchaseBtn.textContent = isValid
-        ? `前往綠界安全支付 NT$ ${plan.price} →`
+        ? `前往安全支付 (Portaly) NT$ ${plan.price} →`
         : `請先選滿 ${plan.requiredCount} 個主題（目前已選 ${state.customChosenThemes.size} 項）`;
     }
 
@@ -598,8 +600,58 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ============ 9. 綠界科技 (ECPay) 金流發起與確認 ============
-  function showCheckoutConfirmModal(plan, chosenThemes) {
+  // ============ 9. Portaly (傳送門) 台灣在地金流發起與確認 ============
+  if (typeof window !== 'undefined' && window.PaymentSDK) {
+    window.PaymentSDK.init({ serverUrl: '' });
+  }
+
+  function triggerPortalyCheckout(plan, chosenThemes, onCustomSuccess) {
+    const themeTitles = chosenThemes
+      .map((id) => THEMES.find((t) => t.id === id)?.name || id)
+      .join('、');
+
+    if (!window.PaymentSDK) {
+      alert('金流模組載入中，請稍候重試');
+      return;
+    }
+
+    PaymentSDK.openCheckout({
+      planId: plan.id,
+      planName: `問仙壇 · ${plan.label} (${themeTitles})`,
+      amount: plan.price,
+      userName: '求問信眾',
+      themes: chosenThemes,
+      onSuccess: (order) => {
+        console.log('[Portaly 付款/驗證成功]', order);
+
+        // 1. 存入所選篇章的測算點數 (每篇各存入 pointsReward 次)
+        WalletManager.addPointsToThemes(chosenThemes, plan.pointsReward || 3);
+
+        // 2. 記錄訂單
+        WalletManager.recordOrder({
+          tradeNo: order.id,
+          planId: plan.id,
+          themes: chosenThemes,
+          amount: plan.price,
+          status: 'paid',
+          paymentMethod: order.paymentMethod || 'Portaly 台灣在地金流'
+        });
+
+        // 3. 畫面即時重新渲染
+        renderThemesHub();
+        renderMemberCenter();
+
+        // 4. 自訂回調或顯示成功彈窗
+        if (typeof onCustomSuccess === 'function') {
+          onCustomSuccess(order);
+        } else {
+          showPortalySuccessModal(plan, chosenThemes, order);
+        }
+      }
+    });
+  }
+
+  function showPortalySuccessModal(plan, chosenThemes, order) {
     const backdrop = document.getElementById('readingModalBackdrop');
     const card = document.getElementById('readingModalCard');
     if (!backdrop || !card) return;
@@ -611,182 +663,39 @@ document.addEventListener('DOMContentLoaded', () => {
     card.innerHTML = `
       <div class="wizard-header" style="border-bottom:1px solid var(--border-gold);padding-bottom:14px;margin-bottom:16px;">
         <div class="wizard-title-row">
-          <h3 style="display:flex;align-items:center;gap:8px;color:var(--gold-bright);font-size:1.2rem;">
-            <span>💳</span> 綠界科技 · 安全結帳確認
+          <h3 style="display:flex;align-items:center;gap:8px;color:#34D399;font-size:1.25rem;">
+            <span>🎉</span> 結緣供養成功！
           </h3>
-          <button type="button" class="btn btn-outline btn-sm" id="closeCheckoutModalBtn" style="padding:4px 10px;">✕ 取消</button>
+          <button type="button" class="btn btn-outline btn-sm" id="closePortalySuccessBtn" style="padding:4px 10px;">✕ 關閉</button>
         </div>
       </div>
 
-      <div style="display:flex;flex-direction:column;gap:14px;font-size:0.9rem;">
-        <div style="background:rgba(212,168,83,0.06);border:1px solid rgba(212,168,83,0.3);border-radius:var(--radius-md);padding:14px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <span style="color:var(--text-muted);">結算方案</span>
-            <span style="font-weight:700;color:#FFFFFF;">${plan.label}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <span style="color:var(--text-muted);">結算金額</span>
-            <span style="font-size:1.35rem;font-weight:900;color:var(--gold-bright);">NT$ ${plan.price}</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
-            <span style="color:var(--text-muted);white-space:nowrap;">開通篇章</span>
-            <span style="text-align:right;color:var(--text-secondary);font-size:0.85rem;">${themeTitles}（各享 ${plan.pointsReward} 次測算）</span>
-          </div>
+      <div style="text-align:center;padding:10px 0 20px;">
+        <div style="font-size:3.2rem;margin-bottom:10px;">🧧</div>
+        <h4 style="color:var(--gold-bright);font-size:1.25rem;margin-bottom:8px;">誠心叩問，福澤圓滿</h4>
+        <p style="color:var(--text-secondary);font-size:0.92rem;line-height:1.6;max-width:440px;margin:0 auto 16px;">
+          感謝您的結緣支持！系統已成功開通 <strong>${themeTitles}</strong>，所選篇章各自存入 <strong>${plan.pointsReward || 3} 次</strong> 深度命理與掌紋解析次數！
+        </p>
+        <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:var(--radius-sm);padding:10px 16px;font-size:0.8rem;color:var(--text-muted);display:inline-block;">
+          訂單單號：<span style="color:#FFFFFF;font-family:monospace;">${order.id || '已完成'}</span> ｜ 付款方式：<span style="color:#10B981;">${order.paymentMethod || 'Portaly 台灣金流'}</span>
         </div>
-
-        <div style="background:rgba(255,255,255,0.03);border-radius:var(--radius-sm);padding:12px;font-size:0.8rem;color:var(--text-secondary);line-height:1.6;">
-          <div style="font-weight:700;color:var(--gold-bright);margin-bottom:4px;display:flex;align-items:center;gap:6px;">
-            <span>🔒</span> 綠界科技 (ECPay) 256-bit SSL 加密收銀台
-          </div>
-          點擊確認後，將前往綠界安全收銀台，支援 <strong>信用卡 / Apple Pay / LINE Pay / 超商代碼 / ATM 虛擬帳號</strong>。<br>
-          付款完成後自動返回問仙壇並即刻存入點數。
+        <div style="margin-top:24px;display:flex;gap:12px;justify-content:center;">
+          <button type="button" class="btn btn-gold btn-lg" id="startReadingNowPortalyBtn" style="box-shadow:0 0 20px rgba(212,168,83,0.4);">🔮 立即前往測算</button>
         </div>
-
-        <form id="realEcpaySubmitForm" style="margin-top:6px;">
-          <input type="hidden" name="planId" value="${plan.id}" />
-          <input type="hidden" name="themes" value="${chosenThemes.join(',')}" />
-          <button type="submit" class="btn btn-gold" id="startEcpayBtn" style="width:100%;font-size:1.05rem;padding:12px;box-shadow:0 0 20px rgba(212,168,83,0.4);">
-            ⚡ 確認前往綠界安全付款 (NT$ ${plan.price})
-          </button>
-        </form>
       </div>
     `;
 
-    const close = () => {
+    const closeSuccess = () => {
       backdrop.classList.remove('show', 'active');
     };
 
-    card.querySelector('#closeCheckoutModalBtn')?.addEventListener('click', close);
-
-    const form = card.querySelector('#realEcpaySubmitForm');
-    if (form) {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const startBtn = document.getElementById('startEcpayBtn');
-        if (startBtn) {
-          startBtn.disabled = true;
-          startBtn.textContent = '⏳ 正在為您連線綠界安全收銀台...';
-        }
-
-        try {
-          const res = await fetch('/api/ecpay/create', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              planId: plan.id,
-              themes: chosenThemes
-            })
-          });
-
-          if (res.ok) {
-            const data = await res.json();
-            if (data.success && data.actionUrl && data.params) {
-              submitDynamicEcpayForm(data.actionUrl, data.params);
-              return;
-            } else {
-              throw new Error(data.error || '無法取得綠界結帳資訊');
-            }
-          } else {
-            const errData = await res.json().catch(() => ({}));
-            throw new Error(errData.error || `伺服器回應異常 (${res.status})`);
-          }
-        } catch (err) {
-          console.error('[ECPay Create Error]', err);
-          alert(`連線綠界付款失敗：${err.message}\n請確認本機伺服器已正常啟動。`);
-          if (startBtn) {
-            startBtn.disabled = false;
-            startBtn.textContent = `⚡ 確認前往綠界安全付款 (NT$ ${plan.price})`;
-          }
-        }
-      });
-    }
-
-    backdrop.classList.add('show', 'active');
-  }
-
-  function submitDynamicEcpayForm(actionUrl, params) {
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = actionUrl;
-    form.style.display = 'none';
-
-    Object.entries(params).forEach(([k, v]) => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = k;
-      input.value = v;
-      form.appendChild(input);
+    card.querySelector('#closePortalySuccessBtn')?.addEventListener('click', closeSuccess);
+    card.querySelector('#startReadingNowPortalyBtn')?.addEventListener('click', () => {
+      closeSuccess();
+      switchTab('hub');
     });
 
-    document.body.appendChild(form);
-    form.submit();
-  }
-
-  async function submitClientSideEcpayOrder(plan, chosenThemes) {
-    const origin = window.location.origin;
-    const now = new Date();
-    const pad = (n, len = 2) => String(n).padStart(len, '0');
-    const twTime = new Date(now.getTime() + (8 * 60 + now.getTimezoneOffset()) * 60000);
-    const yy = String(twTime.getFullYear()).slice(-2);
-    const mm = pad(twTime.getMonth() + 1);
-    const dd = pad(twTime.getDate());
-    const hh = pad(twTime.getHours());
-    const mi = pad(twTime.getMinutes());
-    const ss = pad(twTime.getSeconds());
-    const rand = Math.random().toString(36).substring(2, 5).toUpperCase();
-    const tradeNo = `WXT${yy}${mm}${dd}${hh}${mi}${ss}${rand}`;
-    const tradeDate = `${twTime.getFullYear()}/${mm}/${dd} ${hh}:${mi}:${ss}`;
-
-    const themeTitles = chosenThemes.map((id) => THEMES.find((t) => t.id === id)?.name || id).join('、');
-    const itemName = `問仙壇-${plan.label}#包含：${themeTitles}`;
-
-    const merchantId = '3002607';
-    const hashKey = 'pwFHCqoQZGmho4w6';
-    const hashIV = 'EkRm7iFT261dpevs';
-    const actionUrl = 'https://payment-stage.ecpay.com.tw/Cashier/AioCheckOut/V5';
-
-    const clientReturnUrl = `${origin}/?payment=success&tradeNo=${encodeURIComponent(tradeNo)}&plan=${encodeURIComponent(plan.id)}&themes=${encodeURIComponent(chosenThemes.join(','))}&amount=${encodeURIComponent(plan.price)}`;
-
-    const ecpayParams = {
-      MerchantID: merchantId,
-      MerchantTradeNo: tradeNo,
-      MerchantTradeDate: tradeDate,
-      PaymentType: 'aio',
-      TotalAmount: String(plan.price),
-      TradeDesc: '問仙壇命理文化測算與掌心解碼',
-      ItemName: itemName,
-      ReturnURL: `${origin}/api/ecpay/callback`,
-      ClientBackURL: clientReturnUrl,
-      OrderResultURL: clientReturnUrl,
-      ChoosePayment: 'ALL',
-      EncryptType: '1',
-      CustomField1: plan.id,
-      CustomField2: chosenThemes.join(',')
-    };
-
-    const sortedKeys = Object.keys(ecpayParams).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-    const rawPairs = sortedKeys.map((k) => `${k}=${ecpayParams[k]}`);
-    const combined = `HashKey=${hashKey}&${rawPairs.join('&')}&HashIV=${hashIV}`;
-    const encoded = encodeURIComponent(combined)
-      .replace(/%20/g, '+')
-      .replace(/%2d/gi, '-')
-      .replace(/%5f/gi, '_')
-      .replace(/%2e/gi, '.')
-      .replace(/%21/gi, '!')
-      .replace(/%2a/gi, '*')
-      .replace(/%28/gi, '(')
-      .replace(/%29/gi, ')');
-
-    const encoder = new TextEncoder();
-    const data = encoder.encode(encoded.toLowerCase());
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    ecpayParams.CheckMacValue = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-
-    submitDynamicEcpayForm(actionUrl, ecpayParams);
+    backdrop.classList.add('show', 'active');
   }
 
   if (confirmPurchaseBtn) {
@@ -808,7 +717,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      showCheckoutConfirmModal(plan, chosenArray);
+      triggerPortalyCheckout(plan, chosenArray);
     });
   }
 
@@ -1323,7 +1232,21 @@ document.addEventListener('DOMContentLoaded', () => {
       const consumeRes = WalletManager.consumePoint(activeThemeId, 1);
       if (!consumeRes.success) {
         state.wizard.isSubmitting = false;
-        alert('您的測算次數不足，請先至會員中心購買該主題方案！');
+        const themeObj = THEMES.find((t) => t.id === activeThemeId);
+        const themeName = themeObj ? themeObj.name : '此主題';
+
+        if (window.PaymentSDK) {
+          triggerPortalyCheckout(
+            { id: 'single', label: `單項供養方案【${themeName}】`, price: 199, pointsReward: 3 },
+            [activeThemeId],
+            () => {
+              // 付款/模擬成功後，自動延續解析報告流程！
+              executeDecodingFlow();
+            }
+          );
+        } else {
+          alert(`您的【${themeName}】測算次數不足，請先至會員中心開通點數！`);
+        }
         renderWizardStep();
         return;
       }

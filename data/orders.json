@@ -1,0 +1,57 @@
+[
+  {
+    "id": "ORD-WXT-MTLFDXXB-V57B",
+    "planId": "triple",
+    "planName": "問仙壇 · 命理解析方案",
+    "themes": [
+      "love",
+      "wealth",
+      "career"
+    ],
+    "upsells": [],
+    "amount": 499,
+    "currency": "TWD",
+    "status": "PAID",
+    "userName": "VIP信眾",
+    "userEmail": "",
+    "createdAt": "2026-09-03T11:12:12.287Z",
+    "paidAt": "2026-09-03T11:12:12.288Z",
+    "paymentMethod": "體驗碼 VIP 驗證開通",
+    "portalyCheckoutUrl": "https://portaly.cc/kaiyun_ai?order_id=ORD-WXT-MTLFDXXB-V57B&ref=ORD-WXT-MTLFDXXB-V57B"
+  },
+  {
+    "id": "ORD-WXT-MTLFDXX2-4TWM",
+    "planId": "single",
+    "planName": "問仙壇 · 命理解析方案",
+    "themes": [
+      "love"
+    ],
+    "upsells": [],
+    "amount": 199,
+    "currency": "TWD",
+    "status": "PAID",
+    "userName": "測試信眾",
+    "userEmail": "",
+    "createdAt": "2026-09-03T11:12:12.278Z",
+    "paidAt": "2026-09-03T11:12:12.285Z",
+    "paymentMethod": "開發者模擬付款 (Dev Mock)",
+    "portalyCheckoutUrl": "https://portaly.cc/kaiyun_ai?order_id=ORD-WXT-MTLFDXX2-4TWM&ref=ORD-WXT-MTLFDXX2-4TWM"
+  },
+  {
+    "id": "ORD-WXT-MTLFDTIJ-MJ95",
+    "planId": "test_fortune",
+    "planName": "測試合盤解鎖",
+    "themes": [],
+    "upsells": [],
+    "amount": 399,
+    "currency": "TWD",
+    "status": "PAID",
+    "userName": "張緣主",
+    "userEmail": "chang@example.com",
+    "createdAt": "2026-09-03T11:12:06.571Z",
+    "paidAt": "2026-09-03T11:12:06.578Z",
+    "paymentMethod": "Portaly 台灣信用卡 (VISA/MasterCard)",
+    "portalyCheckoutUrl": "https://portaly.cc/kaiyun_ai?order_id=ORD-WXT-MTLFDTIJ-MJ95&ref=ORD-WXT-MTLFDTIJ-MJ95",
+    "tradeNo": "PT-20260903-1788433926576"
+  }
+]

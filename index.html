@@ -22,6 +22,7 @@
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="stylesheet" href="src/css/style.css">
+  <link rel="stylesheet" href="src/css/payment-modal.css">
 </head>
 <body>
   <!-- 購買前的儀式過場：以網頁文字呈現春聯，避免圖像中文字失真 -->
@@ -177,7 +178,7 @@
                 <div>
                   <div style="font-size:0.85rem;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
                     <span>當前結算方案</span>
-                    <span style="font-size:0.72rem;background:rgba(212,168,83,0.15);color:var(--gold-bright);padding:2px 8px;border-radius:999px;border:1px solid rgba(212,168,83,0.3);">綠界科技 ECPay 加密金流</span>
+                    <span style="font-size:0.72rem;background:rgba(212,168,83,0.15);color:var(--gold-bright);padding:2px 8px;border-radius:999px;border:1px solid rgba(212,168,83,0.3);">Portaly 傳送門 · 台灣在地金流</span>
                   </div>
                   <div style="font-size:1.25rem;font-weight:900;color:var(--gold-bright);margin-top:2px;" id="checkoutSummaryPlan">三項超值方案</div>
                   <div style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px;" id="checkoutSummarySelected">已選：感情篇、事業篇、財運篇</div>
@@ -186,7 +187,7 @@
                 <div style="display:flex;align-items:center;gap:16px;">
                   <div style="font-family:var(--font-serif);font-size:2.2rem;font-weight:900;color:var(--gold-bright);" id="checkoutSummaryPrice">NT$ 499</div>
                   <button type="button" class="btn btn-primary btn-lg" id="confirmPurchaseBtn" style="box-shadow:0 0 20px rgba(212,168,83,0.3);">
-                    前往綠界安全支付 →
+                    前往安全支付 (Portaly) →
                   </button>
                 </div>
               </div>
@@ -194,7 +195,7 @@
               <!-- 金流支援通道與合規提示 -->
               <div style="border-top:1px dashed rgba(212,168,83,0.25);padding-top:12px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;font-size:0.78rem;color:var(--text-muted);">
                 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-                  <span>💳 支援：信用卡 / Apple Pay / LINE Pay / 超商代碼 / ATM 虛擬帳號</span>
+                  <span>💳 支援：台灣各家信用卡 / LINE Pay / 街口支付 / 超商代碼 / ATM 轉帳</span>
                   <span style="color:#10B981;">🔒 256-bit SSL 銀行級加密</span>
                 </div>
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-secondary);">
@@ -254,7 +255,7 @@
           </div>
           <div style="line-height:1.6;color:var(--text-secondary);font-size:0.75rem;">
             本平台「問仙壇」提供個人化東方民俗文化研究、易學符號與 AI 掌相演算法之數位內容點數服務。<br>
-            金流交易皆由第三方「綠界科技 ECPay」提供 256-bit SSL 加密安全收銀。掌紋照片於用戶端辨識，不留存雲端資料庫。<br>
+            金流交易皆由第三方「Portaly 傳送門」提供 256-bit SSL 加密安全收銀。掌紋照片於用戶端辨識，不留存雲端資料庫。<br>
             客服信箱：<a href="mailto:service@wen-xian-tan.com" style="color:var(--gold-bright);text-decoration:underline;">service@wen-xian-tan.com</a> ｜ 服務時間：週一至週五 10:00 - 18:00
           </div>
           <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">
