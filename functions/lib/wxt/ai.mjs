@@ -3,8 +3,10 @@
 import { fetchWithTimeout } from './http.mjs';
 import { requireGroq } from './auth.mjs';
 
-const GEMINI_TEXT_DEFAULT = 'gemini-3.7-flash';
-const GEMINI_VISION_DEFAULT = 'gemini-3.7-flash';
+/* gemini-3.7-flash 長期回 503（需求過載），主力改用實測穩定的 3.6-flash，再備 flash-latest */
+const GEMINI_TEXT_DEFAULT = 'gemini-3.6-flash';
+const GEMINI_VISION_DEFAULT = 'gemini-3.6-flash';
+const GEMINI_TEXT_FALLBACK_DEFAULT = 'gemini-flash-latest';
 const TEXT_MODEL_DEFAULT = 'openai/gpt-oss-120b';
 const VISION_MODEL_DEFAULT = 'qwen/qwen3.8-27b';
 const WORKERS_AI_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
@@ -79,6 +81,10 @@ function geminiModel(env, kind) {
   return envText(env, 'GEMINI_TEXT_MODEL') || GEMINI_TEXT_DEFAULT;
 }
 
+function geminiTextFallbackModel(env) {
+  return envText(env, 'GEMINI_TEXT_MODEL_FALLBACK') || GEMINI_TEXT_FALLBACK_DEFAULT;
+}
+
 function groqTextModel(env, model) {
   return model || envText(env, 'GROQ_TEXT_MODEL') || TEXT_MODEL_DEFAULT;
 }
@@ -138,7 +144,7 @@ async function callGeminiGenerate(env, { model, body, label }) {
   return response.json();
 }
 
-export async function callGeminiText(env, messages, { model, maxTokens = 1800, temperature = 0.55 } = {}) {
+export async function callGeminiText(env, messages, { model, maxTokens = 4096, temperature = 0.55 } = {}) {
   const usedModel = model || geminiModel(env, 'text');
   const { contents, systemInstruction } = geminiContentsFromMessages(messages);
   const body = {
@@ -175,7 +181,7 @@ export async function callGeminiVision(env, imageBase64, { model } = {}) {
   return { text: String(extractText(payload) || '').trim(), model: usedModel, tokens: usageTokens(payload) };
 }
 
-export async function callGroqText(env, messages, { model, maxTokens = 1800, temperature = 0.55 } = {}) {
+export async function callGroqText(env, messages, { model, maxTokens = 4096, temperature = 0.55 } = {}) {
   const apiKey = requireGroq(env);
   const usedModel = groqTextModel(env, model);
   const response = await fetchWithTimeout(
@@ -233,7 +239,7 @@ export async function callGroqVision(env, imageBase64, { model } = {}) {
   return { text: String(extractText(payload) || '').trim(), model: usedModel, tokens: usageTokens(payload) };
 }
 
-export async function callWorkersAi(env, messages, { maxTokens = 1800, temperature = 0.55 } = {}) {
+export async function callWorkersAi(env, messages, { maxTokens = 4096, temperature = 0.55 } = {}) {
   if (!env.AI || typeof env.AI.run !== 'function') throw new Error('Workers AI 未綁定');
   const result = await env.AI.run(WORKERS_AI_MODEL, {
     messages,
@@ -250,6 +256,8 @@ async function firstAvailable(attempts) {
     try {
       return await attempt();
     } catch (error) {
+      // 供應商掉下去要吵，不然只會看到最後成功的那家，查不出前面為什麼失敗
+      console.warn(`[AI 供應商失敗] ${error && error.message ? error.message : error}`);
       errors.push(error);
     }
   }
@@ -264,7 +272,15 @@ export async function generateReport(env, { systemPrompt, userPrompt }) {
     { role: 'user', content: userPrompt }
   ];
   const attempts = [];
-  if (hasGemini(env)) attempts.push(() => callGeminiText(env, messages));
+  if (hasGemini(env)) {
+    const primary = geminiModel(env, 'text');
+    const fallback = geminiTextFallbackModel(env);
+    attempts.push(() => callGeminiText(env, messages, { model: primary }));
+    // 主力型號滿載（503）時，同一把金鑰換一個型號再試，還輪不到 Groq
+    if (fallback && fallback !== primary) {
+      attempts.push(() => callGeminiText(env, messages, { model: fallback }));
+    }
+  }
   if (hasGroq(env)) attempts.push(() => callGroqText(env, messages));
   attempts.push(() => callWorkersAi(env, messages));
   return firstAvailable(attempts);

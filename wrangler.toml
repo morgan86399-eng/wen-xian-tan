@@ -16,9 +16,10 @@ binding = "RL"
 id = "86894485cae2413e989bd361762d27e3"
 
 [vars]
-GEMINI_TEXT_MODEL = "gemini-3.7-flash"
-GEMINI_VISION_MODEL = "gemini-3.7-flash"
+GEMINI_TEXT_MODEL = "gemini-3.6-flash"
+GEMINI_VISION_MODEL = "gemini-3.6-flash"
 GROQ_TEXT_MODEL = "openai/gpt-oss-120b"
+GEMINI_TEXT_MODEL_FALLBACK = "gemini-flash-latest"
 GROQ_VISION_MODEL = "qwen/qwen3.8-27b"
 
 # Pages：頂層 bindings 不會繼承到 production，必須重寫一次
@@ -39,7 +40,8 @@ binding = "RL"
 id = "86894485cae2413e989bd361762d27e3"
 
 [env.production.vars]
-GEMINI_TEXT_MODEL = "gemini-3.7-flash"
-GEMINI_VISION_MODEL = "gemini-3.7-flash"
+GEMINI_TEXT_MODEL = "gemini-3.6-flash"
+GEMINI_VISION_MODEL = "gemini-3.6-flash"
 GROQ_TEXT_MODEL = "openai/gpt-oss-120b"
+GEMINI_TEXT_MODEL_FALLBACK = "gemini-flash-latest"
 GROQ_VISION_MODEL = "qwen/qwen3.8-27b"

@@ -275,7 +275,7 @@ await check('有 Gemini 時先打 Gemini', async (env) => {
     }, { systemPrompt: 's', userPrompt: 'u' });
     assert.match(calls[0], /generativelanguage\.googleapis\.com/);
     assert.equal(result.parsed.summary, 'gemini-ok');
-    assert.equal(result.model, 'gemini-3.7-flash');
+    assert.equal(result.model, 'gemini-3.6-flash');
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -310,6 +310,39 @@ await check('Gemini 失敗才打 Groq', async (env) => {
     assert.ok(hosts.some((item) => item.includes('generativelanguage.googleapis.com')));
     assert.ok(hosts.some((item) => item.includes('api.groq.com')));
     assert.equal(result.parsed.summary, 'groq-ok');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+await check('主力 Gemini 型號滿載時，同金鑰換次選型號，還不用掉到 Groq', async (env) => {
+  const models = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    if (href.includes('api.groq.com')) throw new Error('不該掉到 Groq');
+    const model = decodeURIComponent(href.split('/models/')[1].split(':')[0]);
+    models.push(model);
+    if (model === 'gemini-3.6-flash') {
+      return { ok: false, status: 503, text: async () => 'high demand' };
+    }
+    return {
+      ok: true,
+      json: async () => ({
+        candidates: [{ content: { parts: [{ text: '{"summary":"fallback-ok"}' }] } }],
+        usageMetadata: { totalTokenCount: 8 }
+      })
+    };
+  };
+  try {
+    const result = await generateReport({
+      ...env,
+      GEMINI_API_KEY: 'AQ.test',
+      GROQ_API_KEY: 'gsk_test'
+    }, { systemPrompt: 's', userPrompt: 'u' });
+    assert.deepEqual(models, ['gemini-3.6-flash', 'gemini-flash-latest']);
+    assert.equal(result.model, 'gemini-flash-latest');
+    assert.equal(result.parsed.summary, 'fallback-ok');
   } finally {
     globalThis.fetch = realFetch;
   }
