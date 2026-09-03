@@ -536,8 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalPoints = 0;
     Object.values(wallet).forEach((pts) => { totalPoints += pts; });
 
-    const isLocalDevelopment = ['localhost', '127.0.0.1'].includes(window.location.hostname);
-    const devLoginSection = isLocalDevelopment ? `
+    const devLoginSection = `
       <div class="auth-divider">
         <span>測試帳號登入（開發用）</span>
       </div>
@@ -545,16 +544,16 @@ document.addEventListener('DOMContentLoaded', () => {
       <form id="devLoginForm" style="display:grid;gap:14px;">
         <div class="auth-form-group">
           <label class="auth-form-label" for="devLoginUsername">帳號：</label>
-          <input type="text" id="devLoginUsername" class="auth-form-input" placeholder="帳號" value="user">
+          <input type="text" id="devLoginUsername" class="auth-form-input" placeholder="帳號" value="user" autocomplete="username">
         </div>
         <div class="auth-form-group">
           <label class="auth-form-label" for="devLoginPassword">密碼：</label>
-          <input type="password" id="devLoginPassword" class="auth-form-input" placeholder="密碼" value="user123">
+          <input type="password" id="devLoginPassword" class="auth-form-input" placeholder="密碼" value="user123" autocomplete="current-password">
         </div>
         <div id="devLoginError" style="display:none;color:#EF4444;font-size:0.85rem;"></div>
         <button type="submit" class="btn btn-outline" style="width:100%;">測試帳號登入</button>
       </form>
-    ` : '';
+    `;
 
     authPageContainer.innerHTML = `
       <div class="auth-page-header">
