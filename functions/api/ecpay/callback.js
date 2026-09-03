@@ -1,51 +1,58 @@
-import { getEcpayConfig, verifyCheckMacValue } from './_utils.js';
+import { route } from '../../lib/wxt/http.mjs';
+import { getEcpayConfig, verifyCheckMacValue } from '../../lib/wxt/ecpay.mjs';
+import {
+  getOrderByTradeNo,
+  recordPaymentEvent,
+  markOrderPaid,
+  grantCreditsForOrder,
+  hasDb
+} from '../../lib/wxt/store.mjs';
+import { getProduct } from '../../lib/wxt/products.mjs';
+import { sha256Hex } from '../../lib/security/token.mjs';
 
-/**
- * 綠界金流伺服器非同步回傳 (ReturnURL)
- * 收到後必須驗證 CheckMacValue，成功需回覆 "1|OK"
- */
-export async function onRequestPost(context) {
-  const { request, env } = context;
+export const onRequest = route(async ({ request, env }) => {
+  if (!hasDb(env)) return new Response('0|NO_DB', { status: 503 });
 
-  try {
-    const formData = await request.formData();
-    const params = Object.fromEntries(formData.entries());
+  const formData = await request.formData();
+  const params = Object.fromEntries(formData.entries());
+  const config = getEcpayConfig(env);
 
-    const config = getEcpayConfig(env);
+  const valid = await verifyCheckMacValue(params, config.hashKey, config.hashIV);
+  if (!valid) return new Response('0|CheckMacValue Error', { status: 400 });
 
-    // 1. 驗證 CheckMacValue
-    const isValid = await verifyCheckMacValue(params, config.hashKey, config.hashIV);
-    if (!isValid) {
-      console.error('[ECPay Callback] CheckMacValue 驗證失敗:', params);
-      return new Response('0|CheckMacValue Error', {
-        status: 400,
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-      });
-    }
+  const tradeNo = String(params.MerchantTradeNo || '');
+  const rtnCode = String(params.RtnCode || '');
+  const eventId = `${tradeNo}:${rtnCode}:${String(params.TradeNo || params.PaymentDate || '')}`;
 
-    // 2. 檢驗交易狀態碼 (RtnCode === '1' 代表交易成功)
-    const { RtnCode, RtnMsg, MerchantTradeNo, TradeAmt, PaymentDate, CustomField1, CustomField2 } = params;
+  const order = await getOrderByTradeNo(env, tradeNo);
+  if (!order) return new Response('0|ORDER_NOT_FOUND', { status: 404 });
 
-    if (RtnCode === '1') {
-      console.log(`[ECPay Callback] 交易成功！訂單號: ${MerchantTradeNo}, 金額: ${TradeAmt}, 方案: ${CustomField1}, 主題: ${CustomField2}, 付款時間: ${PaymentDate}`);
-      
-      // 成功回應 1|OK 給綠界
-      return new Response('1|OK', {
-        status: 200,
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-      });
-    } else {
-      console.warn(`[ECPay Callback] 付款失敗或未完成: ${RtnCode} (${RtnMsg})`);
-      return new Response(`0|Payment Failed: ${RtnMsg}`, {
-        status: 200,
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-      });
-    }
-  } catch (err) {
-    console.error('[ECPay Callback Error]', err);
-    return new Response(`0|${err.message}`, {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+  const payloadHash = await sha256Hex(JSON.stringify(params));
+  const isNew = await recordPaymentEvent(env, {
+    provider: 'ecpay',
+    eventId,
+    orderId: order.id,
+    payloadHash
+  });
+
+  if (!isNew) return new Response('1|OK', { status: 200 });
+
+  if (rtnCode !== '1') return new Response('0|Payment Failed', { status: 200 });
+
+  const paid = await markOrderPaid(env, tradeNo);
+  if (!paid) return new Response('1|OK', { status: 200 });
+
+  const product = getProduct(order.product_id);
+  const themes = JSON.parse(order.themes_json || '[]');
+  if (product && themes.length) {
+    await grantCreditsForOrder(env, {
+      userId: order.user_id,
+      orderId: order.id,
+      themes,
+      creditsPerTheme: product.creditsPerTheme,
+      idempotencyPrefix: `purchase:${order.id}`
     });
   }
-}
+
+  return new Response('1|OK', { status: 200 });
+}, { methods: ['POST'] });

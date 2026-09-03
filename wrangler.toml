@@ -2,3 +2,40 @@ name = "wen-xian-tan-morgan86399"
 pages_build_output_dir = "./dist"
 compatibility_date = "2026-09-01"
 compatibility_flags = ["nodejs_compat"]
+
+[ai]
+binding = "AI"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "wenxiantan-db"
+database_id = "c4fc4525-9b98-4ba5-852c-7b121d6ab77e"
+
+[[kv_namespaces]]
+binding = "RL"
+id = "86894485cae2413e989bd361762d27e3"
+
+[vars]
+GROQ_TEXT_MODEL = "llama-3.3-70b-versatile"
+GROQ_VISION_MODEL = "llama-4-scout-17b-16e-instruct"
+
+# Pages：頂層 bindings 不會繼承到 production，必須重寫一次
+[env.production]
+compatibility_date = "2026-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production.ai]
+binding = "AI"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "wenxiantan-db"
+database_id = "c4fc4525-9b98-4ba5-852c-7b121d6ab77e"
+
+[[env.production.kv_namespaces]]
+binding = "RL"
+id = "86894485cae2413e989bd361762d27e3"
+
+[env.production.vars]
+GROQ_TEXT_MODEL = "llama-3.3-70b-versatile"
+GROQ_VISION_MODEL = "llama-4-scout-17b-16e-instruct"

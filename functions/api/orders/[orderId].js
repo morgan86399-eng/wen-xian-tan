@@ -1,6 +1,6 @@
-import { getOnly, json } from '../../../lib/wxt/http.mjs';
-import { readUserSession } from '../../../lib/wxt/auth.mjs';
-import { getOrderById, hasDb } from '../../../lib/wxt/store.mjs';
+import { getOnly, json } from '../../lib/wxt/http.mjs';
+import { readUserSession } from '../../lib/wxt/auth.mjs';
+import { getOrderById, hasDb } from '../../lib/wxt/store.mjs';
 
 export const onRequest = getOnly(async ({ request, env, params }) => {
   if (!hasDb(env)) return json({ error: 'SERVICE_UNAVAILABLE' }, 503);
@@ -16,6 +16,7 @@ export const onRequest = getOnly(async ({ request, env, params }) => {
   return json({
     orderId: order.id,
     status: order.status,
+    isPaid: order.status === 'PAID',
     productId: order.product_id,
     amount: order.amount,
     themes: JSON.parse(order.themes_json || '[]'),
