@@ -1915,7 +1915,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ...answers,
             relationLabel: answers.relationCustom || (THEME_RELATION_CONFIG[activeThemeId]?.options.find(r => r.id === answers.relation)?.label || answers.relation),
             roleLabel: answers.roleCustom || (THEME_ROLE_CONFIG[activeThemeId]?.options.find(r => r.id === answers.role)?.label || answers.role),
-            goalLabel: answers.goalCustom || (answers.goal === 'skip' ? '略過（由仙佛全方位推演指引）' : (DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || answers.goal))
+            goalLabel: answers.goalCustom || (answers.goal === 'skip' ? '略過（由仙佛全方位推演指引）' : (DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || answers.goal)),
+            userName: (MemberManager.getCurrentUser() && MemberManager.getCurrentUser().name) || '信士'
           }
         })
       })

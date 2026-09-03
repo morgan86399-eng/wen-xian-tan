@@ -324,6 +324,25 @@ app.post('/api/reading/generate', (req, res) => {
     </div>
   `;
 
+  const rawUserName = (answers.userName || req.body.userName || '').trim();
+  const sanitizedUserName = (!rawUserName || rawUserName === '陳信士' || rawUserName.includes('陳信士')) ? '信士' : rawUserName;
+
+  const promptUsed = `你是「問仙壇」首席通靈易學宗師與紫微八字傳人。
+你現在必須為前來求籤問事的信士進行一對一、極致客製化的深度排盤解析。
+
+【信士真實叩問背景】：
+- 信士稱謂：${sanitizedUserName}
+- 請示主題：【${curTheme.name}】
+- 信士親筆叩問煩惱：${q}
+- 手相提供狀態：${hasPalm ? '【已提供手相照片】' : '【信士略過上傳，未提供手相】'}
+
+【絕對天條與防漏規則】：
+${hasPalm
+  ? '1. 信士「已上傳手相」：請於推演中對照手相掌心紋路走向（如感情線/智慧線/事業線/丘陵），進行相理與八字的雙重印證。'
+  : '1. 信士「未提供手相（略過上傳）」：【最高鐵律】全文絕對嚴禁出現任何「手相」、「掌紋」、「手紋」、「感情線」、「智慧線」、「事業線」、「小指丘」、「掌心」等字眼！一切推演依據必須 100% 來自先天生辰八字、十神五行、神煞大運與易經卦象！'
+}
+2. 嚴禁模稜兩可的官話，必須直指問題核心「${q}」，給予信士溫暖、慈悲但極具實踐力的因果病灶與破局之法。`;
+
   res.json({
     success: true,
     score: 95,
@@ -339,7 +358,7 @@ app.post('/api/reading/generate', (req, res) => {
     formattedAdvice,
     hasPalm,
     themeTitle: hasPalm ? curTheme.withPalm : curTheme.noPalm,
-    promptUsed: `量身定做 Prompt（針對 ${q}，手相狀態：${hasPalm ? '有手相' : '無手相 (嚴格禁絕掌紋術語)'}）`
+    promptUsed
   });
 });
 

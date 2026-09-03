@@ -39,11 +39,15 @@ export async function onRequestPost({ request, env }) {
 
     const curTheme = themeTitles[themeId] || themeTitles.love;
 
+    const rawUserName = (answers.userName || body.userName || '').trim();
+    const sanitizedUserName = (!rawUserName || rawUserName === '陳信士' || rawUserName.includes('陳信士')) ? '信士' : rawUserName;
+
     // 2. 量身定做的 Prompt (客製化指令)
     const systemPrompt = `你是「問仙壇」首席通靈易學宗師與紫微八字傳人。
 你現在必須為前來求籤問事的信士進行一對一、極致客製化的深度排盤解析。
 
 【信士真實叩問背景】：
+- 信士稱謂：${sanitizedUserName}
 - 請示主題：【${curTheme.name}】
 - 命造乾坤：${genderLabel}
 - 年齡階段：${ageLabel}
