@@ -125,7 +125,7 @@ function geminiContentsFromMessages(messages) {
   };
 }
 
-/* 從 Cloudflare 打 Gemini 實測要 15 秒以上（本機只要 1.3 秒），逾時設 15 秒會全部落空，維持 25 秒 */
+/* 從 Cloudflare 打 Gemini 實測要 15 秒以上（本機只要 1.3 秒），逾時設 15 秒會全部落空；60 秒又只是多等，實測 30 秒最划算 */
 async function callGeminiGenerate(env, { model, body, label }) {
   const apiKey = envText(env, 'GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY 未設定');
@@ -136,7 +136,7 @@ async function callGeminiGenerate(env, { model, body, label }) {
       headers: { 'content-type': 'application/json', 'x-goog-api-key': apiKey },
       body: JSON.stringify(body)
     },
-    25000,
+    30000,
     label
   );
   if (!response.ok) {
@@ -146,7 +146,7 @@ async function callGeminiGenerate(env, { model, body, label }) {
   return response.json();
 }
 
-export async function callGeminiText(env, messages, { model, maxTokens = 4096, temperature = 0.55 } = {}) {
+export async function callGeminiText(env, messages, { model, maxTokens = 8192, temperature = 0.55 } = {}) {
   const usedModel = model || geminiModel(env, 'text');
   const { contents, systemInstruction } = geminiContentsFromMessages(messages);
   const body = {
@@ -183,7 +183,7 @@ export async function callGeminiVision(env, imageBase64, { model } = {}) {
   return { text: String(extractText(payload) || '').trim(), model: usedModel, tokens: usageTokens(payload) };
 }
 
-export async function callGroqText(env, messages, { model, maxTokens = 4096, temperature = 0.55 } = {}) {
+export async function callGroqText(env, messages, { model, maxTokens = 8192, temperature = 0.55 } = {}) {
   const apiKey = requireGroq(env);
   const usedModel = groqTextModel(env, model);
   const response = await fetchWithTimeout(
@@ -199,7 +199,7 @@ export async function callGroqText(env, messages, { model, maxTokens = 4096, tem
         messages
       })
     },
-    20000,
+    30000,
     'Groq'
   );
   if (!response.ok) {
@@ -233,7 +233,7 @@ export async function callGroqVision(env, imageBase64, { model } = {}) {
         }]
       })
     },
-    20000,
+    30000,
     'Groq Vision'
   );
   if (!response.ok) throw new Error(`Groq Vision 回應 ${response.status}`);
@@ -241,7 +241,7 @@ export async function callGroqVision(env, imageBase64, { model } = {}) {
   return { text: String(extractText(payload) || '').trim(), model: usedModel, tokens: usageTokens(payload) };
 }
 
-export async function callWorkersAi(env, messages, { maxTokens = 4096, temperature = 0.55 } = {}) {
+export async function callWorkersAi(env, messages, { maxTokens = 8192, temperature = 0.55 } = {}) {
   if (!env.AI || typeof env.AI.run !== 'function') throw new Error('Workers AI 未綁定');
   const result = await env.AI.run(WORKERS_AI_MODEL, {
     messages,
