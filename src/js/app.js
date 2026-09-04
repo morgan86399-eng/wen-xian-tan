@@ -17,7 +17,7 @@ import '../css/payment-modal.css';
 import '../css/sapphire.css';
 import '../css/star-sapphire.css';
 import './payment-sdk.js';
-import { formatAdviceFromReport, pickReportObject, extractActions } from '../../functions/lib/wxt/report-format.mjs';
+import { formatAdviceFromReport, pickReportObject, extractActions, extractSections } from '../../functions/lib/wxt/report-format.mjs';
 import { CREDITS_BY_THEME } from '../../functions/lib/wxt/products.mjs';
 import { TERMS_VERSION } from './legal.js';
 
@@ -2033,6 +2033,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const reportObj = pickReportObject(apiResult);
     const adviceText = formatAdviceFromReport(reportObj);
     const reportActions = extractActions(reportObj);
+    const reportSections = extractSections(reportObj);
+    const reportSummary = typeof reportObj.summary === 'string' ? reportObj.summary.trim() : '';
     const finalThemeTitle = reportObj.title || (hasPalm ? theme.title : (theme.titleNoPalm || theme.title));
     const finalTurnaround = reportObj.turnaroundYear || '';
     const finalNoble = reportObj.nobleGuide || '';
@@ -2091,14 +2093,25 @@ document.addEventListener('DOMContentLoaded', () => {
             <div><strong>本次問題：</strong> ${escapeHtml(reportData.question)}</div>
             <div style="margin-top:4px;color:var(--text-gold);"><strong>期望：</strong> ${escapeHtml(reportData.goal)}</div>
           </div>
-          <div style="line-height:1.75;white-space:pre-wrap;">${escapeHtml(reportData.advice || '報告內容尚未回傳，請稍後到歷史紀錄簿查看。')}</div>
+          ${reportSummary ? `<div class="report-summary-highlight">${escapeHtml(reportSummary)}</div>` : ''}
+          ${reportSections.length
+            ? reportSections.map((section, index) => `
+              <section class="report-section-block">
+                <h4 class="report-section-heading"><span class="report-section-index">${index + 1}</span>${escapeHtml(section.heading)}</h4>
+                <p class="report-section-body">${escapeHtml(section.body)}</p>
+              </section>`).join('')
+            : `<div style="line-height:1.75;white-space:pre-wrap;">${escapeHtml(reportData.advice || '報告內容尚未回傳，請稍後到歷史紀錄簿查看。')}</div>`}
         </div>
 
         ${reportActions.length ? `
         <div class="report-actions-box">
           <div class="report-actions-title">✦ 建設性建議 · 這週可以開始做 ✦</div>
-          <ol class="report-actions-list">
-            ${reportActions.map((item) => `<li>${escapeHtml(item)}</li>`).join('')}
+          <ol class="report-actions-list report-actions-cards">
+            ${reportActions.map((item, index) => `
+              <li class="report-action-card">
+                <span class="report-action-num">${index + 1}</span>
+                <span>${escapeHtml(item)}</span>
+              </li>`).join('')}
           </ol>
         </div>` : ''}
 

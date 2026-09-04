@@ -2905,6 +2905,90 @@ p {
   font-weight: 800;
 }
 
+/* 報告分段排版：每段一個標題塊，重點看得出層級 */
+.report-summary-highlight {
+  background: rgba(245, 158, 11, 0.14);
+  border-left: 3px solid var(--gold-bright, #E0B95C);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 0.92rem;
+  line-height: 1.75;
+  font-weight: 600;
+}
+
+.report-section-block {
+  padding: 12px 0;
+  border-bottom: 1px dashed rgba(245, 158, 11, 0.22);
+}
+
+.report-section-block:last-of-type {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.report-section-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--gold-bright, #E0B95C);
+  line-height: 1.5;
+}
+
+.report-section-index {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid var(--border-gold, rgba(212, 168, 83, 0.35));
+}
+
+.report-section-body {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.85;
+  color: var(--text-secondary, #cbd5e1);
+  white-space: pre-wrap;
+}
+
+/* 建議做成卡片，一眼看得出有三條可執行的事 */
+.report-action-card {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: rgba(125, 211, 252, 0.08);
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.report-action-num {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #0b1220;
+  background: #7dd3fc;
+}
+
+.report-actions-list.report-actions-cards {
+  padding-left: 0;
+  list-style: none;
+}
+
 /* 一對一煩惱諮詢：LINE 官方帳號入口 */
 .report-consult-box {
   margin-top: 14px;

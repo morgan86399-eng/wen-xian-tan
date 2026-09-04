@@ -131,6 +131,47 @@ const INCOMPLETE_TITLE = ['請提供', '請補充', '請告訴我', '缺少', '�
 
 /* 報告合約寫死四段：段數不足代表模型沒照骨架寫（llama 沒有 JSON 模式時常整段吐純文字） */
 const REQUIRED_SECTIONS = 4;
+/* 一段少於這個字數就是敷衍，不是報告 */
+const SECTION_MIN_BODY = 40;
+
+/* 建設性建議的最低門檻：三條、每條夠長、彼此不重複、也不能直接抄內文 */
+export const REQUIRED_ACTIONS = 3;
+const ACTION_MIN_LEN = 18;
+
+/** 把 sections 收成 [{heading, body}]，給報告頁分段排版用 */
+export function extractSections(raw) {
+  if (!raw || typeof raw !== 'object') return [];
+  const list = Array.isArray(raw.sections) ? raw.sections : [];
+  const out = [];
+  for (const section of list) {
+    if (!section || typeof section !== 'object') continue;
+    const heading = stripTags(section.heading || section.title || '');
+    const body = stripTags(section.body || section.content || section.text || '');
+    if (!heading && !body) continue;
+    out.push({ heading, body });
+  }
+  return out;
+}
+
+function normalizeAction(text) {
+  return String(text || '').replace(/[\s，。、；：!！?？~～．・…]/g, '');
+}
+
+/** 建議不合格就回 true：這是報告能不能交付的硬門檻，不是加分項 */
+export function hasWeakActions(raw) {
+  const actions = extractActions(raw);
+  if (actions.length < REQUIRED_ACTIONS) return true;
+
+  const picked = actions.slice(0, REQUIRED_ACTIONS);
+  if (picked.some((item) => item.length < ACTION_MIN_LEN)) return true;
+
+  const unique = new Set(picked.map(normalizeAction));
+  if (unique.size < REQUIRED_ACTIONS) return true;
+
+  // 建議直接抄內文原句就不算建議
+  const bodyText = normalizeAction(formatAdviceFromReport(raw));
+  return picked.some((item) => bodyText.includes(normalizeAction(item)));
+}
 
 export function isIncompleteReport(raw) {
   if (!raw) return true;
@@ -149,7 +190,7 @@ export function isIncompleteReport(raw) {
   const filled = sections.filter((section) => {
     if (!section || typeof section !== 'object') return false;
     const body = typeof section.body === 'string' ? section.body : (typeof section.content === 'string' ? section.content : '');
-    return Boolean(body.trim());
+    return body.trim().length >= SECTION_MIN_BODY;
   });
   return filled.length < REQUIRED_SECTIONS;
 }

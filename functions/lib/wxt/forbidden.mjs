@@ -82,6 +82,14 @@ export const HARDENED_RETRY_HINT = [
   '本次禁止任何索取、反問、待補清單、流程說明，直接用上面已有的資料寫滿四段內文與三條行動建議。'
 ].join('\n');
 
+/* 建議不合格時的重試指令：只在三條建議缺漏、太短、重複或抄內文時附加 */
+export const WEAK_ACTIONS_RETRY_HINT = [
+  '',
+  '【重試指令】上一次的 actions 不合格：可能少於三條、太短、彼此重複，或直接抄了內文句子。',
+  '本次請重寫三條互不重複的建議，每條 30 到 60 字，各自寫出「什麼時候、對誰、具體做什麼」，',
+  '而且要扣住使用者填寫的主要問題，不可以只寫心態或口號。'
+].join('\n');
+
 function themeKey(themeId) {
   return THEME_SKELETONS[themeId] ? themeId : 'love';
 }
@@ -105,8 +113,14 @@ export function buildSystemPrompt(themeId) {
     `【固定骨架】依序寫滿以下四段，heading 逐字使用，不可增減、不可改名：\n${headings}`,
     '每段 body 至少 120 字，用一般人聽得懂的白話，扣住使用者填寫的問題與狀態，寫出具體情境與可以觀察的跡象。',
     '',
-    '【建設性建議】actions 必須有三條，每條 30 到 60 字，是使用者這一週就能自己開始做的具體行動，',
-    '要寫出時機、對象與做法，不要只寫心態口號，也不要重複四段內文原句。',
+    '【貼合本人】這份報告只寫給這一位使用者：',
+    '1. 內文至少一次直接扣住他填寫的「本次主要問題」，用他自己的說法，不要換成籠統的代稱。',
+    '2. 依他的年齡、目前狀態與稱謂關係調整語氣和舉例，年輕人與長輩的例子不可以互換。',
+    '3. 嚴禁寫成任何人都適用的通用範本，也不要複述題目。',
+    '',
+    '【建設性建議】actions 必須剛好三條，每條 30 到 60 字，是使用者這一週就能自己開始做的具體行動。',
+    '每一條都要寫出「什麼時候、對誰、具體做什麼」，三條之間不可以重複，',
+    '也不可以整句照抄四段內文，更不要只寫心態口號。',
     '',
     '【紅線】不排紫微八字、不出現百分比與倍數、不做醫療診斷或療效宣稱、不用一定會或保證這類絕對用語。',
     '掌紋描述只當參考素材，不可當成醫療診斷。',
@@ -156,6 +170,26 @@ export function buildUserPrompt({ themeId, answers, palmDescription = '' }) {
     `7. 掌紋：${palmDescription ? '已提供，客觀描述如下' : '本次未提供，改以前六項推演'}`
   ];
   if (palmDescription) lines.push(`掌紋線條客觀描述：${palmDescription}`);
+
+  // 問卷若有其他自訂輸入，一併送進去，不要讓個人細節在這裡消失
+  const KNOWN = new Set([
+    'gender', 'genderLabel', 'genderCustom', 'age', 'ageLabel', 'ageCustom',
+    'relation', 'relationLabel', 'relationCustom', 'role', 'roleLabel', 'roleCustom',
+    'question', 'goal', 'goalLabel', 'goalCustom', 'palmDataUrl', 'palmImageBase64'
+  ]);
+  const extras = [];
+  for (const [field, value] of Object.entries(data)) {
+    if (KNOWN.has(field)) continue;
+    const text = String(value == null ? '' : value).trim();
+    if (!text || text.length > 200) continue;
+    extras.push(`- ${field}：${text}`);
+  }
+  if (extras.length) {
+    lines.push('');
+    lines.push('補充填寫內容：');
+    lines.push(...extras.slice(0, 10));
+  }
+
   lines.push('');
   lines.push('以上七步資料已齊，請直接輸出完整報告，不得要求補充任何資料，不得反問使用者。');
   return lines.join('\n');

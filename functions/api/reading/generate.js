@@ -12,10 +12,11 @@ import {
   buildUserPrompt,
   scanForbidden,
   replaceForbidden,
-  HARDENED_RETRY_HINT
+  HARDENED_RETRY_HINT,
+  WEAK_ACTIONS_RETRY_HINT
 } from '../../lib/wxt/forbidden.mjs';
 import { describePalm, generateReport } from '../../lib/wxt/ai.mjs';
-import { withAdviceField, isIncompleteReport } from '../../lib/wxt/report-format.mjs';
+import { withAdviceField, isIncompleteReport, hasWeakActions } from '../../lib/wxt/report-format.mjs';
 
 export const onRequest = postOnly(async ({ request, env }) => {
   if (!hasDb(env)) return json({ error: 'SERVICE_UNAVAILABLE' }, 503);
@@ -104,6 +105,11 @@ export const onRequest = postOnly(async ({ request, env }) => {
       const raw = outcome.parsed || { summary: outcome.text, sections: [] };
       if (isIncompleteReport(raw)) {
         retryHint = HARDENED_RETRY_HINT;
+        continue;
+      }
+      // 三條可執行建議是交付門檻，缺了就重寫，兩次都不合格寧可失敗退點
+      if (hasWeakActions(raw)) {
+        retryHint = WEAK_ACTIONS_RETRY_HINT;
         continue;
       }
       const textDump = JSON.stringify(raw);

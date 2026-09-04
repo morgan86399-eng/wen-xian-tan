@@ -37,6 +37,8 @@ import {
   pickReportObject,
   withAdviceField,
   extractActions,
+  extractSections,
+  hasWeakActions,
   isIncompleteReport
 } from '../functions/lib/wxt/report-format.mjs';
 
@@ -411,10 +413,15 @@ await check('已登入且有點數時 generate 回傳 advice 正文', async (env
                 title: '感情篇',
                 summary: '先把相處節奏看清楚。',
                 sections: [
-                  { heading: '對象輪廓與相處模式', body: '對方目前偏觀察、少主動。' },
-                  { heading: '這段關係目前的節奏', body: '先把相處節奏看清楚。' },
-                  { heading: '適合主動或等待的時機', body: '週末再開口比較合適。' },
-                  { heading: '自身要調整的互動習慣', body: '這週只確認一件具體約定。' }
+                  { heading: '對象輪廓與相處模式', body: '對方目前偏觀察、少主動，遇到不確定的事會先退一步，不是沒有意願，而是需要更多時間確認。' },
+                  { heading: '這段關係目前的節奏', body: '先把相處節奏看清楚，你想要的是明確的方向，對方目前還在適應階段，兩邊的速度並不一致。' },
+                  { heading: '適合主動或等待的時機', body: '週末再開口比較合適，平日彼此的心力都被工作佔滿，這時候談重要的事容易失焦也容易誤解。' },
+                  { heading: '自身要調整的互動習慣', body: '這週只確認一件具體約定就好，一次談太多件事，對方會不知道要先回應哪一個，反而更沉默。' }
+                ],
+                actions: [
+                  '這週三晚上傳一則訊息給對方，只約週末白天見面，不要在訊息裡談關係定位',
+                  '見面時把最想確認的那一件事寫成一句話先講，講完停下來聽對方怎麼回應',
+                  '這週先不要主動追問進度，把注意力放回自己原本安排好的行程與生活節奏'
                 ]
               })
             }
@@ -465,10 +472,10 @@ const GOOD_SAMPLE = {
   title: '關係的穩定始於內心的從容',
   summary: '先把相處節奏看清楚。',
   sections: [
-    { heading: '對象輪廓與相處模式', body: '對方在意的是被理解，先從日常對話開始。' },
-    { heading: '這段關係目前的節奏', body: '先把相處節奏看清楚，不急著下定論。' },
-    { heading: '適合主動或等待的時機', body: '週間先觀察，週末再開口比較合適。' },
-    { heading: '自身要調整的互動習慣', body: '把想說的話講完整，不要只丟半句。' }
+    { heading: '對象輪廓與相處模式', body: '對方在意的是被理解，比起被安排行程，他更希望有人願意聽完整件事。先從日常對話裡的小事開始接話，不要急著給結論或建議。' },
+    { heading: '這段關係目前的節奏', body: '目前兩個人的節奏並不同步，你想確認方向，對方還停留在觀察期。先把相處節奏看清楚，不急著在這個月下定論，讓彼此都有喘息的空間。' },
+    { heading: '適合主動或等待的時機', body: '週間對方的心力多半放在工作上，這時候談重要的事容易失焦。週末白天兩個人都比較放鬆，這個時段開口比較合適，也比較聽得進去。' },
+    { heading: '自身要調整的互動習慣', body: '你習慣把話講一半就停下來，等對方自己意會，這樣容易造成誤解。把想說的話講完整，包含你的感受和你希望的做法，對方才有辦法回應。' }
   ],
   actions: [
     '這週挑一個平常的晚上，主動約對方吃一頓飯，只聊生活不談將來',
@@ -482,7 +489,9 @@ await check('六篇 system prompt 都含禁止追問與自己那四段骨架', a
     const prompt = buildSystemPrompt(themeId);
     assert.match(prompt, /嚴禁向使用者索取任何補充資料/, `${themeId} 少了禁止索取`);
     assert.match(prompt, /嚴禁反問使用者/, `${themeId} 少了禁止反問`);
-    assert.match(prompt, /actions 必須有三條/, `${themeId} 少了建設性建議要求`);
+    assert.match(prompt, /actions 必須剛好三條/, `${themeId} 少了建設性建議要求`);
+    assert.match(prompt, /本次主要問題/, `${themeId} 少了扣住使用者問題的要求`);
+    assert.match(prompt, /嚴禁寫成任何人都適用的通用範本/, `${themeId} 少了禁止通用範本`);
     assert.equal(skeleton.length, 4, `${themeId} 骨架不是四段`);
     for (const heading of skeleton) {
       assert.ok(prompt.includes(heading), `${themeId} prompt 少了骨架「${heading}」`);
@@ -859,6 +868,149 @@ await check('對外文案不得再出現特定金流商名稱', async () => {
     if (text.includes('綠界') || text.includes('ECPay')) hits.push(file);
   }
   assert.deepEqual(hits, [], `這些對外檔案還寫著金流商名稱：${hits.join('、')}`);
+});
+
+
+
+console.log('\n[建議品質門檻]');
+
+const FOUR_SECTIONS = [
+  { heading: '對象輪廓與相處模式', body: '對方在意的是被理解，比起被安排行程，他更希望有人願意聽完整件事，先從日常對話的小事開始接話。' },
+  { heading: '這段關係目前的節奏', body: '目前兩個人的節奏並不同步，你想確認方向，對方還停留在觀察期，先讓彼此都有喘息的空間比較好。' },
+  { heading: '適合主動或等待的時機', body: '週間對方心力多半在工作上，這時談重要的事容易失焦，週末白天兩人都放鬆，開口比較聽得進去。' },
+  { heading: '自身要調整的互動習慣', body: '你習慣把話講一半就停，等對方自己意會，容易造成誤解，把感受和希望的做法一起講完整比較好。' }
+];
+
+const GOOD_ACTIONS = [
+  '這週三晚上傳訊息給對方，只約週末白天見面，訊息裡不要談關係定位',
+  '見面時把最想確認的那件事寫成一句話先講，講完停下來聽對方怎麼回應',
+  '這週先不主動追問進度，把注意力放回自己原本安排好的行程與生活節奏'
+];
+
+await check('完全沒有建議的報告判不合格', async () => {
+  assert.equal(hasWeakActions({ sections: FOUR_SECTIONS }), true);
+  assert.equal(hasWeakActions({ sections: FOUR_SECTIONS, actions: [] }), true);
+});
+
+await check('建議少於三條判不合格', async () => {
+  assert.equal(hasWeakActions({ sections: FOUR_SECTIONS, actions: GOOD_ACTIONS.slice(0, 2) }), true);
+});
+
+await check('建議太短判不合格', async () => {
+  const short = ['多陪伴對方', '保持好心情', '記得多溝通'];
+  assert.equal(hasWeakActions({ sections: FOUR_SECTIONS, actions: short }), true);
+});
+
+await check('三條建議重複判不合格', async () => {
+  const dup = [GOOD_ACTIONS[0], GOOD_ACTIONS[0], GOOD_ACTIONS[1]];
+  assert.equal(hasWeakActions({ sections: FOUR_SECTIONS, actions: dup }), true);
+});
+
+await check('建議整句照抄內文判不合格', async () => {
+  const copied = [FOUR_SECTIONS[0].body, GOOD_ACTIONS[1], GOOD_ACTIONS[2]];
+  assert.equal(hasWeakActions({ sections: FOUR_SECTIONS, actions: copied }), true);
+});
+
+await check('三條具體且互不重複的建議才放行', async () => {
+  assert.equal(hasWeakActions({ sections: FOUR_SECTIONS, actions: GOOD_ACTIONS }), false);
+});
+
+await check('段落太短的報告判不完整', async () => {
+  const thin = FOUR_SECTIONS.map((section) => ({ heading: section.heading, body: '再觀察看看。' }));
+  assert.equal(isIncompleteReport({ sections: thin, actions: GOOD_ACTIONS }), true);
+  assert.equal(isIncompleteReport({ sections: FOUR_SECTIONS, actions: GOOD_ACTIONS }), false);
+});
+
+await check('extractSections 收出四段標題與內文', async () => {
+  const sections = extractSections({ sections: FOUR_SECTIONS });
+  assert.equal(sections.length, 4);
+  assert.equal(sections[0].heading, '對象輪廓與相處模式');
+  assert.ok(sections[0].body.length > 20);
+});
+
+console.log('\n[建議不合格會重試]');
+
+function groqPayload(obj) {
+  return {
+    ok: true,
+    json: async () => ({
+      choices: [{ message: { content: JSON.stringify(obj) } }],
+      usage: { total_tokens: 12 }
+    })
+  };
+}
+
+await check('模型漏掉建議時自動重試，第二次補上才入庫', async (env) => {
+  const id = await seedUserWithCredit(env, 'weakaction@example.test');
+  const token = await signUserSession(env, { uid: id, provider: 'email' });
+  const realFetch = globalThis.fetch;
+  const prompts = [];
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).includes('api.groq.com')) throw new Error(`不該打到 ${url}`);
+    prompts.push(JSON.parse(init.body).messages[1].content);
+    return groqPayload(prompts.length === 1
+      ? { title: '感情篇', summary: '先看節奏。', sections: FOUR_SECTIONS }
+      : { title: '感情篇', summary: '先看節奏。', sections: FOUR_SECTIONS, actions: GOOD_ACTIONS });
+  };
+  try {
+    const { status, body } = await postJson(generate, env, {
+      themeId: 'love',
+      requestId: 'nonce-weakaction-1234',
+      answers: { question: '這段關係接下來怎麼相處' }
+    }, { cookie: `wx_session=${token}` });
+
+    assert.equal(status, 200);
+    assert.equal(prompts.length, 2, '應該重試一次');
+    assert.match(prompts[1], /actions 不合格/, '第二次要帶建議專用的重試指令');
+    assert.equal((body.report.actions || []).length, 3);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+await check('兩次都沒建議就判失敗並退還點數', async (env) => {
+  const id = await seedUserWithCredit(env, 'noaction@example.test');
+  const token = await signUserSession(env, { uid: id, provider: 'email' });
+  const realFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async (url) => {
+    if (!String(url).includes('api.groq.com')) throw new Error(`不該打到 ${url}`);
+    calls += 1;
+    return groqPayload({ title: '感情篇', summary: '先看節奏。', sections: FOUR_SECTIONS });
+  };
+  try {
+    const { status, body } = await postJson(generate, env, {
+      themeId: 'love',
+      requestId: 'nonce-noaction-12345',
+      answers: { question: '這段關係接下來怎麼相處' }
+    }, { cookie: `wx_session=${token}` });
+
+    assert.equal(status, 503);
+    assert.equal(body.error, 'GENERATION_FAILED');
+    assert.equal(calls, 2);
+    const credits = await getCreditsMap(env, id);
+    assert.equal(credits.love, 3, '沒交付合格報告就要把點數退回去');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+console.log('\n[提示詞要貼合本人]');
+
+await check('使用者填的自訂欄位會被送進提示詞', async () => {
+  const prompt = buildUserPrompt({
+    themeId: 'love',
+    answers: {
+      question: '我跟他還有機會嗎',
+      genderLabel: '女性',
+      ageLabel: '25 ~ 34 歲',
+      roleLabel: '單身中 · 尋覓正緣',
+      childAgeNote: '孩子今年小學三年級'
+    }
+  });
+  assert.match(prompt, /我跟他還有機會嗎/, '主要問題要原話送進去');
+  assert.match(prompt, /25 ~ 34 歲/, '年齡要送進去');
+  assert.match(prompt, /孩子今年小學三年級/, '自訂欄位不可以被丟掉');
 });
 
 
