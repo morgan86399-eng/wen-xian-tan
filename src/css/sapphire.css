@@ -239,7 +239,15 @@ body {
   text-shadow: 0 0 36px rgba(82, 165, 255, .18);
 }
 
-.hero-description { color: rgba(222, 236, 252, .86); font-size: clamp(.93rem, 1.4vw, 1.04rem); }
+.hero-description {
+  max-width: min(100%, 35rem);
+  color: rgba(222, 236, 252, .86);
+  font-size: clamp(.93rem, 1.4vw, 1.04rem);
+  line-height: clamp(1.72, 1.8vw, 1.9);
+  text-wrap: pretty;
+}
+
+.hero-keep-together { white-space: nowrap; }
 
 .hero-actions { display: none; }
 .hero-actions .btn { min-height: 54px; padding-inline: 24px; }
@@ -578,7 +586,12 @@ body {
     gap: 24px;
   }
   .app-hero--editorial .hero-main-title { font-size: clamp(2.5rem, 13vw, 4rem); }
-  .hero-description { margin-top: 14px; line-height: 1.75; }
+  .hero-description {
+    max-width: none;
+    margin-top: 14px;
+    font-size: clamp(.95rem, 4.15vw, 1.04rem);
+    line-height: 1.78;
+  }
   .hero-actions { margin-top: 22px; }
   .hero-actions .btn { flex: 1 1 100%; }
   .hero-art { min-height: 220px; border-radius: 28px; }
