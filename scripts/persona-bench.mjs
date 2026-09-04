@@ -4,7 +4,7 @@
 
 import { writeFileSync } from 'node:fs';
 import { buildSystemPrompt, buildUserPrompt } from '../functions/lib/wxt/forbidden.mjs';
-import { isIncompleteReport, hasWeakActions, extractSections, extractActions } from '../functions/lib/wxt/report-format.mjs';
+import { isIncompleteReport, hasWeakActions, hasVagueBody, extractSections, extractActions } from '../functions/lib/wxt/report-format.mjs';
 import { PERSONAS } from './persona-cases.mjs';
 
 
@@ -24,6 +24,21 @@ function thinReport() {
     summary: '再觀察。',
     sections: [1, 2, 3, 4].map((i) => ({ heading: `第 ${i} 段`, body: '再看看。' })),
     actions: ['保持正面', '多多加油', '順其自然']
+  };
+}
+
+/* 四段夠長、建議三條，但整篇都是空話與軟釘子 —— 這種最容易矇混過關 */
+function wishyWashyReport(persona) {
+  const body = `關於「${persona.question}」這件事，每個人的狀況因人而異，凡事順其自然就好，時間到了自然會有答案，先保持正面的心態，慢慢就會看到轉變。`;
+  return {
+    title: '順其自然',
+    summary: '保持平常心。',
+    sections: [1, 2, 3, 4].map((i) => ({ heading: `第 ${i} 段`, body })),
+    actions: [
+      '這週盡量找時間跟身邊的人聊一聊，適時把心裡的想法表達出來，不要一直放著',
+      '平常多加留意自己的情緒變化，適度給自己一些休息的空間，不要給自己太大壓力',
+      '不妨試著看看能不能換個角度想這件事，視情況調整自己的步調就好'
+    ]
   };
 }
 
@@ -71,7 +86,8 @@ for (const p of PERSONAS) {
     禁止通用範本: systemPrompt.includes('嚴禁寫成任何人都適用的通用範本'),
     擋下無建議的通用報告: hasWeakActions(genericReport()) === true,
     擋下敷衍短報告: isIncompleteReport(thinReport()) === true || hasWeakActions(thinReport()) === true,
-    放行合格報告: isIncompleteReport(goodReport(p)) === false && hasWeakActions(goodReport(p)) === false
+    擋下模稜兩可報告: hasVagueBody(wishyWashyReport(p)) === true && hasWeakActions(wishyWashyReport(p)) === true,
+    放行合格報告: isIncompleteReport(goodReport(p)) === false && hasWeakActions(goodReport(p)) === false && hasVagueBody(goodReport(p)) === false
   };
 
   const good = goodReport(p);
@@ -101,12 +117,12 @@ lines.push('檢查產品有沒有把「這一個人」的資料送進模型，�
 lines.push('');
 lines.push('**這份測試不能證明什麼**：沒有呼叫真實 AI，所以模型實際寫出來的文字品質不在這次驗證範圍。');
 lines.push('');
-lines.push('| # | 人格 | 篇章 | 問題原話 | 年齡 | 身分 | 自訂欄位 | 禁通用範本 | 擋通用報告 | 擋敷衍報告 | 放行合格報告 | 小計 |');
-lines.push('|---|------|------|---------|------|------|---------|-----------|-----------|-----------|-------------|------|');
+lines.push('| # | 人格 | 篇章 | 問題原話 | 年齡 | 身分 | 自訂欄位 | 禁通用範本 | 擋通用報告 | 擋敷衍報告 | 擋模稜兩可 | 放行合格報告 | 小計 |');
+lines.push('|---|------|------|---------|------|------|---------|-----------|-----------|-----------|-----------|-------------|------|');
 rows.forEach((r, i) => {
   const c = r.checks;
   const y = (v) => (v ? '✅' : '❌');
-  lines.push(`| ${String(i + 1).padStart(2, '0')} | ${r.name} | ${r.theme} | ${y(c.問題原話進提示詞)} | ${y(c.年齡進提示詞)} | ${y(c.身分狀態進提示詞)} | ${y(c.自訂欄位進提示詞)} | ${y(c.禁止通用範本)} | ${y(c.擋下無建議的通用報告)} | ${y(c.擋下敷衍短報告)} | ${y(c.放行合格報告)} | ${r.passed}/${r.total} |`);
+  lines.push(`| ${String(i + 1).padStart(2, '0')} | ${r.name} | ${r.theme} | ${y(c.問題原話進提示詞)} | ${y(c.年齡進提示詞)} | ${y(c.身分狀態進提示詞)} | ${y(c.自訂欄位進提示詞)} | ${y(c.禁止通用範本)} | ${y(c.擋下無建議的通用報告)} | ${y(c.擋下敷衍短報告)} | ${y(c.擋下模稜兩可報告)} | ${y(c.放行合格報告)} | ${r.passed}/${r.total} |`);
 });
 lines.push('');
 lines.push(`**全數通過的人格：${passAll} / ${rows.length}**`);

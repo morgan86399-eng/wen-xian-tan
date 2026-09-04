@@ -7,16 +7,9 @@ import {
   saveReading,
   hasDb
 } from '../../lib/wxt/store.mjs';
-import {
-  buildSystemPrompt,
-  buildUserPrompt,
-  scanForbidden,
-  replaceForbidden,
-  HARDENED_RETRY_HINT,
-  WEAK_ACTIONS_RETRY_HINT
-} from '../../lib/wxt/forbidden.mjs';
-import { describePalm, generateReport } from '../../lib/wxt/ai.mjs';
-import { withAdviceField, isIncompleteReport, hasWeakActions } from '../../lib/wxt/report-format.mjs';
+import { describePalm } from '../../lib/wxt/ai.mjs';
+import { runReportPipeline } from '../../lib/wxt/report-pipeline.mjs';
+import { withAdviceField } from '../../lib/wxt/report-format.mjs';
 
 export const onRequest = postOnly(async ({ request, env }) => {
   if (!hasDb(env)) return json({ error: 'SERVICE_UNAVAILABLE' }, 503);
@@ -84,53 +77,22 @@ export const onRequest = postOnly(async ({ request, env }) => {
     }
   }
 
-  const systemPrompt = buildSystemPrompt(themeId);
-  const userPrompt = buildUserPrompt({ themeId, answers, palmDescription });
-
-  let model = '';
-  let tokens = 0;
-  let report = null;
-
-  // 模型若反過來跟使用者要資料，就是不合格輸出：加硬指令重試一次，仍不合格才判失敗
-  let retryHint = '';
-
+  // 保證交付：只有整條模型鏈都拿不回任何內容才准失敗
+  let outcome = null;
   try {
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      const outcome = await generateReport(env, {
-        systemPrompt,
-        userPrompt: `${userPrompt}${retryHint}`
-      });
-      model = outcome.model;
-      tokens = (outcome.tokens || 0) + visionTokens;
-      const raw = outcome.parsed || { summary: outcome.text, sections: [] };
-      if (isIncompleteReport(raw)) {
-        retryHint = HARDENED_RETRY_HINT;
-        continue;
-      }
-      // 三條可執行建議是交付門檻，缺了就重寫，兩次都不合格寧可失敗退點
-      if (hasWeakActions(raw)) {
-        retryHint = WEAK_ACTIONS_RETRY_HINT;
-        continue;
-      }
-      const textDump = JSON.stringify(raw);
-      const hits = scanForbidden(textDump);
-      if (!hits.length) {
-        report = raw;
-        break;
-      }
-      if (attempt === 1) {
-        report = JSON.parse(replaceForbidden(textDump));
-      }
-    }
+    outcome = await runReportPipeline(env, { themeId, answers, palmDescription });
   } catch {
+    outcome = null;
+  }
+
+  if (!outcome || !outcome.report) {
     await refundCredit(env, { userId: session.uid, themeId, idempotencyKey });
     return json({ error: 'GENERATION_FAILED' }, 503);
   }
 
-  if (!report) {
-    await refundCredit(env, { userId: session.uid, themeId, idempotencyKey });
-    return json({ error: 'GENERATION_FAILED' }, 503);
-  }
+  let report = outcome.report;
+  const model = outcome.model;
+  const tokens = (outcome.tokens || 0) + visionTokens;
 
   report = withAdviceField(report);
 
@@ -151,6 +113,7 @@ export const onRequest = postOnly(async ({ request, env }) => {
     themeId,
     report,
     model,
-    tokens
+    tokens,
+    degraded: Boolean(outcome.degraded)
   });
 });

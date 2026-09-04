@@ -157,6 +157,29 @@ function normalizeAction(text) {
   return String(text || '').replace(/[\s，。、；：!！?？~～．・…]/g, '');
 }
 
+/* 模稜兩可的空話：出現在內文就是沒有真的針對這個人講話 */
+const VAGUE_PHRASES = [
+  '順其自然', '時間到了', '自然會好', '自然就會', '因人而異', '見仁見智',
+  '保持正面', '放寬心', '平常心', '一切都會好', '船到橋頭', '隨遇而安',
+  '多加留意', '適時調整', '凡事都有', '未來會更好', '船到橋頭自然直'
+];
+
+/* 建議裡的軟釘子：講了等於沒講 */
+const HEDGE_WORDS = ['盡量', '儘量', '適時', '適度', '多加', '不妨', '試著看看', '再看看情況', '視情況'];
+
+/* 可執行＝講得出什麼時候做 */
+const TIME_ANCHORS = [
+  '今天', '今晚', '今早', '明天', '後天', '本週', '這週', '這禮拜', '這星期',
+  '週末', '周末', '下週', '下星期', '三天', '五天', '七天', '一週', '兩週',
+  '每天', '每週', '月底', '下個月', '這個月', '睡前', '起床'
+];
+
+/** 內文出現空話就回 true */
+export function hasVagueBody(raw) {
+  const bodyText = formatAdviceFromReport(raw);
+  return VAGUE_PHRASES.some((phrase) => bodyText.includes(phrase));
+}
+
 /** 建議不合格就回 true：這是報告能不能交付的硬門檻，不是加分項 */
 export function hasWeakActions(raw) {
   const actions = extractActions(raw);
@@ -167,6 +190,13 @@ export function hasWeakActions(raw) {
 
   const unique = new Set(picked.map(normalizeAction));
   if (unique.size < REQUIRED_ACTIONS) return true;
+
+  // 軟釘子：一條裡出現「盡量」「適時」這種字就等於沒給做法
+  if (picked.some((item) => HEDGE_WORDS.some((word) => item.includes(word)))) return true;
+
+  // 三條裡至少兩條要講得出什麼時候做，否則只是方向不是行動
+  const anchored = picked.filter((item) => TIME_ANCHORS.some((word) => item.includes(word)));
+  if (anchored.length < 2) return true;
 
   // 建議直接抄內文原句就不算建議
   const bodyText = normalizeAction(formatAdviceFromReport(raw));

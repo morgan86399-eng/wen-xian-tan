@@ -146,7 +146,7 @@ async function callGeminiGenerate(env, { model, body, label }) {
   return response.json();
 }
 
-export async function callGeminiText(env, messages, { model, maxTokens = 8192, temperature = 0.55 } = {}) {
+export async function callGeminiText(env, messages, { model, maxTokens = 8192, temperature = 0.55, jsonMode = true } = {}) {
   const usedModel = model || geminiModel(env, 'text');
   const { contents, systemInstruction } = geminiContentsFromMessages(messages);
   const body = {
@@ -154,7 +154,7 @@ export async function callGeminiText(env, messages, { model, maxTokens = 8192, t
     generationConfig: {
       temperature,
       maxOutputTokens: maxTokens,
-      responseMimeType: 'application/json'
+      ...(jsonMode ? { responseMimeType: 'application/json' } : {})
     }
   };
   if (systemInstruction) body.systemInstruction = systemInstruction;
@@ -187,21 +187,24 @@ export async function callGeminiVision(env, imageBase64, { model } = {}) {
    但 max_tokens 不能大於分鐘上限，填 8192 會被退件。實測 8000 可以正常回（7.7 秒，實用 3671）。 */
 const GROQ_MAX_TOKENS = 8000;
 
-export async function callGroqText(env, messages, { model, maxTokens = GROQ_MAX_TOKENS, temperature = 0.55 } = {}) {
+export async function callGroqText(env, messages, { model, maxTokens = GROQ_MAX_TOKENS, temperature = 0.55, jsonMode = true } = {}) {
   const apiKey = requireGroq(env);
   const usedModel = groqTextModel(env, model);
+  // JSON 模式偶爾會回 400 json_validate_failed（多半是寫到一半被 max_tokens 截斷）；
+  // 關掉它改用純文字再自己解析，是那種情況唯一的救命索
+  const requestBody = {
+    model: usedModel,
+    temperature,
+    max_tokens: maxTokens,
+    messages
+  };
+  if (jsonMode) requestBody.response_format = { type: 'json_object' };
   const response = await fetchWithTimeout(
     'https://api.groq.com/openai/v1/chat/completions',
     {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: usedModel,
-        temperature,
-        max_tokens: maxTokens,
-        response_format: { type: 'json_object' },
-        messages
-      })
+      body: JSON.stringify(requestBody)
     },
     30000,
     'Groq'
@@ -272,21 +275,22 @@ async function firstAvailable(attempts) {
   throw err;
 }
 
-export async function generateReport(env, { systemPrompt, userPrompt }) {
+export async function generateReport(env, { systemPrompt, userPrompt, jsonMode = true, temperature = 0.55 }) {
   const messages = [
     { role: 'system', content: systemPrompt },
     { role: 'user', content: userPrompt }
   ];
+  const options = { jsonMode, temperature };
   const attempts = [];
   // Groq 是第一順位（weiyo 2026-09-05 指定），Gemini 退為備援，最後才是 Workers AI
-  if (hasGroq(env)) attempts.push(() => callGroqText(env, messages));
+  if (hasGroq(env)) attempts.push(() => callGroqText(env, messages, options));
   if (hasGemini(env)) {
     const primary = geminiModel(env, 'text');
     const fallback = geminiTextFallbackModel(env);
-    attempts.push(() => callGeminiText(env, messages, { model: primary }));
+    attempts.push(() => callGeminiText(env, messages, { ...options, model: primary }));
     // 主力型號滿載（503）時，同一把金鑰換一個型號再試
     if (fallback && fallback !== primary) {
-      attempts.push(() => callGeminiText(env, messages, { model: fallback }));
+      attempts.push(() => callGeminiText(env, messages, { ...options, model: fallback }));
     }
   }
   attempts.push(() => callWorkersAi(env, messages));

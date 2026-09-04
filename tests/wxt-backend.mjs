@@ -39,6 +39,7 @@ import {
   extractActions,
   extractSections,
   hasWeakActions,
+  hasVagueBody,
   isIncompleteReport
 } from '../functions/lib/wxt/report-format.mjs';
 
@@ -257,17 +258,17 @@ await check('已登入但缺點數回 402', async (env) => {
 
 console.log('\n[AI 呼叫順序]');
 
-await check('有 Gemini 時先打 Gemini', async (env) => {
+await check('Groq 是第一順位，有 Gemini 也先打 Groq', async (env) => {
   const calls = [];
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url) => {
     calls.push(String(url));
-    if (String(url).includes('generativelanguage.googleapis.com')) {
+    if (String(url).includes('api.groq.com')) {
       return {
         ok: true,
         json: async () => ({
-          candidates: [{ content: { parts: [{ text: '{"summary":"gemini-ok"}' }] } }],
-          usageMetadata: { totalTokenCount: 8 }
+          choices: [{ message: { content: '{"summary":"groq-ok"}' } }],
+          usage: { total_tokens: 11 }
         })
       };
     }
@@ -279,29 +280,29 @@ await check('有 Gemini 時先打 Gemini', async (env) => {
       GEMINI_API_KEY: 'AQ.test',
       GROQ_API_KEY: 'gsk_test'
     }, { systemPrompt: 's', userPrompt: 'u' });
-    assert.match(calls[0], /generativelanguage\.googleapis\.com/);
-    assert.equal(result.parsed.summary, 'gemini-ok');
-    assert.equal(result.model, 'gemini-3.5-flash');
+    assert.match(calls[0], /api\.groq\.com/, '第一通應該打 Groq');
+    assert.equal(calls.length, 1, 'Groq 成功就不該再打 Gemini');
+    assert.equal(result.parsed.summary, 'groq-ok');
   } finally {
     globalThis.fetch = realFetch;
   }
 });
 
-await check('Gemini 失敗才打 Groq', async (env) => {
+await check('Groq 撞到速率上限才換 Gemini', async (env) => {
   const hosts = [];
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url) => {
     const href = String(url);
     hosts.push(href);
-    if (href.includes('generativelanguage.googleapis.com')) {
-      return { ok: false, status: 429, text: async () => 'limit:0' };
-    }
     if (href.includes('api.groq.com')) {
+      return { ok: false, status: 429, text: async () => 'rate limit' };
+    }
+    if (href.includes('generativelanguage.googleapis.com')) {
       return {
         ok: true,
         json: async () => ({
-          choices: [{ message: { content: '{"summary":"groq-ok"}' } }],
-          usage: { total_tokens: 11 }
+          candidates: [{ content: { parts: [{ text: '{"summary":"gemini-ok"}' }] } }],
+          usageMetadata: { totalTokenCount: 8 }
         })
       };
     }
@@ -313,20 +314,20 @@ await check('Gemini 失敗才打 Groq', async (env) => {
       GEMINI_API_KEY: 'AQ.test',
       GROQ_API_KEY: 'gsk_test'
     }, { systemPrompt: 's', userPrompt: 'u' });
-    assert.ok(hosts.some((item) => item.includes('generativelanguage.googleapis.com')));
-    assert.ok(hosts.some((item) => item.includes('api.groq.com')));
-    assert.equal(result.parsed.summary, 'groq-ok');
+    assert.match(hosts[0], /api\.groq\.com/, '先打 Groq');
+    assert.ok(hosts.some((item) => item.includes('generativelanguage.googleapis.com')), 'Groq 失敗要換 Gemini');
+    assert.equal(result.parsed.summary, 'gemini-ok');
   } finally {
     globalThis.fetch = realFetch;
   }
 });
 
-await check('主力 Gemini 型號滿載時，同金鑰換次選型號，還不用掉到 Groq', async (env) => {
+await check('Groq 不可用時，Gemini 主力型號滿載會換同金鑰的次選型號', async (env) => {
   const models = [];
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url) => {
     const href = String(url);
-    if (href.includes('api.groq.com')) throw new Error('不該掉到 Groq');
+    if (href.includes('api.groq.com')) return { ok: false, status: 429, text: async () => 'rate limit' };
     const model = decodeURIComponent(href.split('/models/')[1].split(':')[0]);
     models.push(model);
     if (model === 'gemini-3.6-flash') {
@@ -608,7 +609,7 @@ await check('模型回追問文時自動加硬指令重試，第二次過關才�
   }
 });
 
-await check('兩次都回追問文就判失敗並退還點數', async (env) => {
+await check('整條鏈都拿不回任何內容才失敗退點', async (env) => {
   const id = await seedUserWithCredit(env, 'fail@example.test');
   const token = await signUserSession(env, { uid: id, provider: 'email' });
   const realFetch = globalThis.fetch;
@@ -626,9 +627,9 @@ await check('兩次都回追問文就判失敗並退還點數', async (env) => {
     }, { cookie: `wx_session=${token}` });
     assert.equal(status, 503);
     assert.equal(body.error, 'GENERATION_FAILED');
-    assert.equal(calls, 2);
+    assert.equal(calls, 3, '三種策略都要試過才准放棄');
     const credits = await getCreditsMap(env, id);
-    assert.equal(credits.love, 3, '失敗要把點數退回去');
+    assert.equal(credits.love, 3, '完全拿不到內容才退點');
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -968,7 +969,7 @@ await check('模型漏掉建議時自動重試，第二次補上才入庫', asyn
   }
 });
 
-await check('兩次都沒建議就判失敗並退還點數', async (env) => {
+await check('模型怎樣都不給建議時，仍然交付報告且不退點', async (env) => {
   const id = await seedUserWithCredit(env, 'noaction@example.test');
   const token = await signUserSession(env, { uid: id, provider: 'email' });
   const realFetch = globalThis.fetch;
@@ -985,11 +986,73 @@ await check('兩次都沒建議就判失敗並退還點數', async (env) => {
       answers: { question: '這段關係接下來怎麼相處' }
     }, { cookie: `wx_session=${token}` });
 
-    assert.equal(status, 503);
-    assert.equal(body.error, 'GENERATION_FAILED');
-    assert.equal(calls, 2);
+    assert.equal(status, 200, '付了錢就一定要拿到報告');
+    assert.equal(body.ok, true);
+    assert.equal((body.report.actions || []).length, 3, '保底也要給三條建議');
+    assert.equal(body.degraded, true, '走保底要標記出來，方便日後監控');
+    assert.ok(calls > 3, '應該有額外叫過只補建議的那一次');
     const credits = await getCreditsMap(env, id);
-    assert.equal(credits.love, 3, '沒交付合格報告就要把點數退回去');
+    assert.equal(credits.love, 2, '有交付就不退點');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+await check('前面都不給建議，專門補建議那次成功就不算保底', async (env) => {
+  const id = await seedUserWithCredit(env, 'repair@example.test');
+  const token = await signUserSession(env, { uid: id, provider: 'email' });
+  const realFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).includes('api.groq.com')) throw new Error(`不該打到 ${url}`);
+    calls += 1;
+    const prompt = JSON.parse(init.body).messages[1].content;
+    if (prompt.includes('只回傳三條')) return groqPayload({ actions: GOOD_ACTIONS });
+    return groqPayload({ title: '感情篇', summary: '先看節奏。', sections: FOUR_SECTIONS });
+  };
+  try {
+    const { status, body } = await postJson(generate, env, {
+      themeId: 'love',
+      requestId: 'nonce-repair-1234567',
+      answers: { question: '這段關係接下來怎麼相處' }
+    }, { cookie: `wx_session=${token}` });
+
+    assert.equal(status, 200);
+    assert.equal(body.degraded, false, '有補到真的建議就不算保底');
+    assert.equal((body.report.actions || []).length, 3);
+    assert.ok(calls >= 4);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+await check('Groq JSON 模式回 400 時，關掉 JSON 模式仍然交付', async (env) => {
+  const id = await seedUserWithCredit(env, 'jsonfail@example.test');
+  const token = await signUserSession(env, { uid: id, provider: 'email' });
+  const realFetch = globalThis.fetch;
+  const modes = [];
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).includes('api.groq.com')) throw new Error(`不該打到 ${url}`);
+    const sent = JSON.parse(init.body);
+    const jsonMode = Boolean(sent.response_format);
+    modes.push(jsonMode);
+    if (jsonMode) {
+      return { ok: false, status: 400, text: async () => 'json_validate_failed' };
+    }
+    return groqPayload({ title: '感情篇', summary: '先看節奏。', sections: FOUR_SECTIONS, actions: GOOD_ACTIONS });
+  };
+  try {
+    const { status, body } = await postJson(generate, env, {
+      themeId: 'love',
+      requestId: 'nonce-jsonfail-123456',
+      answers: { question: '這段關係接下來怎麼相處' }
+    }, { cookie: `wx_session=${token}` });
+
+    assert.equal(status, 200, 'JSON 模式失敗不可以讓付費使用者空手');
+    assert.equal(body.ok, true);
+    assert.ok(modes.includes(false), '應該有一次是關掉 JSON 模式打的');
+    const credits = await getCreditsMap(env, id);
+    assert.equal(credits.love, 2, '有交付就不退點');
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -1011,6 +1074,86 @@ await check('使用者填的自訂欄位會被送進提示詞', async () => {
   assert.match(prompt, /我跟他還有機會嗎/, '主要問題要原話送進去');
   assert.match(prompt, /25 ~ 34 歲/, '年齡要送進去');
   assert.match(prompt, /孩子今年小學三年級/, '自訂欄位不可以被丟掉');
+});
+
+
+
+console.log('\n[不准模稜兩可]');
+
+await check('內文出現順其自然這類空話判不合格', async () => {
+  const vague = FOUR_SECTIONS.map((section, i) => ({
+    heading: section.heading,
+    body: i === 0
+      ? '每個人的狀況因人而異，凡事順其自然就好，時間到了自然會有答案，先保持正面的心態面對眼前的變化。'
+      : section.body
+  }));
+  assert.equal(hasVagueBody({ sections: vague }), true);
+  assert.equal(hasVagueBody({ sections: FOUR_SECTIONS }), false);
+});
+
+await check('建議出現盡量、適時這種軟釘子判不合格', async () => {
+  const hedged = [
+    '這週三晚上盡量找時間跟對方講一下最近的狀況，看看他怎麼回應',
+    '週末適時安排一次散步，把想講的事情帶出來聊',
+    '這週先不主動追問進度，把注意力放回自己原本安排好的行程'
+  ];
+  assert.equal(hasWeakActions({ sections: FOUR_SECTIONS, actions: hedged }), true);
+});
+
+await check('三條建議只有一條講得出時間，判不合格', async () => {
+  const noTime = [
+    '這週三晚上傳訊息給對方，只約見面，訊息裡不要談關係定位',
+    '把最想確認的那件事寫成一句話先講，講完停下來聽對方怎麼回應',
+    '先不主動追問進度，把注意力放回自己原本安排好的行程與生活節奏'
+  ];
+  assert.equal(hasWeakActions({ sections: FOUR_SECTIONS, actions: noTime }), true);
+});
+
+await check('至少兩條有明確時間且沒有軟釘子才放行', async () => {
+  assert.equal(hasWeakActions({ sections: FOUR_SECTIONS, actions: GOOD_ACTIONS }), false);
+});
+
+await check('六篇 system prompt 都寫明禁止模稜兩可', async () => {
+  for (const themeId of Object.keys(THEME_SKELETONS)) {
+    const prompt = buildSystemPrompt(themeId);
+    assert.match(prompt, /禁止模稜兩可/, `${themeId} 少了禁止模稜兩可`);
+    assert.match(prompt, /嚴禁「順其自然」/, `${themeId} 少了空話清單`);
+    assert.match(prompt, /軟釘子/, `${themeId} 少了禁止軟釘子`);
+    assert.match(prompt, /至少兩條要明確講出時間/, `${themeId} 少了時間要求`);
+  }
+});
+
+await check('模型寫空話時自動重試，第二次寫具體才入庫', async (env) => {
+  const id = await seedUserWithCredit(env, 'vague@example.test');
+  const token = await signUserSession(env, { uid: id, provider: 'email' });
+  const realFetch = globalThis.fetch;
+  const prompts = [];
+  const vagueSections = FOUR_SECTIONS.map((section, i) => ({
+    heading: section.heading,
+    body: i === 0
+      ? '每個人的狀況因人而異，凡事順其自然就好，時間到了自然會有答案，先保持正面的心態面對眼前的變化。'
+      : section.body
+  }));
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).includes('api.groq.com')) throw new Error(`不該打到 ${url}`);
+    prompts.push(JSON.parse(init.body).messages[1].content);
+    return groqPayload(prompts.length === 1
+      ? { title: '感情篇', summary: '先看節奏。', sections: vagueSections, actions: GOOD_ACTIONS }
+      : { title: '感情篇', summary: '先看節奏。', sections: FOUR_SECTIONS, actions: GOOD_ACTIONS });
+  };
+  try {
+    const { status } = await postJson(generate, env, {
+      themeId: 'love',
+      requestId: 'nonce-vague-123456789',
+      answers: { question: '這段關係接下來怎麼相處' }
+    }, { cookie: `wx_session=${token}` });
+
+    assert.equal(status, 200);
+    assert.equal(prompts.length, 2, '空話應該觸發一次重試');
+    assert.match(prompts[1], /出現「順其自然」/, '第二次要帶空話專用的重試指令');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 });
 
 

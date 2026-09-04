@@ -3,9 +3,9 @@
    只呼叫模型，不碰資料庫、不建訂單、不扣點。 */
 
 import { writeFileSync } from 'node:fs';
-import { buildSystemPrompt, buildUserPrompt, scanForbidden, HARDENED_RETRY_HINT, WEAK_ACTIONS_RETRY_HINT } from '../functions/lib/wxt/forbidden.mjs';
+import { buildSystemPrompt, buildUserPrompt, scanForbidden, replaceForbidden, HARDENED_RETRY_HINT, WEAK_ACTIONS_RETRY_HINT } from '../functions/lib/wxt/forbidden.mjs';
 import { isIncompleteReport, hasWeakActions, extractSections, extractActions } from '../functions/lib/wxt/report-format.mjs';
-import { generateReport } from '../functions/lib/wxt/ai.mjs';
+import { runReportPipeline } from '../functions/lib/wxt/report-pipeline.mjs';
 import { PERSONAS } from './persona-cases.mjs';
 
 const env = {
@@ -40,6 +40,23 @@ function scorePersonaFit(report, persona) {
   };
 }
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/* Groq 免費層每分鐘 8000 token，撞到 429 就等一分鐘再來，最多等四次 */
+async function callWithBackoff(fn, maxWaits = 4) {
+  for (let i = 0; i <= maxWaits; i += 1) {
+    try {
+      return await fn();
+    } catch (error) {
+      const message = String(error && error.message ? error.message : error);
+      if (!message.includes('429') || i === maxWaits) throw error;
+      console.log(`    撞到速率上限，等 65 秒再試（第 ${i + 1} 次）`);
+      await sleep(65000);
+    }
+  }
+  throw new Error('退避重試用盡');
+}
+
 const rows = [];
 let index = 0;
 
@@ -55,25 +72,25 @@ for (const persona of PERSONAS) {
     [persona.extraKey]: persona.extra
   };
 
-  const systemPrompt = buildSystemPrompt(persona.theme);
-  const basePrompt = buildUserPrompt({ themeId: persona.theme, answers });
-
+  // 直接走正式站用的保證交付管線，測的就是使用者真的會拿到什麼
   let report = null;
-  let attempts = 0;
+  let attempts = 1;
   let model = '';
-  let retryHint = '';
   let lastError = '';
+  let forbiddenReplaced = false;
+  let degraded = false;
+  let stage = '';
 
   try {
-    for (let i = 0; i < 2; i += 1) {
-      attempts += 1;
-      const outcome = await generateReport(env, { systemPrompt, userPrompt: `${basePrompt}${retryHint}` });
+    const outcome = await callWithBackoff(() => runReportPipeline(env, { themeId: persona.theme, answers }));
+    if (outcome && outcome.report) {
+      report = outcome.report;
       model = outcome.model;
-      const raw = outcome.parsed || { summary: outcome.text, sections: [] };
-      if (isIncompleteReport(raw)) { retryHint = HARDENED_RETRY_HINT; continue; }
-      if (hasWeakActions(raw)) { retryHint = WEAK_ACTIONS_RETRY_HINT; continue; }
-      report = raw;
-      break;
+      forbiddenReplaced = Boolean(outcome.forbiddenReplaced);
+      degraded = Boolean(outcome.degraded);
+      stage = outcome.stage;
+    } else {
+      lastError = '整條模型鏈都拿不回內容';
     }
   } catch (error) {
     lastError = String(error && error.message ? error.message : error);
@@ -85,22 +102,23 @@ for (const persona of PERSONAS) {
   const actions = report ? extractActions(report) : [];
 
   rows.push({
-    index, persona, report, attempts, model, lastError, fit, forbidden,
+    index, persona, report, attempts, model, lastError, fit, forbidden, forbiddenReplaced, degraded, stage,
     sectionCount: sections.length,
     actionCount: actions.length,
     minActionLen: actions.length ? Math.min(...actions.map((a) => a.length)) : 0,
     sample: report ? (actions[0] || '') : ''
   });
 
-  console.log(`[${index}/${PERSONAS.length}] ${persona.name}｜${report ? '產出成功' : '失敗'}｜嘗試 ${attempts} 次｜${model || lastError}`);
+  console.log(`[${index}/${PERSONAS.length}] ${persona.name}｜${report ? '產出成功' : '失敗'}｜${stage || lastError.slice(0, 50)}${degraded ? '（保底）' : ''}`);
+  if (index < PERSONAS.length) await sleep(35000);
 }
 
 const lines = ['# 問仙壇 × 20 人格 真實 AI 報告測試', '', `執行時間：${new Date().toLocaleString('zh-TW')}`, ''];
-lines.push('| # | 人格 | 篇章 | 產出 | 嘗試 | 段數 | 建議 | 最短建議 | 引用問題 | 提到本人處境 | 非通用範本 | 內文夠長 | 禁用詞 |');
-lines.push('|---|------|------|------|------|------|------|---------|---------|-------------|-----------|---------|--------|');
+lines.push('| # | 人格 | 篇章 | 產出 | 嘗試 | 段數 | 建議 | 最短建議 | 引用問題 | 提到本人處境 | 非通用範本 | 內文夠長 | 禁用詞替換 | 走保底 | 產出階段 |');
+lines.push('|---|------|------|------|------|------|------|---------|---------|-------------|-----------|---------|-----------|--------|---------|');
 for (const r of rows) {
   const y = (v) => (v ? '✅' : '❌');
-  lines.push(`| ${String(r.index).padStart(2, '0')} | ${r.persona.name} | ${r.persona.theme} | ${r.report ? '✅' : '❌'} | ${r.attempts} | ${r.sectionCount} | ${r.actionCount} | ${r.minActionLen} | ${y(r.fit.引用使用者問題)} | ${y(r.fit.提到本人處境關鍵字)} | ${y(r.fit.沒有寫成通用範本)} | ${y(r.fit.內文夠長)} | ${r.forbidden.length ? r.forbidden.join('、') : '無'} |`);
+  lines.push(`| ${String(r.index).padStart(2, '0')} | ${r.persona.name} | ${r.persona.theme} | ${r.report ? '✅' : '❌'} | ${r.attempts} | ${r.sectionCount} | ${r.actionCount} | ${r.minActionLen} | ${y(r.fit.引用使用者問題)} | ${y(r.fit.提到本人處境關鍵字)} | ${y(r.fit.沒有寫成通用範本)} | ${y(r.fit.內文夠長)} | ${r.forbiddenReplaced ? '✅' : '—'} | ${r.degraded ? '⚠️' : '—'} | ${r.stage || r.lastError.slice(0, 20)} |`);
 }
 
 const ok = rows.filter((r) => r.report).length;
