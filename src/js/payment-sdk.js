@@ -1,5 +1,5 @@
 /**
- * 問仙壇 · 綠界 ECPay 結帳（只建單，不模擬付款、不收體驗碼）
+ * 問仙壇 · 外部金流結帳（只建單，不模擬付款、不收體驗碼）
  */
 (function (global) {
   function readJson(res) {
@@ -181,7 +181,7 @@
       header.className = 'kyp-modal-header';
       const title = document.createElement('h3');
       title.className = 'kyp-modal-title';
-      title.textContent = '綠界安全結帳';
+      title.textContent = '安全結帳';
       const closeBtn = document.createElement('button');
       closeBtn.type = 'button';
       closeBtn.className = 'kyp-modal-close';
@@ -224,7 +224,7 @@
 
       const hint = document.createElement('p');
       hint.className = 'kyp-checkout-desc';
-      hint.textContent = '將導向綠界付款頁。付款完成後，點數由伺服器入帳，不會依網址參數加點。';
+      hint.textContent = '將導向金流服務商的付款頁。付款完成後，點數由伺服器入帳，不會依網址參數加點。';
 
       const status = document.createElement('div');
       status.id = 'kyp-polling-status';

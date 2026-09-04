@@ -6,7 +6,15 @@ import { getEcpayConfig, generateTradeNo, formatTaiwanDateTime, calculateCheckMa
 import { requireSiteUrl } from '../../lib/wxt/http.mjs';
 import { THEME_LABELS } from '../../lib/wxt/products.mjs';
 
+/** 收款總開關：沒有明確設成 true 就一律不建單，換金流期間不能有人付得下去 */
+function paymentsEnabled(env) {
+  return String((env && env.PAYMENTS_ENABLED) || '') === 'true';
+}
+
 export const onRequest = postOnly(async ({ request, env }) => {
+  if (!paymentsEnabled(env)) {
+    return json({ error: 'PAYMENTS_DISABLED', message: '線上收款整備中，暫時無法建立訂單' }, 503);
+  }
   if (!hasDb(env)) return json({ error: 'SERVICE_UNAVAILABLE' }, 503);
   const session = await readUserSession(env, request);
   if (!session.ok) return json({ error: 'UNAUTHENTICATED' }, 401);

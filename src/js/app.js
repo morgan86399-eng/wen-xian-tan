@@ -1054,14 +1054,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isValid = state.customChosenThemes.size === plan.requiredCount;
     const agreed = Boolean(document.getElementById('agreeTermsCheckbox')?.checked);
+    // 收款整備中一律關閉：設定還沒載回來也視為關閉，不讓任何人先付下去
+    const paymentsOpen = siteConfig.paymentsEnabled === true;
     if (confirmPurchaseBtn) {
-      confirmPurchaseBtn.disabled = !isValid || !agreed;
-      if (!agreed) {
+      confirmPurchaseBtn.disabled = !paymentsOpen || !isValid || !agreed;
+      if (!paymentsOpen) {
+        confirmPurchaseBtn.textContent = '線上收款整備中，暫時無法購買';
+      } else if (!agreed) {
         confirmPurchaseBtn.textContent = '請先勾選同意服務條款與隱私權政策';
       } else if (!isValid) {
         confirmPurchaseBtn.textContent = `請先選滿 ${plan.requiredCount} 個主題（目前已選 ${state.customChosenThemes.size} 項）`;
       } else {
-        confirmPurchaseBtn.textContent = `前往綠界安全支付 NT$ ${plan.price} →`;
+        confirmPurchaseBtn.textContent = `前往安全支付 NT$ ${plan.price} →`;
       }
     }
 
@@ -1080,6 +1084,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function triggerEcpayCheckout(plan, chosenThemes, onCustomSuccess) {
     if (!requireLogin()) return;
+
+    if (siteConfig.paymentsEnabled !== true) {
+      alert('線上收款整備中，暫時無法購買。開放後會在網站公告，造成不便敬請見諒。');
+      return;
+    }
 
     const themeTitles = chosenThemes
       .map((id) => THEMES.find((t) => t.id === id)?.name || id)
@@ -2336,7 +2345,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (paymentStatus === 'failed' || paymentStatus === 'error') {
       const msg = urlParams.get('msg') || '交易未完成或已取消';
-      alert(`綠界扣款未完成：${decodeURIComponent(msg)}`);
+      alert(`付款未完成：${decodeURIComponent(msg)}`);
       window.history.replaceState({}, document.title, window.location.pathname);
       return;
     }

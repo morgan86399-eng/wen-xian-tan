@@ -28,6 +28,7 @@ import {
 import { getEcpayConfig, calculateCheckMacValue } from '../functions/lib/wxt/ecpay.mjs';
 import { CREDITS_BY_THEME, validateOrderInput, getProduct } from '../functions/lib/wxt/products.mjs';
 import { onRequest as devLogin } from '../functions/api/auth/dev-login.js';
+import { onRequest as createOrderApi } from '../functions/api/ecpay/create.js';
 import { saveReading, getOrderByTradeNo } from '../functions/lib/wxt/store.mjs';
 import { signUserSession, sessionCookieHeader } from '../functions/lib/wxt/auth.mjs';
 import { generateReport } from '../functions/lib/wxt/ai.mjs';
@@ -821,6 +822,43 @@ await check('前端原始碼與首頁不得出現肖像或外貌宣稱', async (
     }
   }
   assert.deepEqual(hits, [], `這些檔案還留著外貌宣稱：${hits.join('、')}`);
+});
+
+
+
+console.log('\n[收款總開關]');
+
+await check('沒開 PAYMENTS_ENABLED 時建不了單', async (env) => {
+  const { id } = await upsertEmailUser(env, 'blocked@example.test');
+  const token = await signUserSession(env, { uid: id, provider: 'email' });
+  const { status, body } = await postJson(createOrderApi, env, {
+    productId: 'all',
+    themeKeys: ['love', 'work', 'career', 'wealth', 'family', 'children']
+  }, { cookie: `wx_session=${token}` });
+
+  assert.equal(status, 503);
+  assert.equal(body.error, 'PAYMENTS_DISABLED');
+});
+
+await check('收款關閉時，未登入者也拿不到建單資訊', async (env) => {
+  const { status, body } = await postJson(createOrderApi, env, { productId: 'single', themeKeys: ['love'] });
+  assert.equal(status, 503);
+  assert.equal(body.error, 'PAYMENTS_DISABLED');
+  assert.equal(body.action, undefined, '不可以外洩金流端點');
+  assert.equal(body.fields, undefined, '不可以外洩簽章欄位');
+});
+
+await check('對外文案不得再出現特定金流商名稱', async () => {
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const files = ['index.html'].concat(
+    readdirSync(new URL('../src/js', import.meta.url)).map((f) => `src/js/${f}`)
+  );
+  const hits = [];
+  for (const file of files) {
+    const text = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+    if (text.includes('綠界') || text.includes('ECPay')) hits.push(file);
+  }
+  assert.deepEqual(hits, [], `這些對外檔案還寫著金流商名稱：${hits.join('、')}`);
 });
 
 
