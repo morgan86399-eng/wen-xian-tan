@@ -278,24 +278,26 @@ export async function generateReport(env, { systemPrompt, userPrompt }) {
     { role: 'user', content: userPrompt }
   ];
   const attempts = [];
+  // Groq 是第一順位（weiyo 2026-09-05 指定），Gemini 退為備援，最後才是 Workers AI
+  if (hasGroq(env)) attempts.push(() => callGroqText(env, messages));
   if (hasGemini(env)) {
     const primary = geminiModel(env, 'text');
     const fallback = geminiTextFallbackModel(env);
     attempts.push(() => callGeminiText(env, messages, { model: primary }));
-    // 主力型號滿載（503）時，同一把金鑰換一個型號再試，還輪不到 Groq
+    // 主力型號滿載（503）時，同一把金鑰換一個型號再試
     if (fallback && fallback !== primary) {
       attempts.push(() => callGeminiText(env, messages, { model: fallback }));
     }
   }
-  if (hasGroq(env)) attempts.push(() => callGroqText(env, messages));
   attempts.push(() => callWorkersAi(env, messages));
   return firstAvailable(attempts);
 }
 
 export async function describePalm(env, imageBase64) {
   const attempts = [];
-  if (hasGemini(env)) attempts.push(() => callGeminiVision(env, imageBase64));
+  // 掌紋視覺同樣以 Groq 為第一順位
   if (hasGroq(env)) attempts.push(() => callGroqVision(env, imageBase64));
+  if (hasGemini(env)) attempts.push(() => callGeminiVision(env, imageBase64));
   if (!attempts.length) return { text: '', model: '', tokens: 0 };
   try {
     return await firstAvailable(attempts);

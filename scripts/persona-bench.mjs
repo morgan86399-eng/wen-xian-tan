@@ -5,49 +5,8 @@
 import { writeFileSync } from 'node:fs';
 import { buildSystemPrompt, buildUserPrompt } from '../functions/lib/wxt/forbidden.mjs';
 import { isIncompleteReport, hasWeakActions, extractSections, extractActions } from '../functions/lib/wxt/report-format.mjs';
+import { PERSONAS } from './persona-cases.mjs';
 
-const PERSONAS = [
-  { slug: 'mother', name: '林秀芬', age: '45 ~ 54 歲', theme: 'family', gender: '女性', relation: '家人', role: '已婚 · 與子女同住',
-    question: '我女兒現在連房門都鎖著不跟我講話，我到底哪裡做錯了', extraKey: 'familyNote', extra: '先生長年外派，家裡只有我和女兒' },
-  { slug: 'group-buying-mom', name: '陳淑惠', age: '35 ~ 44 歲', theme: 'wealth', gender: '女性', relation: '本人自身', role: '全職媽媽兼團購主',
-    question: '團購的錢每個月都在轉，但存款一直沒有增加，我到底哪裡漏財', extraKey: 'incomeNote', extra: '每月流水約二十萬，實拿不到兩萬' },
-  { slug: 'retired-teacher', name: '曾國榮', age: '55 歲以上', theme: 'family', gender: '男性', relation: '家人', role: '退休 · 與配偶同住',
-    question: '退休後在家講話沒人要聽，跟兒子每次見面都在吵，我該怎麼辦', extraKey: 'familyNote', extra: '兒子今年三十五歲，一年回家兩次' },
-  { slug: 'senior-citizen', name: '洪金土', age: '55 歲以上', theme: 'family', gender: '男性', relation: '本人自身', role: '獨居 · 退休',
-    question: '我一個人住，萬一哪天倒在家裡沒人知道，這件事我該先跟誰講', extraKey: 'healthNote', extra: '眼睛看不清楚，手機只會接電話' },
-  { slug: 'spiritual-elder', name: '廖素蘭', age: '55 歲以上', theme: 'wealth', gender: '女性', relation: '本人自身', role: '退休 · 進修中',
-    question: '我一直在上課學顯化豐盛，但錢還是留不住，這是業力的關係嗎', extraKey: 'spendNote', extra: '一年上課花費超過三十萬' },
-  { slug: 'senior-engineer', name: '柯明哲', age: '35 ~ 44 歲', theme: 'work', gender: '男性', relation: '本人自身', role: '在職 · 資深技術主管',
-    question: '公司一直要導入 AI，我在想要不要換工作，還是先留在原位觀察', extraKey: 'workNote', extra: '團隊裡我年紀最大，房貸還有十八年' },
-  { slug: 'intern', name: '許庭萱', age: '18 ~ 24 歲', theme: 'work', gender: '女性', relation: '本人自身', role: '實習中 · 大四',
-    question: '我很怕做錯事被辭退，每天加班到很晚還是覺得自己不夠好', extraKey: 'workNote', extra: '這是第一份工作，不敢問主管問題' },
-  { slug: 'anxious-manager', name: '楊政達', age: '35 ~ 44 歲', theme: 'work', gender: '男性', relation: '本人自身', role: '在職 · 中階主管',
-    question: '下個月數字沒到我這組可能被裁，我要先跟主管說明還是自己先處理', extraKey: 'healthNote', extra: '最近血壓偏高，半夜會醒來' },
-  { slug: 'entrepreneur', name: '陸震華', age: '35 ~ 44 歲', theme: 'career', gender: '男性', relation: '本人自身', role: '創業中 · 公司負責人',
-    question: '這輪融資談不下來，要先縮編保住現金，還是繼續照原計畫擴張', extraKey: 'cashNote', extra: '帳上現金剩四個月' },
-  { slug: 'compliance-accountant', name: '莊美玲', age: '45 ~ 54 歲', theme: 'work', gender: '女性', relation: '本人自身', role: '在職 · 會計主管',
-    question: '主管一直要我放行不合規的單據，我要不要離職', extraKey: 'workNote', extra: '再兩年可以領到退休金' },
-  { slug: 'gen-z-student', name: '邱子軒', age: '18 ~ 24 歲', theme: 'work', gender: '男性', relation: '本人自身', role: '學生 · 高二',
-    question: '反正努力也買不起房，我還要不要拚大學', extraKey: 'studyNote', extra: '班排中段，家裡沒有人可以商量' },
-  { slug: 'influencer', name: '林若涵', age: '25 ~ 34 歲', theme: 'career', gender: '女性', relation: '本人自身', role: '自由接案 · 自媒體',
-    question: '流量少了一半，我要轉型做別的題材，還是繼續做美妝', extraKey: 'incomeNote', extra: '業績最好的時候月收二十萬，現在剩三萬' },
-  { slug: 'passionate-sales', name: '蔡宗憲', age: '25 ~ 34 歲', theme: 'wealth', gender: '男性', relation: '本人自身', role: '在職 · 房仲業務',
-    question: '我身上有幾百萬債務，這一行還要不要繼續做下去', extraKey: 'debtNote', extra: '每月最低應繳四萬八' },
-  { slug: 'social-activist', name: '梁詠欣', age: '25 ~ 34 歲', theme: 'career', gender: '女性', relation: '本人自身', role: '在職 · 非營利組織',
-    question: '做倡議薪水很低又看不到改變，我該不該轉去企業上班', extraKey: 'valueNote', extra: '同溫層會覺得我背叛理念' },
-  { slug: 'overseas-student', name: '杜家瑋', age: '18 ~ 24 歲', theme: 'work', gender: '男性', relation: '本人自身', role: '學生 · 海外碩士',
-    question: '投過八百封履歷沒有回音，簽證快到期，我要留下還是回台灣', extraKey: 'loanNote', extra: '學貸兩百萬，父母不知道' },
-  { slug: 'single-father', name: '謝文彬', age: '35 ~ 44 歲', theme: 'children', gender: '男性', relation: '子女', role: '單親 · 長途貨運',
-    question: '我女兒上國中之後就不跟我說話，我又常常不在家，要怎麼跟她相處', extraKey: 'childNote', extra: '女兒國二，週間住阿嬤家' },
-  { slug: 'blue-collar-worker', name: '吳萬財', age: '55 歲以上', theme: 'wealth', gender: '男性', relation: '本人自身', role: '在職 · 工程統包',
-    question: '被業主倒帳三百萬，工班的薪水要怎麼發得出來', extraKey: 'debtNote', extra: '底下八個師傅等著領錢' },
-  { slug: 'counselor', name: '簡心儀', age: '35 ~ 44 歲', theme: 'love', gender: '女性', relation: '伴侶', role: '在職 · 諮商心理師',
-    question: '我每天聽別人的痛苦，回到家跟伴侶一句話都不想講', extraKey: 'workNote', extra: '一週接二十八個個案' },
-  { slug: 'isolated-youth', name: '韓宇晨', age: '18 ~ 24 歲', theme: 'family', gender: '男性', relation: '家人', role: '待業 · 與家人同住',
-    question: '我兩年沒有出門，家裡快要停止金援，我不知道怎麼開口', extraKey: 'stateNote', extra: '白天睡覺，只在半夜出房間' },
-  { slug: 'petty-bourgeois', name: '溫郁雯', age: '25 ~ 34 歲', theme: 'wealth', gender: '女性', relation: '本人自身', role: '在職 · 行銷企劃',
-    question: '薪水三萬八，想存頭期款但物價一直漲，這件事還有可能嗎', extraKey: 'saveNote', extra: '每月固定存六千，已經存三年' }
-];
 
 /* 三種候選報告：通用範本、敷衍短文、合格報告 */
 function genericReport() {
