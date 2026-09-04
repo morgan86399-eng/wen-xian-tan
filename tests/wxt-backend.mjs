@@ -406,7 +406,12 @@ await check('已登入且有點數時 generate 回傳 advice 正文', async (env
               content: JSON.stringify({
                 title: '感情篇',
                 summary: '先把相處節奏看清楚。',
-                sections: [{ heading: '下一步', body: '這週只確認一件具體約定。' }]
+                sections: [
+                  { heading: '對象輪廓與相處模式', body: '對方目前偏觀察、少主動。' },
+                  { heading: '這段關係目前的節奏', body: '先把相處節奏看清楚。' },
+                  { heading: '適合主動或等待的時機', body: '週末再開口比較合適。' },
+                  { heading: '自身要調整的互動習慣', body: '這週只確認一件具體約定。' }
+                ]
               })
             }
           }],
@@ -455,7 +460,12 @@ const INCOMPLETE_SAMPLE = {
 const GOOD_SAMPLE = {
   title: '關係的穩定始於內心的從容',
   summary: '先把相處節奏看清楚。',
-  sections: [{ heading: '對象輪廓與相處模式', body: '對方在意的是被理解，先從日常對話開始。' }],
+  sections: [
+    { heading: '對象輪廓與相處模式', body: '對方在意的是被理解，先從日常對話開始。' },
+    { heading: '這段關係目前的節奏', body: '先把相處節奏看清楚，不急著下定論。' },
+    { heading: '適合主動或等待的時機', body: '週間先觀察，週末再開口比較合適。' },
+    { heading: '自身要調整的互動習慣', body: '把想說的話講完整，不要只丟半句。' }
+  ],
   actions: [
     '這週挑一個平常的晚上，主動約對方吃一頓飯，只聊生活不談將來',
     '把最近三次對話裡對方主動提起的事記下來，找出他真正在意的主題',
@@ -505,10 +515,18 @@ await check('buildUserPrompt 送白話標籤，略過期望寫成未指定並要
   assert.match(prompt, /請直接輸出完整報告，不得要求補充任何資料/);
 });
 
-await check('isIncompleteReport 擋掉追問文、放行正常報告', async () => {
+await check('isIncompleteReport 擋掉追問文、段數不足、放行正常報告', async () => {
   assert.equal(isIncompleteReport(INCOMPLETE_SAMPLE), true);
   assert.equal(isIncompleteReport(GOOD_SAMPLE), false);
   assert.equal(isIncompleteReport({ title: '感情篇', summary: '', sections: [] }), true);
+  // llama 沒有 JSON 模式時會整段吐純文字：有字但沒有段落結構，一樣算不合格
+  assert.equal(isIncompleteReport({ title: '感情篇', summary: '一大段沒有結構的文字。'.repeat(50), sections: [] }), true);
+  assert.equal(isIncompleteReport({ ...GOOD_SAMPLE, sections: GOOD_SAMPLE.sections.slice(0, 3) }), true);
+  assert.equal(
+    isIncompleteReport({ ...GOOD_SAMPLE, sections: [...GOOD_SAMPLE.sections.slice(0, 3), { heading: '第四段', body: '   ' }] }),
+    true,
+    '第四段只有空白也算不合格'
+  );
 });
 
 await check('extractActions 收出三條建設性建議', async () => {

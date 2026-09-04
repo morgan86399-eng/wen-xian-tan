@@ -183,10 +183,9 @@ export async function callGeminiVision(env, imageBase64, { model } = {}) {
   return { text: String(extractText(payload) || '').trim(), model: usedModel, tokens: usageTokens(payload) };
 }
 
-/* Groq 這把金鑰每分鐘只有 8000 token，而且會用 max_tokens 先扣預算：
-   填 8192 大於整個分鐘額度，等於每次都直接被 429 退件（實測 5 次有 3 次因此掉到 llama）。
-   實際用量峰值 4466，留 5000 才叫得動 Groq。Gemini 與 Workers AI 沒有這個限制，維持 8192。 */
-const GROQ_MAX_TOKENS = 5000;
+/* Groq 這把金鑰每分鐘 8000 token（x-ratelimit-limit-tokens），額度按「實際用量」扣，
+   但 max_tokens 不能大於分鐘上限，填 8192 會被退件。實測 8000 可以正常回（7.7 秒，實用 3671）。 */
+const GROQ_MAX_TOKENS = 8000;
 
 export async function callGroqText(env, messages, { model, maxTokens = GROQ_MAX_TOKENS, temperature = 0.55 } = {}) {
   const apiKey = requireGroq(env);

@@ -129,6 +129,9 @@ const INCOMPLETE_HARD = [
 
 const INCOMPLETE_TITLE = ['請提供', '請補充', '請告訴我', '缺少', '無法解讀'];
 
+/* 報告合約寫死四段：段數不足代表模型沒照骨架寫（llama 沒有 JSON 模式時常整段吐純文字） */
+const REQUIRED_SECTIONS = 4;
+
 export function isIncompleteReport(raw) {
   if (!raw) return true;
   const report = (typeof raw === 'object' && !Array.isArray(raw)) ? raw : { summary: String(raw || '') };
@@ -140,5 +143,13 @@ export function isIncompleteReport(raw) {
   const dump = `${title}\n${bodyText}`;
   if (INCOMPLETE_HARD.some((word) => dump.includes(word))) return true;
 
-  return !bodyText.trim();
+  if (!bodyText.trim()) return true;
+
+  const sections = Array.isArray(report.sections) ? report.sections : [];
+  const filled = sections.filter((section) => {
+    if (!section || typeof section !== 'object') return false;
+    const body = typeof section.body === 'string' ? section.body : (typeof section.content === 'string' ? section.content : '');
+    return Boolean(body.trim());
+  });
+  return filled.length < REQUIRED_SECTIONS;
 }
