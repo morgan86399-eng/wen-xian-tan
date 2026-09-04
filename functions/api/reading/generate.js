@@ -31,7 +31,10 @@ export const onRequest = postOnly(async ({ request, env }) => {
   if (!isThemeId(themeId)) return json({ error: 'INVALID_THEME' }, 400);
   if (!nonce || nonce.length < 8) return json({ error: 'INVALID_NONCE' }, 400);
 
-  const existing = await getReadingByNonce(env, nonce);
+  // nonce 綁使用者：別人拿走同一組 nonce 也讀不到這份報告，也撞不到這筆扣點紀錄
+  const scopedNonce = `${session.uid}:${nonce}`;
+
+  const existing = await getReadingByNonce(env, scopedNonce);
   if (existing && existing.user_id === session.uid) {
     return json({
       ok: true,
@@ -44,7 +47,7 @@ export const onRequest = postOnly(async ({ request, env }) => {
     });
   }
 
-  const idempotencyKey = `reading:${nonce}`;
+  const idempotencyKey = `reading:${scopedNonce}`;
   const deduct = await atomicDeductCredit(env, {
     userId: session.uid,
     themeId,
@@ -52,8 +55,8 @@ export const onRequest = postOnly(async ({ request, env }) => {
   });
 
   if (deduct.idempotent && deduct.readingId) {
-    const cached = await getReadingByNonce(env, nonce);
-    if (cached) {
+    const cached = await getReadingByNonce(env, scopedNonce);
+    if (cached && cached.user_id === session.uid) {
       return json({
         ok: true,
         id: cached.id,
@@ -132,7 +135,8 @@ export const onRequest = postOnly(async ({ request, env }) => {
     contentJson: report,
     model,
     tokens,
-    nonce
+    nonce: scopedNonce,
+    idempotencyKey
   });
 
   return json({

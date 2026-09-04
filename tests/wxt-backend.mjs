@@ -26,6 +26,9 @@ import {
   THEME_SKELETONS
 } from '../functions/lib/wxt/forbidden.mjs';
 import { getEcpayConfig, calculateCheckMacValue } from '../functions/lib/wxt/ecpay.mjs';
+import { CREDITS_BY_THEME, validateOrderInput, getProduct } from '../functions/lib/wxt/products.mjs';
+import { onRequest as devLogin } from '../functions/api/auth/dev-login.js';
+import { saveReading, getOrderByTradeNo } from '../functions/lib/wxt/store.mjs';
 import { signUserSession, sessionCookieHeader } from '../functions/lib/wxt/auth.mjs';
 import { generateReport } from '../functions/lib/wxt/ai.mjs';
 import {
@@ -121,7 +124,7 @@ await check('同一 event 重送只發點一次', async (env) => {
   assert.equal(second.body, '1|OK');
 
   const credits = await getCreditsMap(env, userId);
-  assert.equal(credits.love, 3, '應只發 3 點');
+  assert.equal(credits.love, CREDITS_BY_THEME.love, '應只發一次感情篇的量');
   assert.equal(orderId.length > 0, true);
 });
 
@@ -144,7 +147,7 @@ await check('有餘額時原子扣 1 點', async (env) => {
     userId,
     orderId: 'ord_test',
     themes: ['love'],
-    creditsPerTheme: 1,
+    creditsByTheme: { love: 1 },
     idempotencyPrefix: 'purchase:ord_test'
   });
   const deduct = await atomicDeductCredit(env, {
@@ -391,7 +394,7 @@ await check('已登入且有點數時 generate 回傳 advice 正文', async (env
     userId: id,
     orderId,
     themes: ['love'],
-    creditsPerTheme: 3,
+    creditsByTheme: { love: 3 },
     idempotencyPrefix: `order:${orderId}`
   });
   const token = await signUserSession(env, { uid: id, provider: 'email' });
@@ -551,7 +554,7 @@ async function seedUserWithCredit(env, email) {
     userId: id,
     orderId,
     themes: ['love'],
-    creditsPerTheme: 3,
+    creditsByTheme: { love: 3 },
     idempotencyPrefix: `order:${orderId}`
   });
   return id;
@@ -620,5 +623,205 @@ await check('兩次都回追問文就判失敗並退還點數', async (env) => {
     globalThis.fetch = realFetch;
   }
 });
+
+
+console.log('\n[綠界 callback 逐欄核對]');
+
+/** 用一筆正常訂單 + 一份可覆寫的回呼參數，產生通過簽章的表單 */
+async function paidCallbackParams(env, { tradeNo, orderId, amount = 199, productId = 'single', overrides = {} }) {
+  const params = {
+    MerchantID: env.ECPAY_MERCHANT_ID,
+    MerchantTradeNo: tradeNo,
+    RtnCode: '1',
+    RtnMsg: 'paid',
+    TradeAmt: String(amount),
+    PaymentDate: '2026/09/04 12:00:00',
+    TradeNo: `ECP${tradeNo.slice(-6)}`,
+    CustomField1: orderId,
+    CustomField2: productId,
+    ...overrides
+  };
+  const config = getEcpayConfig(env);
+  params.CheckMacValue = await calculateCheckMacValue(params, config.hashKey, config.hashIV);
+  return params;
+}
+
+async function seedOrder(env, { email, productId, themes, amount, tradeNo }) {
+  const { id: userId } = await upsertEmailUser(env, email);
+  const orderId = await createOrder(env, { userId, productId, amount, themes, merchantTradeNo: tradeNo });
+  return { userId, orderId };
+}
+
+await check('TradeAmt 被改小時拒絕入帳', async (env) => {
+  const tradeNo = 'WXT250904120000AMT';
+  const { userId, orderId } = await seedOrder(env, {
+    email: 'amount@example.test', productId: 'single', themes: ['love'], amount: 199, tradeNo
+  });
+  const params = await paidCallbackParams(env, { tradeNo, orderId, overrides: { TradeAmt: '1' } });
+  const res = await postForm(ecpayCallback, env, params);
+
+  assert.equal(res.status, 400);
+  assert.equal(res.body, '0|AMOUNT_MISMATCH');
+  const credits = await getCreditsMap(env, userId);
+  assert.equal(credits.love, 0, '金額不符不可以發點');
+  const order = await getOrderByTradeNo(env, tradeNo);
+  assert.equal(order.status, 'PENDING', '金額不符訂單不可以變成已付款');
+});
+
+await check('MerchantID 不是自家商店代號時拒絕入帳', async (env) => {
+  const tradeNo = 'WXT250904120000MID';
+  const { userId, orderId } = await seedOrder(env, {
+    email: 'mid@example.test', productId: 'single', themes: ['love'], amount: 199, tradeNo
+  });
+  const params = await paidCallbackParams(env, { tradeNo, orderId, overrides: { MerchantID: '9999999' } });
+  const res = await postForm(ecpayCallback, env, params);
+
+  assert.equal(res.body, '0|MERCHANT_MISMATCH');
+  const credits = await getCreditsMap(env, userId);
+  assert.equal(credits.love, 0);
+});
+
+await check('回呼帶到別筆訂單編號時拒絕入帳', async (env) => {
+  const tradeNo = 'WXT250904120000CF1';
+  const { userId, orderId } = await seedOrder(env, {
+    email: 'cf1@example.test', productId: 'single', themes: ['love'], amount: 199, tradeNo
+  });
+  const params = await paidCallbackParams(env, { tradeNo, orderId, overrides: { CustomField1: 'ord_someone_else' } });
+  const res = await postForm(ecpayCallback, env, params);
+
+  assert.equal(res.body, '0|ORDER_MISMATCH');
+  const credits = await getCreditsMap(env, userId);
+  assert.equal(credits.love, 0);
+  assert.ok(orderId.length > 0);
+});
+
+console.log('\n[六篇方案與各篇點數]');
+
+await check('前端送的 all 方案後端收得到，六篇金額 999', async () => {
+  const validated = validateOrderInput('all', ['love', 'work', 'career', 'wealth', 'family', 'children']);
+  assert.equal(validated.ok, true, validated.error || '');
+  assert.equal(validated.product.amount, 999);
+  assert.equal(validated.themes.length, 6);
+  assert.equal(getProduct('six'), null, '舊的 six 代號不應該再存在');
+});
+
+await check('六篇方案各篇點數不同且合計 18 次', async (env) => {
+  const themes = ['love', 'work', 'career', 'wealth', 'family', 'children'];
+  const tradeNo = 'WXT250904120000ALL';
+  const { userId, orderId } = await seedOrder(env, {
+    email: 'all@example.test', productId: 'all', themes, amount: 999, tradeNo
+  });
+  const params = await paidCallbackParams(env, { tradeNo, orderId, amount: 999, productId: 'all' });
+  const res = await postForm(ecpayCallback, env, params);
+  assert.equal(res.body, '1|OK');
+
+  const credits = await getCreditsMap(env, userId);
+  assert.deepEqual(credits, { love: 4, wealth: 4, career: 3, work: 3, family: 2, children: 2 });
+  const total = Object.values(credits).reduce((sum, n) => sum + n, 0);
+  assert.equal(total, 18);
+});
+
+console.log('\n[付款成功但核發中斷]');
+
+/** 讓指定 SQL 第一次執行就炸掉，用來模擬 Worker 在核發途中被切斷 */
+function dbFailingOnce(db, marker) {
+  let armed = true;
+  const boom = async () => { throw new Error('模擬 D1 中斷'); };
+  return {
+    ...db,
+    prepare(sql) {
+      if (armed && sql.includes(marker)) {
+        armed = false;
+        return { bind: () => ({ run: boom, first: boom, all: boom }) };
+      }
+      return db.prepare(sql);
+    }
+  };
+}
+
+await check('核發中斷時不留付款事件，綠界重送會把點數補齊', async (env) => {
+  const themes = ['love', 'work', 'career', 'wealth', 'family', 'children'];
+  const tradeNo = 'WXT250904120000RTY';
+  const { userId, orderId } = await seedOrder(env, {
+    email: 'retrygrant@example.test', productId: 'all', themes, amount: 999, tradeNo
+  });
+  const params = await paidCallbackParams(env, { tradeNo, orderId, amount: 999, productId: 'all' });
+
+  const brokenEnv = { ...env, DB: dbFailingOnce(env.DB, 'INSERT INTO credits') };
+  const broken = await postForm(ecpayCallback, brokenEnv, params);
+  assert.ok(broken.status >= 500, `核發失敗要回非 2xx 讓綠界重送，實際 ${broken.status}`);
+  assert.notEqual(broken.body, '1|OK', '核發沒完成不可以回 1|OK');
+
+  const events = await env.DB.prepare('SELECT COUNT(*) AS c FROM payment_events').bind().first();
+  assert.equal(events.c, 0, '核發沒完成就不可以留下付款事件，否則重送會被當重複而不補發');
+
+  const retry = await postForm(ecpayCallback, env, params);
+  assert.equal(retry.body, '1|OK');
+  const credits = await getCreditsMap(env, userId);
+  assert.deepEqual(credits, { love: 4, wealth: 4, career: 3, work: 3, family: 2, children: 2 });
+});
+
+console.log('\n[報告不可跨帳號讀取]');
+
+await check('別人拿同一組 nonce 讀不到我的報告', async (env) => {
+  const { id: ownerId } = await upsertEmailUser(env, 'owner@example.test');
+  const rawNonce = 'shared-nonce-0904';
+  await saveReading(env, {
+    userId: ownerId,
+    themeId: 'love',
+    inputJson: { themeId: 'love' },
+    contentJson: { summary: '這是本人的私密報告', sections: [] },
+    model: 'test',
+    tokens: 0,
+    nonce: `${ownerId}:${rawNonce}`,
+    idempotencyKey: `reading:${ownerId}:${rawNonce}`
+  });
+
+  const { id: strangerId } = await upsertEmailUser(env, 'stranger@example.test');
+  const token = await signUserSession(env, { uid: strangerId, provider: 'email' });
+  const { status, body } = await postJson(generate, env, {
+    themeId: 'love',
+    requestId: rawNonce,
+    answers: { question: '借看一下', goal: 'skip' }
+  }, { cookie: `wx_session=${token}` });
+
+  assert.equal(status, 402, '沒點數的人應該被擋在扣點這關');
+  assert.equal(body.error, 'INSUFFICIENT_CREDITS');
+  assert.ok(!JSON.stringify(body).includes('私密報告'), '不可以回傳別人的報告內容');
+});
+
+console.log('\n[測試帳號入口]');
+
+await check('沒開 ALLOW_DEV_LOGIN 時測試登入等同不存在', async (env) => {
+  const { status, body, raw } = await postJson(devLogin, env, { username: 'user', password: 'user123' });
+  assert.equal(status, 404);
+  assert.equal(body.error, 'NOT_FOUND');
+  assert.equal(raw.headers.get('set-cookie'), null, '不可以發 session');
+});
+
+await check('開了 ALLOW_DEV_LOGIN 才能用測試帳號', async (env) => {
+  const { status, body } = await postJson(devLogin, { ...env, ALLOW_DEV_LOGIN: 'true' }, { username: 'user', password: 'user123' });
+  assert.equal(status, 200);
+  assert.equal(body.ok, true);
+});
+
+console.log('\n[肖像宣稱不得復活]');
+
+await check('前端原始碼與首頁不得出現肖像或外貌宣稱', async () => {
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const banned = ['肖像', '長相', '樣貌', '容貌'];
+  const files = ['index.html', 'README.md']
+    .concat(readdirSync(new URL('../src/js', import.meta.url)).map((f) => `src/js/${f}`));
+
+  const hits = [];
+  for (const file of files) {
+    const text = readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+    for (const word of banned) {
+      if (text.includes(word)) hits.push(`${file}:${word}`);
+    }
+  }
+  assert.deepEqual(hits, [], `這些檔案還留著外貌宣稱：${hits.join('、')}`);
+});
+
 
 console.log(`\n問仙壇後端測試通過 ${passed} 項`);

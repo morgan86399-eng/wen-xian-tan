@@ -9,7 +9,13 @@ const DEV_PROVIDER = 'dev';
 const DEV_PROVIDER_SUBJECT = 'dev-test-user';
 const CREDITS_PER_THEME = 1000;
 
+/** 測試帳號只在有明確開啟的環境存在；正式站不設這個變數，端點等同不存在 */
+function devLoginAllowed(env) {
+  return String((env && env.ALLOW_DEV_LOGIN) || '') === 'true';
+}
+
 export const onRequest = postOnly(async ({ request, env }) => {
+  if (!devLoginAllowed(env)) return json({ error: 'NOT_FOUND' }, 404);
   if (!hasDb(env)) return json({ error: 'SERVICE_UNAVAILABLE' }, 503);
 
   const body = await readJson(request);

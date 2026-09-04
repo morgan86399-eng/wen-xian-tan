@@ -151,26 +151,33 @@ export async function getCreditsMap(env, userId) {
   return out;
 }
 
-export async function grantCreditsForOrder(env, { userId, orderId, themes, creditsPerTheme, idempotencyPrefix }) {
+/** 逐篇核發：每篇點數由 creditsByTheme 決定；每篇各自冪等，中斷後重跑會補齊沒發到的篇章 */
+export async function grantCreditsForOrder(env, { userId, orderId, themes, creditsByTheme, idempotencyPrefix }) {
   const stamp = now();
   let grantedAny = false;
   for (const themeId of themes) {
+    const amount = Number((creditsByTheme || {})[themeId] || 0);
+    if (amount <= 0) continue;
+
     const ledgerKey = `${idempotencyPrefix}:${themeId}`;
     const ledgerId = newId('cl');
-    const inserted = await db(env)
-      .prepare(`INSERT INTO credit_ledger (id, user_id, theme_id, delta, reason, order_id, reading_id, idempotency_key, created_at)
-                VALUES (?, ?, ?, ?, 'purchase', ?, NULL, ?, ?)
-                ON CONFLICT(idempotency_key) DO NOTHING`)
-      .bind(ledgerId, userId, themeId, creditsPerTheme, orderId, ledgerKey, stamp)
-      .run();
-    if (!inserted.meta || !inserted.meta.changes) continue;
 
-    await db(env)
-      .prepare(`INSERT INTO credits (user_id, theme_id, balance) VALUES (?, ?, ?)
-                ON CONFLICT(user_id, theme_id) DO UPDATE SET balance = balance + excluded.balance`)
-      .bind(userId, themeId, creditsPerTheme)
-      .run();
-    grantedAny = true;
+    // 帳本與餘額必須同進同退：餘額那句用 WHERE EXISTS 綁在本次剛寫進去的帳本列上，
+    // 帳本被冪等鍵擋掉時餘額就不會加，中途失敗時整批回滾，不會留下「有帳本沒點數」的破洞
+    const [inserted] = await db(env).batch([
+      db(env)
+        .prepare(`INSERT INTO credit_ledger (id, user_id, theme_id, delta, reason, order_id, reading_id, idempotency_key, created_at)
+                  VALUES (?, ?, ?, ?, 'purchase', ?, NULL, ?, ?)
+                  ON CONFLICT(idempotency_key) DO NOTHING`)
+        .bind(ledgerId, userId, themeId, amount, orderId, ledgerKey, stamp),
+      db(env)
+        .prepare(`INSERT INTO credits (user_id, theme_id, balance)
+                  SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM credit_ledger WHERE id = ?)
+                  ON CONFLICT(user_id, theme_id) DO UPDATE SET balance = balance + excluded.balance`)
+        .bind(userId, themeId, amount, ledgerId)
+    ]);
+
+    if (inserted && inserted.meta && inserted.meta.changes) grantedAny = true;
   }
   return grantedAny;
 }
@@ -274,7 +281,7 @@ export async function getReadingByNonce(env, nonce) {
     .first();
 }
 
-export async function saveReading(env, { userId, themeId, inputJson, contentJson, model, tokens, nonce, promptVersion = 'v1' }) {
+export async function saveReading(env, { userId, themeId, inputJson, contentJson, model, tokens, nonce, idempotencyKey, promptVersion = 'v1' }) {
   const id = newId('rd');
   await db(env)
     .prepare(`INSERT INTO readings (id, user_id, theme_id, input_json, content_json, model, tokens, prompt_version, nonce, created_at)
@@ -283,7 +290,7 @@ export async function saveReading(env, { userId, themeId, inputJson, contentJson
     .run();
   await db(env)
     .prepare('UPDATE credit_ledger SET reading_id = ? WHERE idempotency_key = ?')
-    .bind(id, `reading:${nonce}`)
+    .bind(id, idempotencyKey)
     .run();
   return id;
 }

@@ -17,6 +17,8 @@ import '../css/payment-modal.css';
 import '../css/sapphire.css';
 import './payment-sdk.js';
 import { formatAdviceFromReport, pickReportObject, extractActions } from '../../functions/lib/wxt/report-format.mjs';
+import { CREDITS_BY_THEME } from '../../functions/lib/wxt/products.mjs';
+import { TERMS_VERSION } from './legal.js';
 
 /**
  * 問仙壇 · 掌心解碼 App - 核心應用邏輯與白話問卷引導引擎
@@ -39,14 +41,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 站台設定：LINE 官方帳號網址由後台環境變數 LINE_OA_URL 提供，沒設定就不顯示諮詢按鈕
   let siteConfigPromise = null;
+  let siteConfig = {};
   function ensureSiteConfig() {
     if (!siteConfigPromise) {
       siteConfigPromise = fetch('/api/config', { credentials: 'include' })
         .then((res) => (res.ok ? res.json() : {}))
+        .then((cfg) => {
+          siteConfig = cfg && typeof cfg === 'object' ? cfg : {};
+          return siteConfig;
+        })
         .catch(() => ({}));
     }
     return siteConfigPromise;
   }
+  ensureSiteConfig();
 
   function safeLineUrl(value) {
     const url = String(value || '').trim();
@@ -560,7 +568,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let totalPoints = 0;
     Object.values(wallet).forEach((pts) => { totalPoints += pts; });
 
-    const devLoginSection = `
+    const devLoginSection = siteConfig.allowDevLogin ? `
       <div class="auth-divider">
         <span>測試帳號登入（開發用）</span>
       </div>
@@ -568,21 +576,21 @@ document.addEventListener('DOMContentLoaded', () => {
       <form id="devLoginForm" style="display:grid;gap:14px;">
         <div class="auth-form-group">
           <label class="auth-form-label" for="devLoginUsername">帳號：</label>
-          <input type="text" id="devLoginUsername" class="auth-form-input" placeholder="帳號" value="user" autocomplete="username">
+          <input type="text" id="devLoginUsername" class="auth-form-input" placeholder="帳號" autocomplete="username">
         </div>
         <div class="auth-form-group">
           <label class="auth-form-label" for="devLoginPassword">密碼：</label>
-          <input type="password" id="devLoginPassword" class="auth-form-input" placeholder="密碼" value="user123" autocomplete="current-password">
+          <input type="password" id="devLoginPassword" class="auth-form-input" placeholder="密碼" autocomplete="current-password">
         </div>
         <div id="devLoginError" style="display:none;color:#EF4444;font-size:0.85rem;"></div>
         <button type="submit" class="btn btn-outline" style="width:100%;">測試帳號登入</button>
       </form>
-    `;
+    ` : '';
 
     authPageContainer.innerHTML = `
       <div class="auth-page-header">
         <h2>🔮 仙壇結緣 ｜ 信士登入 / 註冊</h2>
-        <p>一鍵登入仙壇帳號，永久保存您的各篇掌紋解讀報告、正緣肖像與測算次數</p>
+        <p>一鍵登入仙壇帳號，永久保存您的各篇掌紋解讀報告與測算次數</p>
       </div>
 
       ${currentUser ? `
@@ -731,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="font-size:2.2rem;margin-bottom:8px;">👤</div>
             <h3 style="color:var(--gold-bright);margin-bottom:8px;">您尚未登入仙壇帳號</h3>
             <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:18px;max-width:480px;margin-left:auto;margin-right:auto;">
-              登入仙壇帳號後，系統將為您永久保存六大主題的測算次數、正緣模擬肖像與掌紋解讀報告。
+              登入仙壇帳號後，系統將為您永久保存六大主題的測算次數與掌紋解讀報告。
             </p>
             <button type="button" class="btn btn-primary" id="memberGoAuthBtn">
               👉 前往使用者登入 / 免費註冊 (支援 LINE · Google)
@@ -1033,12 +1041,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const names = Array.from(state.customChosenThemes).map((id) => {
       const found = THEMES.find((t) => t.id === id);
-      return found ? found.name : id;
+      const label = found ? found.name : id;
+      return `${label} ${CREDITS_BY_THEME[id] || 0} 次`;
     });
 
     if (checkoutSummarySelected) {
       checkoutSummarySelected.textContent = names.length
-        ? `所選項目（各獲 3 次測算機會）：${names.join('、')}`
+        ? `所選項目與獲得次數：${names.join('、')}`
         : '尚未選定欲購買的主題';
     }
 
@@ -1083,6 +1092,7 @@ document.addEventListener('DOMContentLoaded', () => {
     PaymentSDK.openCheckout({
       productId: plan.id,
       planId: plan.id,
+      termsVersion: TERMS_VERSION,
       planName: `問仙壇 · ${plan.label} (${themeTitles})`,
       displayPrice: plan.price,
       themeKeys: chosenThemes,

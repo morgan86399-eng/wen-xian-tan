@@ -72,7 +72,8 @@
         credentials: 'include',
         body: JSON.stringify({
           productId: options.productId || options.planId,
-          themeKeys: options.themeKeys || options.themes || []
+          themeKeys: options.themeKeys || options.themes || [],
+          termsVersion: options.termsVersion || ''
         })
       })
         .then(async (res) => {
