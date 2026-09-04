@@ -15,6 +15,7 @@ import { openCamera, openFilePicker, ensurePalmCaptureDom } from './palm_capture
 import { showLegalModal } from './legal.js';
 import '../css/payment-modal.css';
 import '../css/sapphire.css';
+import '../css/star-sapphire.css';
 import './payment-sdk.js';
 import { formatAdviceFromReport, pickReportObject, extractActions } from '../../functions/lib/wxt/report-format.mjs';
 import { CREDITS_BY_THEME } from '../../functions/lib/wxt/products.mjs';
