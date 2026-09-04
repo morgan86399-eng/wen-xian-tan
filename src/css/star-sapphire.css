@@ -1,189 +1,12 @@
-/* Star Sapphire Cabochon — isolated preview branch visual layer. */
-:root {
-  --cabochon-ink: #01040d;
-  --cabochon-midnight: #03102c;
-  --cabochon-blue: #0a3e9e;
-  --cabochon-electric: #2b8cff;
-  --cabochon-ice: #c9ecff;
-  --cabochon-gold: #d8bc74;
-  --cabochon-champagne: #fff0b8;
-  --cabochon-rim: linear-gradient(115deg, #705017, #f9e9aa 22%, #987122 43%, #fff3c2 66%, #6a4a14 100%);
-}
-
-.star-sapphire-cabochon {
-  background:
-    radial-gradient(ellipse at 50% -12%, rgba(32, 105, 255, .31), transparent 38rem),
-    radial-gradient(ellipse at 4% 62%, rgba(8, 50, 142, .24), transparent 31rem),
-    radial-gradient(ellipse at 96% 78%, rgba(20, 95, 221, .18), transparent 34rem),
-    linear-gradient(180deg, #01040e 0%, #020919 42%, #01030b 100%);
-}
-
-.star-sapphire-cabochon::before {
-  content: '';
-  position: fixed;
-  z-index: 0;
-  inset: 0;
-  pointer-events: none;
-  opacity: .32;
-  background-image:
-    radial-gradient(circle, rgba(255, 255, 255, .55) 0 1px, transparent 1.5px),
-    radial-gradient(circle, rgba(86, 167, 255, .5) 0 1px, transparent 1.5px);
-  background-position: 0 0, 31px 29px;
-  background-size: 91px 91px, 137px 137px;
-  mask-image: linear-gradient(to bottom, #000, transparent 76%);
-  animation: cabochonStarDrift 24s linear infinite;
-}
-
-@keyframes cabochonStarDrift {
-  to { transform: translate3d(-38px, 26px, 0); }
-}
-
-.star-sapphire-cabochon .sapphire-sky::after {
-  content: '';
-  position: absolute;
-  inset: -30%;
-  opacity: .16;
-  background: conic-gradient(from 0deg at 50% 42%, transparent 0 21%, rgba(113, 190, 255, .32) 24%, transparent 28% 54%, rgba(226, 204, 141, .18) 57%, transparent 61% 100%);
-  filter: blur(28px);
-  animation: cabochonAtmosphere 36s linear infinite;
-  will-change: transform;
-}
-
-@keyframes cabochonAtmosphere {
-  to { transform: rotate(360deg) scale(1.04); }
-}
-
-.star-sapphire-cabochon .app-header {
-  border-bottom: 1px solid transparent;
-  background:
-    linear-gradient(rgba(1, 5, 18, .86), rgba(1, 5, 18, .86)) padding-box,
-    var(--cabochon-rim) border-box;
-  box-shadow: 0 18px 54px rgba(0, 3, 18, .58), inset 0 -1px 0 rgba(94, 163, 255, .15);
-}
-
-.star-sapphire-cabochon .brand-wrap {
-  position: relative;
-  border: 1px solid rgba(235, 212, 145, .42);
-  border-radius: 50%;
-  background: radial-gradient(circle at 38% 28%, rgba(91, 176, 255, .28), rgba(3, 12, 38, .9) 66%);
-  box-shadow: inset 0 0 0 3px rgba(3, 24, 70, .72), 0 0 24px rgba(34, 120, 255, .3);
-}
-
-.star-sapphire-cabochon .brand-wrap::before,
-.star-sapphire-cabochon .brand-wrap::after {
-  content: '';
-  position: absolute;
-  z-index: 2;
-  left: 50%;
-  top: 50%;
-  width: 78%;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, #eaf7ff, transparent);
-  box-shadow: 0 0 8px #5eafff;
-  transform: translate(-50%, -50%) rotate(28deg);
-  animation: cabochonLogoRay 4.2s ease-in-out infinite;
-}
-
-.star-sapphire-cabochon .brand-wrap::after {
-  transform: translate(-50%, -50%) rotate(88deg);
-  animation-delay: -1.4s;
-}
-
-@keyframes cabochonLogoRay {
-  0%, 100% { opacity: .12; scale: .68 1; }
-  48% { opacity: .9; scale: 1.16 1; }
-}
-
-.star-sapphire-cabochon .app-nav-tabs {
-  border-color: rgba(224, 201, 133, .3);
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(10, 34, 88, .84), rgba(2, 8, 27, .94));
-}
-
-.star-sapphire-cabochon .app-tab-btn { border-radius: 999px; }
-
-.star-sapphire-cabochon .app-tab-btn.active {
-  color: #fff5ce;
-  border-color: rgba(248, 227, 163, .58);
-  background:
-    radial-gradient(circle at 50% -10%, rgba(91, 182, 255, .42), transparent 48%),
-    linear-gradient(135deg, #0c3d9d, #061335 78%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .2), inset 0 -8px 18px rgba(0, 7, 34, .46), 0 0 22px rgba(40, 125, 255, .28);
-}
-
-.star-sapphire-cabochon .app-hero--editorial {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid transparent;
-  border-radius: 34px;
-  background:
-    linear-gradient(125deg, rgba(1, 5, 18, .97), rgba(4, 18, 57, .95) 58%, rgba(5, 31, 91, .86)) padding-box,
-    var(--cabochon-rim) border-box;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .12),
-    inset 0 -50px 100px rgba(0, 3, 17, .44),
-    0 42px 100px rgba(0, 2, 14, .7),
-    0 0 64px rgba(34, 116, 255, .16);
-}
-
-.star-sapphire-cabochon .app-hero--editorial::before {
-  opacity: .6;
-  background:
-    linear-gradient(112deg, transparent 0 23%, rgba(183, 222, 255, .11) 24%, transparent 26% 68%, rgba(238, 217, 151, .08) 69%, transparent 71%),
-    radial-gradient(circle at 18% 23%, rgba(58, 143, 255, .25), transparent 24%),
-    repeating-radial-gradient(circle at 78% 52%, transparent 0 43px, rgba(158, 204, 255, .06) 44px, transparent 45px 72px);
-  animation: cabochonHeroField 13s ease-in-out infinite alternate;
-}
-
-@keyframes cabochonHeroField {
-  to { opacity: .86; transform: translate3d(1.2%, -.7%, 0) scale(1.025); }
-}
-
-.star-sapphire-cabochon .hero-slogan-capsule {
-  padding: 8px 14px 8px 10px;
-  border: 1px solid rgba(241, 218, 151, .45);
-  border-radius: 999px;
-  background: linear-gradient(90deg, rgba(11, 55, 145, .72), rgba(3, 13, 41, .78));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 10px 26px rgba(0, 9, 43, .4);
-}
-
-.star-sapphire-cabochon .hero-slogan-gem {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  transform: none;
-  background: radial-gradient(circle at 38% 26%, #effaff 0 8%, #52a9ff 20%, #0b4abf 46%, #020a23 82%);
-  box-shadow: inset -2px -3px 5px rgba(0, 2, 13, .78), 0 0 16px rgba(74, 163, 255, .9);
-  animation: cabochonGemBreathe 2.6s ease-in-out infinite;
-}
-
-@keyframes cabochonGemBreathe {
-  50% { transform: scale(1.16); filter: brightness(1.25); box-shadow: inset -2px -3px 5px rgba(0, 2, 13, .6), 0 0 25px rgba(110, 196, 255, 1); }
-}
-
-.star-sapphire-cabochon .hero-main-title {
-  color: transparent;
-  background: linear-gradient(105deg, #fff9d9, #d9bd72 35%, #f9e9ad 58%, #8fd3ff 76%, #fff5c8);
-  background-size: 240% auto;
-  background-clip: text;
-  -webkit-background-clip: text;
-  filter: drop-shadow(0 7px 18px rgba(0, 5, 28, .7));
-  animation: cabochonTitleLight 7s linear infinite;
-}
-
-@keyframes cabochonTitleLight {
-  to { background-position: -240% center; }
-}
-
-.star-sapphire-cabochon .hero-art {
+/* Only the approved hero cabochon remains; the rest of the site uses sapphire.css. */
+.hero-star-cabochon .hero-art {
   min-height: 306px;
   overflow: hidden;
   border: 1px solid transparent;
   border-radius: 54% 54% 22% 22% / 44% 44% 20% 20%;
   background:
     linear-gradient(#020714, #020714) padding-box,
-    var(--cabochon-rim) border-box;
+    linear-gradient(115deg, #705017, #f9e9aa 22%, #987122 43%, #fff3c2 66%, #6a4a14 100%) border-box;
   box-shadow:
     inset 0 2px 1px rgba(255, 255, 255, .28),
     inset 12px 16px 34px rgba(77, 156, 255, .14),
@@ -192,7 +15,7 @@
     0 0 54px rgba(47, 137, 255, .2);
 }
 
-.star-sapphire-cabochon .hero-art::before {
+.hero-star-cabochon .hero-art::before {
   inset: 2.5%;
   border-radius: inherit;
   background:
@@ -207,7 +30,7 @@
   100% { transform: translate3d(-.15%, .35%, 0) scale(1.045); filter: saturate(1) contrast(1.04) brightness(1); }
 }
 
-.star-sapphire-cabochon .hero-art::after {
+.hero-star-cabochon .hero-art::after {
   z-index: 7;
   inset: 2.5%;
   border-radius: inherit;
@@ -226,7 +49,7 @@
   78%, 100% { background-position: center, -130% 0; opacity: .42; }
 }
 
-.star-sapphire-cabochon .hero-art__prism {
+.hero-star-cabochon .hero-art__prism {
   z-index: 3;
   inset: 5%;
   border: 1px solid rgba(236, 214, 149, .2);
@@ -240,7 +63,7 @@
   to { transform: rotate(360deg) scale(1.035); }
 }
 
-.star-cabochon-aura {
+.hero-star-cabochon .star-cabochon-aura {
   position: absolute;
   z-index: 4;
   left: 50%;
@@ -259,7 +82,7 @@
   50% { opacity: .7; transform: translate(-50%, -50%) scale(1.1); filter: blur(16px); }
 }
 
-.star-cabochon-asterism {
+.hero-star-cabochon .star-cabochon-asterism {
   position: absolute;
   z-index: 6;
   left: 53%;
@@ -272,7 +95,7 @@
   animation: cabochonAsterismFloat 4.6s ease-in-out infinite;
 }
 
-.star-cabochon-asterism i {
+.hero-star-cabochon .star-cabochon-asterism i {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -284,11 +107,11 @@
   transform: translate(-50%, -50%) rotate(var(--ray-angle));
 }
 
-.star-cabochon-asterism i:nth-child(1) { --ray-angle: 0deg; }
-.star-cabochon-asterism i:nth-child(2) { --ray-angle: 60deg; }
-.star-cabochon-asterism i:nth-child(3) { --ray-angle: 120deg; }
+.hero-star-cabochon .star-cabochon-asterism i:nth-child(1) { --ray-angle: 0deg; }
+.hero-star-cabochon .star-cabochon-asterism i:nth-child(2) { --ray-angle: 60deg; }
+.hero-star-cabochon .star-cabochon-asterism i:nth-child(3) { --ray-angle: 120deg; }
 
-.star-cabochon-asterism b {
+.hero-star-cabochon .star-cabochon-asterism b {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -310,7 +133,7 @@
   50% { transform: translate(-50%, -50%) scale(1.32); filter: brightness(1.3); }
 }
 
-.star-cabochon-glass {
+.hero-star-cabochon .star-cabochon-glass {
   position: absolute;
   z-index: 5;
   inset: 3%;
@@ -322,210 +145,34 @@
   box-shadow: inset 0 0 38px rgba(100, 177, 255, .13), inset 0 -30px 45px rgba(0, 2, 14, .28);
 }
 
-.star-sapphire-cabochon .hero-celestial {
+.hero-star-cabochon .hero-celestial {
   z-index: 5;
   opacity: .46;
   filter: drop-shadow(0 0 9px rgba(52, 143, 255, .4));
 }
 
-.star-sapphire-cabochon .orbit--outer { animation-duration: 22s; }
-.star-sapphire-cabochon .orbit--mid { animation-duration: 17s; }
-.star-sapphire-cabochon .orbit--inner { animation-duration: 12s; }
-
-.star-sapphire-cabochon .themes-matrix-grid { gap: 18px; }
-
-.star-sapphire-cabochon .theme-hub-card {
-  overflow: hidden;
-  border: 1px solid transparent;
-  border-radius: 24px;
-  background:
-    radial-gradient(circle at var(--pointer-x, 84%) var(--pointer-y, 4%), rgba(83, 169, 255, .2), transparent 25%),
-    linear-gradient(155deg, rgba(8, 29, 78, .94), rgba(2, 8, 27, .98)) padding-box,
-    linear-gradient(130deg, rgba(239, 218, 154, .58), rgba(79, 158, 255, .22) 38%, rgba(232, 207, 137, .44) 70%, rgba(44, 108, 214, .18)) border-box;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .09), 0 24px 54px rgba(0, 3, 20, .52);
-  transform-style: preserve-3d;
-}
-
-.star-sapphire-cabochon .theme-hub-card::before {
-  content: '';
-  position: absolute;
-  z-index: 4;
-  left: -52%;
-  top: -70%;
-  width: 34%;
-  height: 240%;
-  pointer-events: none;
-  opacity: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .35), transparent);
-  transform: rotate(18deg);
-  animation: cabochonCardSweep 8s ease-in-out var(--image-delay, 0s) infinite;
-}
-
-@keyframes cabochonCardSweep {
-  0%, 56% { left: -52%; opacity: 0; }
-  63% { opacity: .68; }
-  78%, 100% { left: 126%; opacity: 0; }
-}
-
-.star-sapphire-cabochon .theme-hub-card:hover {
-  transform: translateY(-7px) scale(1.012);
-  border-color: transparent;
-  box-shadow: 0 30px 70px rgba(0, 17, 66, .66), 0 0 34px rgba(44, 136, 255, .26);
-}
-
-.star-sapphire-cabochon .theme-card-art {
-  height: 116px;
-  margin: 0 -20px 4px;
-  border-bottom: 1px solid rgba(239, 218, 153, .3);
-  border-radius: 23px 23px 42% 42% / 23px 23px 18px 18px;
-  box-shadow: inset 0 -16px 24px rgba(0, 4, 22, .28);
-}
-
-.star-sapphire-cabochon .theme-card-art::after {
-  opacity: .52;
-  background:
-    radial-gradient(circle at var(--glow-x, 28%) 46%, rgba(113, 195, 255, .38), transparent 10%),
-    linear-gradient(105deg, transparent 18%, rgba(255, 246, 207, .27) 35%, transparent 52%);
-  background-size: 100% 100%, 280% 100%;
-  animation-duration: 6.6s;
-}
-
-.star-sapphire-cabochon .theme-icon-box {
-  position: relative;
-  border-radius: 50%;
-  border-color: rgba(240, 220, 159, .46);
-  background: radial-gradient(circle at 36% 24%, rgba(191, 227, 255, .38), rgba(11, 66, 167, .74) 38%, rgba(2, 11, 35, .94) 76%);
-  box-shadow: inset -5px -7px 12px rgba(0, 3, 18, .5), 0 0 22px rgba(50, 143, 255, .23);
-}
-
-.star-sapphire-cabochon .theme-icon-box::after {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border: 1px solid rgba(255, 240, 191, .23);
-  border-radius: inherit;
-}
-
-.star-sapphire-cabochon .btn-primary,
-.star-sapphire-cabochon .btn-gold,
-.star-sapphire-cabochon .sapphire-cta,
-.star-sapphire-cabochon .user-topbar-btn {
-  border: 1px solid transparent;
-  border-radius: 999px;
-  color: #fff9dc;
-  background:
-    radial-gradient(circle at var(--pointer-x, 24%) var(--pointer-y, 18%), rgba(255, 255, 255, .62), transparent 15%) padding-box,
-    linear-gradient(105deg, #020a22, #0b3f9e 24%, #2495ff 47%, #0b48b7 67%, #020a24 100%) padding-box,
-    var(--cabochon-rim) border-box;
-  background-size: 100% 100%, 260% 100%, 100% 100%;
-  box-shadow:
-    inset 0 2px 1px rgba(255, 255, 255, .35),
-    inset 0 -10px 22px rgba(0, 5, 30, .52),
-    0 12px 30px rgba(0, 54, 166, .42),
-    0 0 26px rgba(47, 147, 255, .26);
-  clip-path: none;
-  animation: cabochonButtonFlow 4.8s linear infinite;
-}
-
-@keyframes cabochonButtonFlow {
-  to { background-position: 0 0, -260% 0, 0 0; }
-}
-
-.star-sapphire-cabochon .btn-primary::after,
-.star-sapphire-cabochon .btn-gold::after,
-.star-sapphire-cabochon .sapphire-cta::after,
-.star-sapphire-cabochon .user-topbar-btn::after {
-  content: '✦';
-  position: absolute;
-  z-index: 2;
-  right: 12px;
-  top: 50%;
-  color: #fffce4;
-  font-size: .72rem;
-  text-shadow: 0 0 5px #fff, 0 0 12px #55b2ff;
-  transform: translateY(-50%);
-  animation: cabochonButtonStar 2.2s ease-in-out infinite;
-}
-
-@keyframes cabochonButtonStar {
-  50% { opacity: .35; transform: translateY(-50%) rotate(90deg) scale(.62); }
-}
-
-.star-sapphire-cabochon .btn-primary:hover,
-.star-sapphire-cabochon .btn-gold:hover,
-.star-sapphire-cabochon .sapphire-cta:hover,
-.star-sapphire-cabochon .user-topbar-btn:hover {
-  transform: translateY(-3px) scale(1.025);
-  filter: saturate(1.2) brightness(1.12);
-  box-shadow: inset 0 2px 1px rgba(255, 255, 255, .44), 0 17px 42px rgba(0, 78, 214, .56), 0 0 42px rgba(89, 182, 255, .5);
-}
-
-.star-sapphire-cabochon .btn-outline {
-  border-radius: 999px;
-  border-color: rgba(219, 201, 145, .36);
-  background: linear-gradient(145deg, rgba(9, 36, 91, .7), rgba(2, 9, 30, .9));
-}
-
-.star-sapphire-cabochon .celestial-transition__skip {
-  min-width: 48px;
-  min-height: 44px;
-  padding: 10px 16px;
-  border-color: rgba(239, 218, 154, .48);
-  border-radius: 999px;
-}
-
-.star-sapphire-cabochon .theme-tag { color: #f3d987; }
-.star-sapphire-cabochon .theme-hub-card h3 { color: #eef7ff; text-shadow: 0 0 18px rgba(78, 158, 255, .16); }
+.hero-star-cabochon .orbit--outer { animation-duration: 22s; }
+.hero-star-cabochon .orbit--mid { animation-duration: 17s; }
+.hero-star-cabochon .orbit--inner { animation-duration: 12s; }
 
 @media (max-width: 760px) {
-  .star-sapphire-cabochon .app-hero--editorial {
-    padding: 25px 17px 17px;
-    border-radius: 27px;
-  }
-
-  .star-sapphire-cabochon .hero-art {
+  .hero-star-cabochon .hero-art {
     min-height: clamp(210px, 61vw, 258px);
     border-radius: 48% 48% 22% 22% / 38% 38% 18% 18%;
   }
 
-  .star-sapphire-cabochon .star-cabochon-asterism { width: 48%; }
-  .star-sapphire-cabochon .theme-card-art { height: clamp(106px, 31vw, 126px); }
-  .star-sapphire-cabochon .theme-hub-card:hover { transform: translateY(-3px); }
+  .hero-star-cabochon .star-cabochon-asterism { width: 48%; }
 }
 
 @media (max-width: 390px) {
-  .star-sapphire-cabochon .hero-slogan-capsule {
-    width: 100%;
-    justify-content: center;
-    font-size: .71rem;
-    padding-inline: 8px;
-  }
-
-  .star-sapphire-cabochon .hero-main-title { font-size: clamp(2.25rem, 12.5vw, 3.2rem); }
-  .star-sapphire-cabochon .hero-art { min-height: 202px; }
+  .hero-star-cabochon .hero-art { min-height: 202px; }
 }
 
-:root[data-motion='reduced'] .star-sapphire-cabochon::before,
-:root[data-motion='reduced'] .star-sapphire-cabochon .sapphire-sky::after,
-:root[data-motion='reduced'] .star-sapphire-cabochon .brand-wrap::before,
-:root[data-motion='reduced'] .star-sapphire-cabochon .brand-wrap::after,
-:root[data-motion='reduced'] .star-sapphire-cabochon .app-hero--editorial::before,
-:root[data-motion='reduced'] .star-sapphire-cabochon .hero-slogan-gem,
-:root[data-motion='reduced'] .star-sapphire-cabochon .hero-main-title,
-:root[data-motion='reduced'] .star-sapphire-cabochon .hero-art::before,
-:root[data-motion='reduced'] .star-sapphire-cabochon .hero-art::after,
-:root[data-motion='reduced'] .star-sapphire-cabochon .hero-art__prism,
-:root[data-motion='reduced'] .star-cabochon-aura,
-:root[data-motion='reduced'] .star-cabochon-asterism,
-:root[data-motion='reduced'] .star-cabochon-asterism b,
-:root[data-motion='reduced'] .star-sapphire-cabochon .theme-hub-card::before,
-:root[data-motion='reduced'] .star-sapphire-cabochon .btn-primary,
-:root[data-motion='reduced'] .star-sapphire-cabochon .btn-gold,
-:root[data-motion='reduced'] .star-sapphire-cabochon .sapphire-cta,
-:root[data-motion='reduced'] .star-sapphire-cabochon .user-topbar-btn,
-:root[data-motion='reduced'] .star-sapphire-cabochon .btn-primary::after,
-:root[data-motion='reduced'] .star-sapphire-cabochon .btn-gold::after,
-:root[data-motion='reduced'] .star-sapphire-cabochon .sapphire-cta::after,
-:root[data-motion='reduced'] .star-sapphire-cabochon .user-topbar-btn::after {
+:root[data-motion='reduced'] .hero-star-cabochon .hero-art::before,
+:root[data-motion='reduced'] .hero-star-cabochon .hero-art::after,
+:root[data-motion='reduced'] .hero-star-cabochon .hero-art__prism,
+:root[data-motion='reduced'] .hero-star-cabochon .star-cabochon-aura,
+:root[data-motion='reduced'] .hero-star-cabochon .star-cabochon-asterism,
+:root[data-motion='reduced'] .hero-star-cabochon .star-cabochon-asterism b {
   animation: none !important;
 }
