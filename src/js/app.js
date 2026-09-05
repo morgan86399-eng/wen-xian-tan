@@ -49,6 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
         .then((res) => (res.ok ? res.json() : {}))
         .then((cfg) => {
           siteConfig = cfg && typeof cfg === 'object' ? cfg : {};
+          try {
+            if (typeof updateCheckoutSummary === 'function') {
+              updateCheckoutSummary();
+            }
+          } catch (_) {}
           return siteConfig;
         })
         .catch(() => ({}));

@@ -175,14 +175,14 @@ export async function createPortalyCheckoutSession({
   // 1. 如果有設定 API Key 與 Portaly 商品 ID，透過 API 建立動態 Checkout Session
   if (config.apiKey && portalyProductId) {
     const callbackUrl = `${siteUrl}/api/portaly/webhook`;
-    const payload = {
-      items: [{ productId: portalyProductId }],
-      totalAmount: product.amount,
-      currency: 'TWD',
-      merchantOrderNumber: tradeNo,
+
+    // 優先嘗試 Portaly Payment (Creator Subscription / 方案) 結帳 API
+    const subPayload = {
+      planId: portalyProductId,
       callbackUrl,
       successRedirectUrl: `${siteUrl}/?payment=success&orderId=${encodeURIComponent(orderId)}`,
       cancelRedirectUrl: `${siteUrl}/?payment=cancel&orderId=${encodeURIComponent(orderId)}`,
+      merchantOrderNumber: tradeNo,
       metadata: {
         orderId,
         tradeNo,
@@ -191,35 +191,71 @@ export async function createPortalyCheckoutSession({
         themes: JSON.stringify(themes)
       }
     };
-
     if (user.email) {
-      payload.customerEmail = user.email;
-      payload.emailVerified = true;
+      subPayload.customerEmail = user.email;
+      subPayload.emailVerified = true;
     }
     if (user.displayName) {
-      payload.customerName = user.displayName;
+      subPayload.customerName = user.displayName;
     }
 
-    const res = await fetch(`${config.apiHost}/api/digital-products/checkout-sessions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${config.apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (res.ok && data?.data?.checkoutUrl) {
-      return {
-        ok: true,
-        checkoutUrl: data.data.checkoutUrl,
-        sessionId: data.data.sessionId
-      };
+    try {
+      const res = await fetch(`${config.apiHost}/api/creator-subscription/checkout-sessions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(subPayload)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.data?.checkoutUrl) {
+        return {
+          ok: true,
+          checkoutUrl: data.data.checkoutUrl,
+          sessionId: data.data.sessionId
+        };
+      }
+    } catch (err) {
+      console.warn('Portaly Creator Subscription API call failed:', err.message);
     }
 
-    // 若呼叫 API 發生錯誤，記錄並嘗試 fallback 直連網址
-    console.error('Portaly Checkout Session API Failed:', res.status, data);
+    // 次之嘗試 Digital Products 結帳 API
+    const digitalPayload = {
+      items: [{ productId: portalyProductId }],
+      totalAmount: product.amount,
+      currency: 'TWD',
+      merchantOrderNumber: tradeNo,
+      callbackUrl,
+      successRedirectUrl: `${siteUrl}/?payment=success&orderId=${encodeURIComponent(orderId)}`,
+      cancelRedirectUrl: `${siteUrl}/?payment=cancel&orderId=${encodeURIComponent(orderId)}`,
+      metadata: subPayload.metadata,
+      customerEmail: subPayload.customerEmail,
+      customerName: subPayload.customerName,
+      emailVerified: subPayload.emailVerified
+    };
+
+    try {
+      const res = await fetch(`${config.apiHost}/api/digital-products/checkout-sessions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(digitalPayload)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.data?.checkoutUrl) {
+        return {
+          ok: true,
+          checkoutUrl: data.data.checkoutUrl,
+          sessionId: data.data.sessionId
+        };
+      }
+      console.error('Portaly Digital Products API Failed:', res.status, data);
+    } catch (err) {
+      console.warn('Portaly Digital Products API call failed:', err.message);
+    }
   }
 
   // 2. 若未配置 API Key 或 API 呼叫未成功，檢查是否有配置直連商品網址

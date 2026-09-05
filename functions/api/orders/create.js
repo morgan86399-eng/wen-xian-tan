@@ -1,6 +1,6 @@
 import { postOnly, json, readJson, requireSiteUrl } from '../../lib/wxt/http.mjs';
 import { readUserSession } from '../../lib/wxt/auth.mjs';
-import { createOrder, hasDb } from '../../lib/wxt/store.mjs';
+import { createOrder, findUserById, hasDb } from '../../lib/wxt/store.mjs';
 import { validateOrderInput, THEME_LABELS } from '../../lib/wxt/products.mjs';
 import { generateTradeNo, getEcpayConfig, formatTaiwanDateTime, calculateCheckMacValue } from '../../lib/wxt/ecpay.mjs';
 import { createPortalyCheckoutSession } from '../../lib/wxt/portaly.mjs';
@@ -88,13 +88,18 @@ export const onRequest = postOnly(async ({ request, env }) => {
     provider: 'portaly'
   });
 
+  const userRecord = await findUserById(env, session.uid);
   const sessionResult = await createPortalyCheckoutSession({
     env,
     orderId,
     tradeNo,
     product,
     themes,
-    user: session,
+    user: {
+      uid: session.uid,
+      email: userRecord?.email || session.email || '',
+      displayName: userRecord?.display_name || session.displayName || '問仙壇信眾'
+    },
     siteUrl
   });
 
