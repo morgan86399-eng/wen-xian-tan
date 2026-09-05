@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createFakeD1 } from '../tests/helpers/fake-d1.mjs';
@@ -182,19 +182,39 @@ export async function createDemoServer(port = 3456) {
 
   app.post('/api/demo/save-config', (req, res) => {
     try {
-      const { provider, portalyUrlSingle, portalyUrlTriple, portalyUrlAll, portalyApiKey, portalySecret } = req.body;
-      if (provider) env.PAYMENT_PROVIDER = provider;
+      const { portalyUrlSingle, portalyUrlTriple, portalyUrlAll, portalyApiKey, portalySecret } = req.body;
+      env.PAYMENT_PROVIDER = 'portaly';
       if (portalyUrlSingle !== undefined) env.PORTALY_URL_SINGLE = portalyUrlSingle.trim();
       if (portalyUrlTriple !== undefined) env.PORTALY_URL_TRIPLE = portalyUrlTriple.trim();
       if (portalyUrlAll !== undefined) env.PORTALY_URL_ALL = portalyUrlAll.trim();
-      if (portalyApiKey) env.PORTALY_API_KEY = portalyApiKey.trim();
-      if (portalySecret) env.PORTALY_CALLBACK_SECRET = portalySecret.trim();
+      if (portalyApiKey !== undefined) env.PORTALY_API_KEY = portalyApiKey.trim();
+      if (portalySecret !== undefined) env.PORTALY_CALLBACK_SECRET = portalySecret.trim();
 
-      console.log(`[Config Update] 金流模式更新為: ${env.PAYMENT_PROVIDER}`);
+      // 同步寫入 .dev.vars
+      const devVarsPath = join(ROOT_DIR, '.dev.vars');
+      let content = existsSync(devVarsPath) ? readFileSync(devVarsPath, 'utf8') : '';
+      const updateKey = (key, val) => {
+        const regex = new RegExp(`^${key}=.*$`, 'm');
+        if (regex.test(content)) {
+          content = content.replace(regex, `${key}=${val}`);
+        } else {
+          content += `\n${key}=${val}`;
+        }
+      };
+      if (env.PORTALY_URL_SINGLE) updateKey('PORTALY_URL_SINGLE', env.PORTALY_URL_SINGLE);
+      if (env.PORTALY_URL_TRIPLE) updateKey('PORTALY_URL_TRIPLE', env.PORTALY_URL_TRIPLE);
+      if (env.PORTALY_URL_ALL) updateKey('PORTALY_URL_ALL', env.PORTALY_URL_ALL);
+      if (env.PORTALY_API_KEY) updateKey('PORTALY_API_KEY', env.PORTALY_API_KEY);
+      if (env.PORTALY_CALLBACK_SECRET) updateKey('PORTALY_CALLBACK_SECRET', env.PORTALY_CALLBACK_SECRET);
+      updateKey('PAYMENT_PROVIDER', 'portaly');
+      updateKey('PAYMENTS_ENABLED', 'true');
+      writeFileSync(devVarsPath, content.trim() + '\n', 'utf8');
+
+      console.log(`[Portaly Config Update] Portaly 商品網址與金鑰已寫入並即時生效！`);
       res.json({
         ok: true,
-        message: '金流參數已更新成功！',
-        provider: env.PAYMENT_PROVIDER,
+        message: 'Portaly 金流參數已更新成功並存檔！',
+        provider: 'portaly',
         portalyUrlSingle: env.PORTALY_URL_SINGLE,
         portalyUrlTriple: env.PORTALY_URL_TRIPLE,
         portalyUrlAll: env.PORTALY_URL_ALL
