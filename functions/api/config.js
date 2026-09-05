@@ -2,7 +2,8 @@ export async function onRequestGet({ env }) {
   return new Response(JSON.stringify({
     success: true,
     brandName: env?.BRAND_NAME || '問仙壇',
-    provider: String(env?.PAYMENT_PROVIDER || ''),
+    provider: String(env?.PAYMENT_PROVIDER || 'portaly'),
+    hasPortaly: Boolean(env?.PORTALY_API_KEY || env?.PORTALY_URL_SINGLE),
     hasResend: Boolean(env?.RESEND_API_KEY),
     hasLine: Boolean(env?.LINE_CHANNEL_ID && env?.LINE_CHANNEL_SECRET),
     hasGoogle: Boolean(env?.GOOGLE_CLIENT_ID && env?.GOOGLE_CLIENT_SECRET),

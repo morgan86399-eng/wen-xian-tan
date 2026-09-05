@@ -8,7 +8,7 @@
     "dev": "wrangler pages dev dist --d1=DB --kv=RL",
     "build": "vite build && node scripts/copy-static.mjs",
     "preview": "vite preview",
-    "test": "node tests/wxt-backend.mjs",
+    "test": "node tests/wxt-backend.mjs && node tests/portaly.test.mjs && node tests/portaly-webhook.test.mjs",
     "dev:vite": "vite"
   },
   "keywords": [

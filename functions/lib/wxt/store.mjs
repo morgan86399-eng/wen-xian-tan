@@ -230,12 +230,12 @@ export async function refundCredit(env, { userId, themeId, idempotencyKey }) {
 
 /* ---------- orders / payment_events ---------- */
 
-export async function createOrder(env, { userId, productId, amount, themes, merchantTradeNo, termsVersion = '' }) {
+export async function createOrder(env, { userId, productId, amount, themes, merchantTradeNo, termsVersion = '', provider = 'portaly' }) {
   const id = newId('ord');
   await db(env)
     .prepare(`INSERT INTO orders (id, user_id, product_id, amount, currency, status, provider, merchant_trade_no, themes_json, terms_version, created_at)
-              VALUES (?, ?, ?, ?, 'TWD', 'PENDING', 'ecpay', ?, ?, ?, ?)`)
-    .bind(id, userId, productId, amount, merchantTradeNo, JSON.stringify(themes), termsVersion, now())
+              VALUES (?, ?, ?, ?, 'TWD', 'PENDING', ?, ?, ?, ?, ?)`)
+    .bind(id, userId, productId, amount, provider, merchantTradeNo, JSON.stringify(themes), termsVersion, now())
     .run();
   return id;
 }
