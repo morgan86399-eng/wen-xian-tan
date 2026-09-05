@@ -1,0 +1,88 @@
+<svg class="brand-logo-icon" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 純陽耀金流光漸層 -->
+    <linearGradient id="cySwordGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="25%" stop-color="#FEF08A"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="85%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#78350F"/>
+    </linearGradient>
+
+    <!-- 劍身銀金冷輝漸層 -->
+    <linearGradient id="bladeShine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+
+    <!-- 天罡烈焰光暈 -->
+    <radialGradient id="swordAura" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(255, 248, 220, 0.6)"/>
+      <stop offset="40%" stop-color="rgba(245, 158, 11, 0.35)"/>
+      <stop offset="80%" stop-color="rgba(220, 38, 38, 0.15)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+
+    <filter id="swordGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 背景暗夜星輪底盤 -->
+  <circle cx="100" cy="100" r="92" fill="#090815"/>
+  <circle cx="100" cy="100" r="92" fill="url(#swordAura)"/>
+  <circle cx="100" cy="100" r="88" stroke="url(#cySwordGold)" stroke-width="1.8" opacity="0.8"/>
+  <circle cx="100" cy="100" r="82" stroke="url(#cySwordGold)" stroke-width="1" stroke-dasharray="3 4" opacity="0.5"/>
+
+  <!-- 兩側純陽天罡烈焰光弧 (象徵陰陽調和、純陽守護) -->
+  <g filter="url(#swordGlow)" opacity="0.75">
+    <path d="M 45 130 C 40 95, 55 60, 80 40 C 70 60, 68 85, 75 110 C 65 118, 55 125, 45 130 Z" fill="url(#cySwordGold)"/>
+    <path d="M 155 130 C 160 95, 145 60, 120 40 C 130 60, 132 85, 125 110 C 135 118, 145 125, 155 130 Z" fill="url(#cySwordGold)"/>
+  </g>
+
+  <!-- 純陽天罡劍主體 (筆直朝天) -->
+  <g filter="url(#swordGlow)">
+    <!-- 劍尖與劍身 (長 115px) -->
+    <!-- 劍身左側反光 -->
+    <path d="M 100 22 L 94 40 L 96 142 L 100 142 Z" fill="#FFFFFF" opacity="0.95"/>
+    <!-- 劍身右側金光 -->
+    <path d="M 100 22 L 106 40 L 104 142 L 100 142 Z" fill="url(#bladeShine)"/>
+    <!-- 劍脊中線 (金光銳氣) -->
+    <line x1="100" y1="24" x2="100" y2="142" stroke="url(#cySwordGold)" stroke-width="1.5"/>
+
+    <!-- 劍身北斗七星鑲嵌 (七顆靈鑽星點) -->
+    <circle cx="100" cy="48" r="2" fill="#FEF08A"/>
+    <circle cx="98" cy="62" r="1.8" fill="#FFFFFF"/>
+    <circle cx="102" cy="76" r="1.8" fill="#FEF08A"/>
+    <circle cx="100" cy="90" r="1.8" fill="#FFFFFF"/>
+    <circle cx="98" cy="104" r="1.8" fill="#FEF08A"/>
+    <circle cx="102" cy="118" r="1.8" fill="#FFFFFF"/>
+    <circle cx="100" cy="132" r="2.2" fill="#FDE047"/>
+
+    <!-- 劍格 (護手：太極如意雲首護手) -->
+    <path d="M 80 142 Q 100 138 120 142 Q 126 148 116 150 Q 100 146 84 150 Q 74 148 80 142 Z" fill="url(#cySwordGold)"/>
+    <circle cx="100" cy="144" r="3" fill="#DC2626"/>
+
+    <!-- 劍柄 (純金纏繩) -->
+    <rect x="97" y="150" width="6" height="22" rx="2" fill="url(#cySwordGold)"/>
+    <!-- 劍首 (圓形太極首) -->
+    <circle cx="100" cy="176" r="6.5" fill="url(#cySwordGold)"/>
+    <circle cx="100" cy="176" r="3" fill="#090815"/>
+
+    <!-- 劍穗靈動赤絛飄帶 -->
+    <path d="M 100 182 Q 95 188 98 194 Q 100 188 100 182 Z" fill="#DC2626"/>
+    <path d="M 100 182 Q 105 188 102 194 Q 100 188 100 182 Z" fill="#DC2626"/>
+  </g>
+
+  <!-- 劍頂破空天機光芒 -->
+  <g transform="translate(100, 22)">
+    <line x1="0" y1="-8" x2="0" y2="8" stroke="#FFFFFF" stroke-width="1.8" filter="url(#swordGlow)"/>
+    <line x1="-8" y1="0" x2="8" y2="0" stroke="#FFFFFF" stroke-width="1.8" filter="url(#swordGlow)"/>
+    <circle cx="0" cy="0" r="2.5" fill="#FFFFFF"/>
+  </g>
+</svg>

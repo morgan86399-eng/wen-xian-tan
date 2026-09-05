@@ -1,0 +1,83 @@
+<svg class="brand-logo-icon" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- 純陽真金奢華漸層 -->
+    <linearGradient id="gourdGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="25%" stop-color="#FDE68A"/>
+      <stop offset="55%" stop-color="#F59E0B"/>
+      <stop offset="85%" stop-color="#D97706"/>
+      <stop offset="100%" stop-color="#92400E"/>
+    </linearGradient>
+
+    <!-- 三昧真火純陽焰色漸層 -->
+    <linearGradient id="pureFlame" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#EA580C"/>
+      <stop offset="50%" stop-color="#F59E0B"/>
+      <stop offset="85%" stop-color="#FEF08A"/>
+      <stop offset="100%" stop-color="#FFFFFF"/>
+    </linearGradient>
+
+    <!-- 混元光環 -->
+    <radialGradient id="gourdHalo" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="rgba(255, 255, 255, 0.7)"/>
+      <stop offset="40%" stop-color="rgba(245, 158, 11, 0.35)"/>
+      <stop offset="75%" stop-color="rgba(220, 38, 38, 0.15)"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+
+    <filter id="gourdGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3.2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 背景底盤 -->
+  <circle cx="100" cy="100" r="92" fill="#0C0A1A"/>
+  <circle cx="100" cy="100" r="92" fill="url(#gourdHalo)"/>
+  <circle cx="100" cy="100" r="88" stroke="url(#gourdGold)" stroke-width="1.8" opacity="0.8"/>
+  <circle cx="100" cy="100" r="82" stroke="url(#gourdGold)" stroke-width="1" stroke-dasharray="3 4" opacity="0.5"/>
+
+  <!-- 混元金丹 (壺頂懸浮之純陽九轉金丹，光芒奪目) -->
+  <g filter="url(#gourdGlow)">
+    <circle cx="100" cy="30" r="9" fill="url(#pureFlame)"/>
+    <circle cx="100" cy="30" r="4" fill="#FFFFFF"/>
+    <!-- 金丹四射微芒 -->
+    <line x1="100" y1="16" x2="100" y2="44" stroke="#FFFFFF" stroke-width="1.2" opacity="0.8"/>
+    <line x1="86" y1="30" x2="114" y2="30" stroke="#FFFFFF" stroke-width="1.2" opacity="0.8"/>
+  </g>
+
+  <!-- 壺口噴湧之純陽真火與騰湧祥雲 -->
+  <g filter="url(#gourdGlow)">
+    <path d="M 94 62 C 92 48, 108 48, 100 38 C 104 46, 112 52, 106 62 Z" fill="url(#pureFlame)"/>
+    <!-- 壺口金環蓋 -->
+    <ellipse cx="100" cy="62" rx="10" ry="3.5" fill="url(#gourdGold)" stroke="#FFFFFF" stroke-width="0.8"/>
+  </g>
+
+  <!-- 純陽金寶葫蘆主體 (上下兩肚飽滿，壺納天地) -->
+  <g filter="url(#gourdGlow)">
+    <!-- 上肚 (較小，直徑約 36px) -->
+    <circle cx="100" cy="84" r="18" fill="url(#gourdGold)"/>
+    <!-- 下肚 (較大，直徑約 58px) -->
+    <circle cx="100" cy="132" r="29" fill="url(#gourdGold)"/>
+
+    <!-- 葫蘆立體高光 (左側流動月白高光線) -->
+    <path d="M 88 74 C 84 80, 84 88, 90 94" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.85"/>
+    <path d="M 80 118 C 74 128, 76 142, 86 150" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" fill="none" opacity="0.85"/>
+
+    <!-- 腰繫仙繩與硃砂法印 (葫蘆細腰處束金紅絲帶) -->
+    <path d="M 90 102 C 95 105, 105 105, 110 102 C 108 107, 92 107, 90 102 Z" fill="#DC2626"/>
+    <!-- 赤紅靈穗飄垂兩側 -->
+    <path d="M 106 105 Q 116 112 114 122 Q 110 114 104 106 Z" fill="#DC2626"/>
+    <path d="M 94 105 Q 84 112 86 122 Q 90 114 96 106 Z" fill="#DC2626"/>
+    <!-- 腰間太極微印 -->
+    <circle cx="100" cy="104" r="3.2" fill="#FEF08A" stroke="#78350F" stroke-width="0.6"/>
+  </g>
+
+  <!-- 底部神聖祥雲托座 -->
+  <g filter="url(#gourdGlow)" opacity="0.75">
+    <path d="M 64 162 C 72 154, 82 156, 88 162 C 94 156, 106 156, 112 162 C 118 154, 128 154, 136 162 C 120 174, 80 174, 64 162 Z" fill="url(#gourdGold)"/>
+  </g>
+</svg>
