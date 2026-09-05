@@ -232,19 +232,55 @@ body {
   50% { transform: rotate(225deg) scale(1.28); box-shadow: 0 0 22px rgba(118, 203, 255, 1); }
 }
 
+.hero-copy {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  max-width: min(44%, 430px);
+  padding-right: 20px;
+}
+@media (max-width: 900px) {
+  .hero-copy {
+    max-width: 100%;
+    padding-right: 0;
+  }
+}
+
 .app-hero--editorial .hero-main-title {
-  font-size: clamp(2.05rem, 4vw, 3.65rem);
-  line-height: 1.23;
-  letter-spacing: .025em;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: clamp(2.1rem, 3.5vw, 2.9rem);
+  line-height: 1.16;
+  letter-spacing: .03em;
   text-shadow: 0 0 36px rgba(82, 165, 255, .18);
+  max-width: 100%;
+  margin: 0;
+}
+
+.hero-title-brand {
+  font-family: 'Ma Shan Zheng', 'Noto Serif TC', serif;
+  background: linear-gradient(135deg, #FFFFFF 0%, #FDE68A 45%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.hero-title-sub {
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: #E2E8F0;
+  text-shadow: 0 0 20px rgba(96, 165, 250, .3);
+  display: inline-block;
 }
 
 .hero-description {
-  max-width: min(100%, 28rem);
-  padding-right: clamp(12px, 2.5vw, 32px);
-  color: rgba(222, 236, 252, .86);
-  font-size: clamp(.93rem, 1.4vw, 1.04rem);
-  line-height: clamp(1.72, 1.8vw, 1.9);
+  max-width: min(100%, 25rem);
+  padding-right: 8px;
+  color: rgba(222, 236, 252, .88);
+  font-size: clamp(.92rem, 1.35vw, 1.02rem);
+  line-height: clamp(1.72, 1.8vw, 1.88);
   text-wrap: pretty;
 }
 

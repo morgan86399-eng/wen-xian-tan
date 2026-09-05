@@ -663,7 +663,14 @@ p {
   position: relative;
   z-index: 1;
   align-self: center;
-  max-width: 620px;
+  max-width: min(44%, 430px);
+  padding-right: 20px;
+}
+@media (max-width: 900px) {
+  .hero-copy {
+    max-width: 100%;
+    padding-right: 0;
+  }
 }
 
 .hero-kicker {
@@ -675,10 +682,13 @@ p {
 }
 
 .app-hero--editorial .hero-main-title {
-  max-width: 610px;
-  font-size: clamp(2.05rem, 4vw, 3.65rem);
-  line-height: 1.23;
-  letter-spacing: .025em;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 100%;
+  font-size: clamp(2.1rem, 3.5vw, 2.9rem);
+  line-height: 1.16;
+  letter-spacing: .03em;
   margin: 0;
 }
 
