@@ -265,10 +265,12 @@
                   <span>💳 線上收款整備中，開放後將公告可用的付款方式</span>
                   <span style="color:#10B981;">🔒 256-bit SSL 銀行級加密</span>
                 </div>
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-secondary);">
-                  <input type="checkbox" id="agreeTermsCheckbox" style="accent-color:var(--gold-bright);">
-                  <span>我已閱讀並同意 <a href="javascript:void(0)" class="legal-link" data-doc="terms" style="color:var(--gold-bright);text-decoration:underline;">服務條款</a> 與 <a href="javascript:void(0)" class="legal-link" data-doc="privacy" style="color:var(--gold-bright);text-decoration:underline;">隱私權政策</a></span>
-                </label>
+                <div id="checkoutTermsAgreementContainer" class="checkout-terms-container is-hidden">
+                  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-secondary);">
+                    <input type="checkbox" id="agreeTermsCheckbox" style="accent-color:var(--gold-bright);width:16px;height:16px;">
+                    <span>我已閱讀並同意 <a href="javascript:void(0)" class="legal-link" data-doc="terms" style="color:var(--gold-bright);text-decoration:underline;">服務條款</a> 與 <a href="javascript:void(0)" class="legal-link" data-doc="privacy" style="color:var(--gold-bright);text-decoration:underline;">隱私權政策</a></span>
+                  </label>
+                </div>
               </div>
             </div>
           </div>

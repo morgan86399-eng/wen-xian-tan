@@ -3196,3 +3196,78 @@ p {
     font-size: 0.82rem;
   }
 }
+
+/* 結帳服務條款與隱私權政策動態顯現控制 */
+.checkout-terms-container {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.checkout-terms-container.is-hidden {
+  display: none !important;
+}
+
+.checkout-terms-container.is-revealed {
+  display: flex !important;
+  align-items: center;
+  animation: termsHighlightGlow 1.2s ease-out;
+  padding: 6px 12px;
+  background: rgba(212, 168, 83, 0.12);
+  border: 1px solid rgba(212, 168, 83, 0.45);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 16px rgba(212, 168, 83, 0.25);
+}
+
+@keyframes termsHighlightGlow {
+  0% {
+    box-shadow: 0 0 0 rgba(212, 168, 83, 0);
+    transform: scale(0.96);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(212, 168, 83, 0.7);
+    transform: scale(1.02);
+  }
+  100% {
+    box-shadow: 0 0 16px rgba(212, 168, 83, 0.25);
+    transform: scale(1);
+  }
+}
+
+/* 結帳按鈕未勾選條款時之引導狀態（可點擊並具備呼吸光效） */
+#confirmPurchaseBtn.awaiting-terms {
+  background: linear-gradient(135deg, rgba(20, 35, 75, 0.95), rgba(12, 18, 38, 0.98)) !important;
+  border: 1.5px solid var(--border-gold) !important;
+  color: var(--gold-bright) !important;
+  box-shadow: 0 0 18px rgba(212, 168, 83, 0.35) !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  animation: pulseTermsBtn 2.4s infinite ease-in-out;
+}
+
+#confirmPurchaseBtn.awaiting-terms:hover {
+  background: linear-gradient(135deg, rgba(30, 55, 115, 0.98), rgba(20, 30, 60, 0.98)) !important;
+  border-color: #fff1ad !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 28px rgba(212, 168, 83, 0.6) !important;
+  transform: translateY(-1px);
+}
+
+#confirmPurchaseBtn.ready-to-pay {
+  background: var(--gold-gradient) !important;
+  border: 1px solid #fff1ad !important;
+  color: #030817 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 26px rgba(212, 168, 83, 0.65) !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+@keyframes pulseTermsBtn {
+  0%, 100% {
+    box-shadow: 0 0 12px rgba(212, 168, 83, 0.25);
+    border-color: rgba(212, 168, 83, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 24px rgba(212, 168, 83, 0.65);
+    border-color: #fff1ad;
+  }
+}

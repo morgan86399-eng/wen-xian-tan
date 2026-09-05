@@ -1095,25 +1095,129 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const isValid = state.customChosenThemes.size === plan.requiredCount;
-    const agreed = Boolean(document.getElementById('agreeTermsCheckbox')?.checked);
+    const agreeCheckbox = document.getElementById('agreeTermsCheckbox');
+    const agreed = Boolean(agreeCheckbox?.checked);
     // 收款整備中一律關閉：設定還沒載回來也視為關閉，不讓任何人先付下去
     const paymentsOpen = siteConfig.paymentsEnabled === true;
+
+    // 若使用者已經打勾，保持卡片底部的條款區塊顯現
+    const termsContainer = document.getElementById('checkoutTermsAgreementContainer');
+    if (termsContainer && agreed) {
+      termsContainer.classList.remove('is-hidden');
+      termsContainer.classList.add('is-revealed');
+    }
+
     if (confirmPurchaseBtn) {
-      confirmPurchaseBtn.disabled = !paymentsOpen || !isValid || !agreed;
+      // 只要收款開啟且選滿主題，按鈕即保持可點擊狀態，引導使用者點擊確認條款或直接結帳
+      confirmPurchaseBtn.disabled = !paymentsOpen || !isValid;
+      confirmPurchaseBtn.classList.remove('awaiting-terms', 'ready-to-pay');
+
       if (!paymentsOpen) {
         confirmPurchaseBtn.textContent = '線上收款整備中，暫時無法購買';
-      } else if (!agreed) {
-        confirmPurchaseBtn.textContent = '請先勾選同意服務條款與隱私權政策';
       } else if (!isValid) {
         confirmPurchaseBtn.textContent = `請先選滿 ${plan.requiredCount} 個主題（目前已選 ${state.customChosenThemes.size} 項）`;
+      } else if (!agreed) {
+        confirmPurchaseBtn.textContent = '👉 請先勾選同意服務條款與隱私權政策';
+        confirmPurchaseBtn.classList.add('awaiting-terms');
+        confirmPurchaseBtn.title = '點擊開啟服務條款與隱私權政策確認';
       } else {
-        confirmPurchaseBtn.textContent = `前往安全支付 NT$ ${plan.price} →`;
+        confirmPurchaseBtn.textContent = `⚡ 前往安全支付 NT$ ${plan.price} →`;
+        confirmPurchaseBtn.classList.add('ready-to-pay');
+        confirmPurchaseBtn.title = `立即前往安全支付 NT$ ${plan.price}`;
       }
     }
 
     if (themePickerCountEl) {
       themePickerCountEl.textContent = `（已選 ${state.customChosenThemes.size} 項／需要 ${plan.requiredCount} 項）`;
     }
+  }
+
+  // 顯現結帳卡片底部的服務條款勾選區塊
+  function revealCheckoutTermsAgreement() {
+    const container = document.getElementById('checkoutTermsAgreementContainer');
+    if (container) {
+      container.classList.remove('is-hidden');
+      container.classList.add('is-revealed');
+      const agreeCheckbox = document.getElementById('agreeTermsCheckbox');
+      agreeCheckbox?.focus();
+    }
+  }
+
+  // 點擊「請先勾選同意服務條款與隱私權政策」按鈕後，彈出條款確認視窗
+  function openTermsAgreementModal(plan, chosenArray) {
+    const backdrop = document.getElementById('readingModalBackdrop');
+    const card = document.getElementById('readingModalCard');
+    if (!backdrop || !card) return;
+
+    card.innerHTML = `
+      <div class="wizard-header" style="border-bottom:1px solid var(--border-gold);padding-bottom:14px;margin-bottom:16px;">
+        <div class="wizard-title-row">
+          <h3 style="display:flex;align-items:center;gap:8px;color:var(--gold-bright);font-size:1.2rem;">
+            <span>📜</span> 請先勾選同意服務條款與隱私權政策
+          </h3>
+          <button type="button" class="btn btn-outline btn-sm" id="closeTermsModalBtn" style="padding:4px 10px;" aria-label="關閉">✕</button>
+        </div>
+        <p style="margin-top:6px;font-size:0.85rem;color:var(--text-muted);line-height:1.5;">
+          為保障信士消費權益與交易安全，在前往安全支付前，請確認閱讀並勾選同意問仙壇之服務規範。
+        </p>
+      </div>
+
+      <div style="background:rgba(255,255,255,0.03);border:1.5px solid rgba(212,168,83,0.3);border-radius:var(--radius-md);padding:18px;margin-bottom:18px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px dashed var(--border);padding-bottom:10px;">
+          <span style="color:var(--text-secondary);font-size:0.9rem;">選定結算方案：</span>
+          <strong style="color:var(--gold-bright);font-size:1.05rem;">${escapeHtml(plan.label)}</strong>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <span style="color:var(--text-secondary);font-size:0.9rem;">結算金額：</span>
+          <span style="font-family:var(--font-serif);font-size:1.7rem;font-weight:900;color:var(--gold-bright);">NT$ ${plan.price}</span>
+        </div>
+
+        <div style="background:rgba(12,10,28,0.7);border:1.5px solid var(--border-gold);border-radius:var(--radius-sm);padding:14px;display:flex;align-items:center;gap:12px;box-shadow:0 0 16px rgba(212,168,83,0.15);">
+          <input type="checkbox" id="modalTermsCheckbox" style="accent-color:var(--gold-bright);width:18px;height:18px;cursor:pointer;">
+          <label for="modalTermsCheckbox" style="font-size:0.92rem;color:#FFF;cursor:pointer;line-height:1.6;">
+            我已閱讀並同意 <a href="javascript:void(0)" class="legal-link" data-doc="terms" style="color:var(--gold-bright);text-decoration:underline;font-weight:700;">服務條款</a> 與 <a href="javascript:void(0)" class="legal-link" data-doc="privacy" style="color:var(--gold-bright);text-decoration:underline;font-weight:700;">隱私權政策</a>
+          </label>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:flex-end;">
+        <button type="button" class="btn btn-outline" id="cancelTermsModalBtn">返回</button>
+        <button type="button" class="btn btn-primary" id="confirmTermsAndPayBtn" style="box-shadow:0 0 20px rgba(212,168,83,0.35);font-weight:800;">
+          同意並前往安全支付 NT$ ${plan.price} →
+        </button>
+      </div>
+    `;
+
+    const closeModal = () => backdrop.classList.remove('show', 'active');
+    card.querySelector('#closeTermsModalBtn')?.addEventListener('click', closeModal);
+    card.querySelector('#cancelTermsModalBtn')?.addEventListener('click', closeModal);
+
+    const modalCheckbox = card.querySelector('#modalTermsCheckbox');
+    const payBtn = card.querySelector('#confirmTermsAndPayBtn');
+    const mainCheckbox = document.getElementById('agreeTermsCheckbox');
+
+    if (mainCheckbox && mainCheckbox.checked) {
+      modalCheckbox.checked = true;
+    }
+
+    modalCheckbox?.addEventListener('change', () => {
+      if (mainCheckbox) {
+        mainCheckbox.checked = modalCheckbox.checked;
+        updateCheckoutSummary();
+      }
+    });
+
+    payBtn?.addEventListener('click', () => {
+      if (modalCheckbox) modalCheckbox.checked = true;
+      if (mainCheckbox) {
+        mainCheckbox.checked = true;
+        updateCheckoutSummary();
+      }
+      closeModal();
+      triggerEcpayCheckout(plan, chosenArray);
+    });
+
+    backdrop.classList.add('show', 'active');
   }
 
   if (typeof window !== 'undefined' && window.PaymentSDK) {
@@ -1201,13 +1305,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (confirmPurchaseBtn) {
     confirmPurchaseBtn.addEventListener('click', () => {
-      const agreeCheckbox = document.getElementById('agreeTermsCheckbox');
-      if (agreeCheckbox && !agreeCheckbox.checked) {
-        alert('請先閱讀並勾選同意《服務條款》與《隱私權政策》');
-        agreeCheckbox.focus();
-        return;
-      }
-
       const plan = PLANS.find((p) => p.id === state.selectedPlanId);
       if (!plan) return;
 
@@ -1219,6 +1316,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (!requireLogin()) return;
+
+      const agreeCheckbox = document.getElementById('agreeTermsCheckbox');
+      if (!agreeCheckbox || !agreeCheckbox.checked) {
+        // 點擊「請先勾選同意服務條款與隱私權政策」按鈕後，立即顯現閱讀並同意條款！
+        revealCheckoutTermsAgreement();
+        openTermsAgreementModal(plan, chosenArray);
+        return;
+      }
+
       triggerEcpayCheckout(plan, chosenArray);
     });
   }
