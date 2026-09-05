@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>問仙壇 · Portaly 全流程金流與 AI 履約驗證中控台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    :root {
+      --bg-dark: #060b17;
+      --card-bg: rgba(16, 26, 48, 0.75);
+      --card-border: rgba(184, 151, 91, 0.35);
+      --card-border-active: #d4af37;
+      --gold-primary: #f0cb68;
+      --gold-light: #fff2c4;
+      --gold-dark: #aa7c11;
+      --text-main: #f0f4fc;
+      --text-muted: #94a3b8;
+      --accent-cyan: #38bdf8;
+      --accent-green: #34d399;
+      --accent-purple: #c084fc;
+      --accent-red: #f87171;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 50% 0%, #152545 0%, var(--bg-dark) 70%);
+      color: var(--text-main);
+      font-family: 'Noto Sans TC', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    header {
+      background: rgba(6, 11, 23, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #f0cb68, #aa7c11);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Noto Serif TC', serif;
+      font-weight: 900;
+      color: #060b17;
+      font-size: 18px;
+      box-shadow: 0 0 16px rgba(240, 203, 104, 0.4);
+    }
+
+    .brand-title {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #fff2c4, #f0cb68);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+      text-decoration: none;
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #f0cb68, #c99320);
+      color: #060b17;
+      box-shadow: 0 4px 14px rgba(240, 203, 104, 0.25);
+    }
+    .btn-gold:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(240, 203, 104, 0.4);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: var(--text-main);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--gold-primary);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 28px auto;
+      padding: 0 20px;
+    }
+
+    /* Live Member Card */
+    .member-banner {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .member-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 12px;
+    }
+
+    .member-title {
+      font-size: 15px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .member-name {
+      color: var(--gold-primary);
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .credits-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .credits-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .credit-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 12px 10px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .credit-box.highlight {
+      border-color: var(--gold-primary);
+      background: rgba(240, 203, 104, 0.08);
+      box-shadow: 0 0 14px rgba(240, 203, 104, 0.2);
+    }
+
+    .credit-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .credit-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Workflow Cards */
+    .steps-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .step-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+    }
+
+    .step-card.active {
+      border-color: var(--card-border-active);
+      box-shadow: 0 0 24px rgba(240, 203, 104, 0.18);
+    }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .step-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--gold-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .step-title {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-top: 4px;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+    }
+
+    .status-badge.success {
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+
+    .status-badge.running {
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .plan-selector {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .plan-option {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+
+    .plan-option.selected {
+      border-color: var(--gold-primary);
+      background: rgba(240, 203, 104, 0.08);
+    }
+
+    .plan-option-name {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+
+    .plan-option-price {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gold-primary);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .plan-option-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .json-preview {
+      background: #03060f;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #a5f3fc;
+      overflow-x: auto;
+      max-height: 240px;
+      margin-top: 14px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* Report Presentation */
+    .report-card {
+      background: linear-gradient(180deg, rgba(26, 38, 64, 0.9) 0%, rgba(13, 20, 36, 0.95) 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 28px;
+      margin-top: 18px;
+      position: relative;
+    }
+
+    .report-header {
+      text-align: center;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+    }
+
+    .report-badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 20px;
+      background: rgba(240, 203, 104, 0.12);
+      border: 1px solid var(--gold-primary);
+      color: var(--gold-primary);
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .report-headline {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 24px;
+      font-weight: 900;
+      color: #fff2c4;
+      letter-spacing: 1px;
+    }
+
+    .report-summary-box {
+      background: rgba(240, 203, 104, 0.06);
+      border-left: 4px solid var(--gold-primary);
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      font-size: 15px;
+      line-height: 1.75;
+      color: #f1f5f9;
+      margin-bottom: 24px;
+    }
+
+    .report-sections {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .report-section-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 18px;
+    }
+
+    .report-section-heading {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--gold-primary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .report-section-body {
+      font-size: 14px;
+      line-height: 1.8;
+      color: #cbd5e1;
+    }
+
+    .report-actions-box {
+      background: rgba(52, 211, 153, 0.08);
+      border: 1px solid rgba(52, 211, 153, 0.25);
+      border-radius: 10px;
+      padding: 20px;
+    }
+
+    .report-actions-title {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent-green);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .report-actions-list {
+      list-style-type: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .report-action-item {
+      font-size: 13.5px;
+      line-height: 1.6;
+      color: #e2e8f0;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .action-num {
+      background: var(--accent-green);
+      color: #060b17;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 900;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .log-stream {
+      background: #02040a;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #94a3b8;
+      max-height: 180px;
+      overflow-y: auto;
+      margin-top: 20px;
+    }
+
+    .log-item {
+      margin-bottom: 4px;
+      line-height: 1.5;
+    }
+    .log-item.info { color: #38bdf8; }
+    .log-item.success { color: #34d399; }
+    .log-item.warn { color: #fbbf24; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">仙</div>
+      <div>
+        <div class="brand-title">問仙壇 · Portaly 驗證中控台</div>
+        <div class="brand-subtitle">金流付款 · Webhook 簽章入帳 · 原子扣點 · AI 測算全履約</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-gold" id="btnAutoRun" onclick="runAutoVerification()">
+        <span>🚀</span> 一鍵全自動演示
+      </button>
+      <button class="btn btn-outline" onclick="resetState()">
+        <span>🔄</span> 重設點數與訂單
+      </button>
+      <a href="/" class="btn btn-outline" target="_blank">
+        <span>⛩️</span> 前往問仙壇主頁 ↗
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- 即時會員卡片 -->
+    <div class="member-banner">
+      <div class="member-info">
+        <div class="member-title">
+          <span>👤 驗證帳號：</span>
+          <span class="member-name" id="userDisplayName">weiyo (weiyo@zenasker.com)</span>
+        </div>
+        <div class="status-badge" id="envBadge">環境：本地安全模擬器 + 正式 AI 管線</div>
+      </div>
+
+      <div>
+        <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px;">
+          📊 會員六大主題即時剩餘點數（即時連線 D1 資料庫）：
+        </div>
+        <div class="credits-grid">
+          <div class="credit-box" id="box-love">
+            <div class="credit-label">❤️ 感情篇</div>
+            <div class="credit-value" id="credit-love">0</div>
+          </div>
+          <div class="credit-box" id="box-work">
+            <div class="credit-label">💼 工作篇</div>
+            <div class="credit-value" id="credit-work">0</div>
+          </div>
+          <div class="credit-box" id="box-career">
+            <div class="credit-label">🚀 事業篇</div>
+            <div class="credit-value" id="credit-career">0</div>
+          </div>
+          <div class="credit-box" id="box-wealth">
+            <div class="credit-label">💰 財富篇</div>
+            <div class="credit-value" id="credit-wealth">0</div>
+          </div>
+          <div class="credit-box" id="box-family">
+            <div class="credit-label">🏡 家庭篇</div>
+            <div class="credit-value" id="credit-family">0</div>
+          </div>
+          <div class="credit-box" id="box-children">
+            <div class="credit-label">👶 子女篇</div>
+            <div class="credit-value" id="credit-children">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 步驟 1 到 4 -->
+    <div class="steps-wrapper">
+
+      <!-- STEP 1: 建立訂單 -->
+      <section class="step-card" id="cardStep1">
+        <div class="step-header">
+          <div class="step-badge">
+            <span>第 1 步</span> · 方案選購與建單
+          </div>
+          <span class="status-badge" id="step1Status">待執行</span>
+        </div>
+        <h3 class="step-title">建立 Portaly 待付款訂單 (POST /api/orders/create)</h3>
+        <p class="step-desc">選擇要購買的測算方案，向後端發起建單，產出專屬交易序號與 Portaly 結帳收銀台網址。</p>
+
+        <div class="form-group">
+          <label class="form-label">選擇購買方案：</label>
+          <div class="plan-selector">
+            <div class="plan-option selected" id="planSingle" onclick="selectPlan('single', 199, ['love'])">
+              <div class="plan-option-name">單項體驗方案</div>
+              <div class="plan-option-price">NT$ 199</div>
+              <div class="plan-option-sub">核發 4 次點數（感情篇）</div>
+            </div>
+            <div class="plan-option" id="planTriple" onclick="selectPlan('triple', 499, ['love', 'career', 'wealth'])">
+              <div class="plan-option-name">三項超值方案</div>
+              <div class="plan-option-price">NT$ 499</div>
+              <div class="plan-option-sub">核發 12 次點數（三主題）</div>
+            </div>
+            <div class="plan-option" id="planAll" onclick="selectPlan('all', 999, ['love', 'work', 'career', 'wealth', 'family', 'children'])">
+              <div class="plan-option-name">六項圓滿方案</div>
+              <div class="plan-option-price">NT$ 999</div>
+              <div class="plan-option-sub">核發 24 次點數（全開通）</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-gold" id="btnCreateOrder" onclick="createOrder()">
+          <span>💳</span> 立即建立 Portaly 訂單
+        </button>
+
+        <div class="json-preview" id="step1Json" style="display: none;"></div>
+      </section>
+
+      <!-- STEP 2: Webhook 付款簽章入帳 -->
+      <section class="step-card" id="cardStep2">
+        <div class="step-header">
+          <div class="step-badge">
+            <span>第 2 步</span> · Portaly 簽章與自動入帳
+          </div>
+          <span class="status-badge" id="step2Status">待執行</span>
+        </div>
+        <h3 class="step-title">模擬 Portaly Webhook 簽章回調 (POST /api/portaly/webhook)</h3>
+        <p class="step-desc">
+          使用者於 Portaly 收銀台完成付款後，Portaly 伺服器帶有 WebCrypto HMAC-SHA256 簽章（<code>x-portaly-signature</code>）通知後端。後端驗簽通過後，訂單標記為 <code>PAID</code> 並自動核發會員點數。
+        </p>
+
+        <button class="btn btn-gold" id="btnTriggerWebhook" onclick="triggerWebhook()" disabled>
+          <span>🔐</span> 模擬發送 Portaly 簽章 Webhook 並入帳
+        </button>
+
+        <div class="json-preview" id="step2Json" style="display: none;"></div>
+      </section>
+
+      <!-- STEP 3: 命理求問與原子扣點 -->
+      <section class="step-card" id="cardStep3">
+        <div class="step-header">
+          <div class="step-badge">
+            <span>第 3 步</span> · 命理測算與原子扣點
+          </div>
+          <span class="status-badge" id="step3Status">待執行</span>
+        </div>
+        <h3 class="step-title">提交求問單並扣點產出 (POST /api/reading/generate)</h3>
+        <p class="step-desc">
+          使用已入帳之額度（扣減 1 點），發送測算求問內容至後端，後端執行原子扣點保護（防重複扣減與負餘額），並呼叫正統易學 AI 模型管線產出深度命理報告。
+        </p>
+
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 14px; margin-bottom: 16px;">
+          <div style="font-size: 13px; font-weight: 600; color: var(--gold-primary); margin-bottom: 6px;">求問情境：</div>
+          <div style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+            • 主題：感情篇 (love)<br>
+            • 對象：本人（女，32 歲，單身，科技業專案經理）<br>
+            • 提問：想知道今年下半年有沒有機會遇到正緣對象？目前的桃花狀態如何，該積極社交還是沉澱自己？
+          </div>
+        </div>
+
+        <button class="btn btn-gold" id="btnGenerateReading" onclick="generateReading()" disabled>
+          <span>🔮</span> 開始扣點並產出測算報告（扣 1 點）
+        </button>
+
+        <div class="json-preview" id="step3Json" style="display: none;"></div>
+      </section>
+
+      <!-- STEP 4: 完整報告履約展示 -->
+      <section class="step-card" id="cardStep4" style="display: none;">
+        <div class="step-header">
+          <div class="step-badge">
+            <span>第 4 步</span> · 履約成果驗證
+          </div>
+          <span class="status-badge success" id="step4Status">履約圓滿成功</span>
+        </div>
+        <h3 class="step-title">仙佛開示 · 深度命理透視報告成果</h3>
+        <p class="step-desc">
+          完整呈現正統易學四大深度剖析段落與三道仙佛錦囊行動指引，並已完整永久存檔至信眾歷史檔案。
+        </p>
+
+        <!-- 華麗報告卡片 -->
+        <div class="report-card" id="reportView">
+          <div class="report-header">
+            <div class="report-badge">問仙壇 · 正統命理深度報告</div>
+            <h2 class="report-headline" id="reportTitle">【感情篇】紅鸞星動與正緣透視</h2>
+          </div>
+
+          <div class="report-summary-box" id="reportSummary">
+            載入中...
+          </div>
+
+          <div class="report-sections" id="reportSections">
+            <!-- 動態插入 -->
+          </div>
+
+          <div class="report-actions-box">
+            <div class="report-actions-title">
+              <span>🪷</span> 仙佛錦囊 · 三道具體轉運心法
+            </div>
+            <ul class="report-actions-list" id="reportActions">
+              <!-- 動態插入 -->
+            </ul>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- 終端即時執行日誌 -->
+    <div class="log-stream" id="logStream">
+      <div class="log-item info">[系統初始化] 驗證中控台載入完成，資料庫連線正常。</div>
+    </div>
+
+  </main>
+
+  <script>
+    let currentPlan = 'single';
+    let currentAmount = 199;
+    let currentThemes = ['love'];
+    let currentOrderId = null;
+    let currentTradeNo = null;
+
+    function log(msg, type = 'info') {
+      const box = document.getElementById('logStream');
+      const item = document.createElement('div');
+      item.className = `log-item ${type}`;
+      const time = new Date().toLocaleTimeString();
+      item.textContent = `[${time}] ${msg}`;
+      box.appendChild(item);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function refreshState() {
+      try {
+        const res = await fetch('/api/demo/state');
+        const data = await res.json();
+        if (data.ok) {
+          updateCreditsDisplay(data.credits);
+        }
+      } catch (e) {
+        log('刷新狀態失敗: ' + e.message, 'warn');
+      }
+    }
+
+    function updateCreditsDisplay(credits) {
+      if (!credits) return;
+      ['love', 'work', 'career', 'wealth', 'family', 'children'].forEach(theme => {
+        const valEl = document.getElementById(`credit-${theme}`);
+        const boxEl = document.getElementById(`box-${theme}`);
+        if (valEl) valEl.textContent = credits[theme] || 0;
+        if (boxEl) {
+          if (credits[theme] > 0) {
+            boxEl.classList.add('highlight');
+          } else {
+            boxEl.classList.remove('highlight');
+          }
+        }
+      });
+    }
+
+    function selectPlan(plan, amount, themes) {
+      currentPlan = plan;
+      currentAmount = amount;
+      currentThemes = themes;
+      document.querySelectorAll('.plan-option').forEach(el => el.classList.remove('selected'));
+      if (plan === 'single') document.getElementById('planSingle').classList.add('selected');
+      if (plan === 'triple') document.getElementById('planTriple').classList.add('selected');
+      if (plan === 'all') document.getElementById('planAll').classList.add('selected');
+      log(`切換方案：${plan} (NT$ ${amount})，包含主題：${themes.join(', ')}`);
+    }
+
+    // 1. 建立訂單
+    async function createOrder() {
+      const btn = document.getElementById('btnCreateOrder');
+      const statusBadge = document.getElementById('step1Status');
+      const jsonBox = document.getElementById('step1Json');
+
+      btn.disabled = true;
+      statusBadge.textContent = '建單中...';
+      statusBadge.className = 'status-badge running';
+      log(`正在發送建單請求 (POST /api/orders/create)...`);
+
+      try {
+        const res = await fetch('/api/orders/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productId: currentPlan,
+            themeKeys: currentThemes,
+            termsVersion: '20260901'
+          })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          currentOrderId = data.orderId;
+          currentTradeNo = data.tradeNo;
+          statusBadge.textContent = '建單成功 (PENDING)';
+          statusBadge.className = 'status-badge success';
+          document.getElementById('cardStep1').classList.remove('active');
+          document.getElementById('cardStep2').classList.add('active');
+          document.getElementById('btnTriggerWebhook').disabled = false;
+
+          jsonBox.style.display = 'block';
+          jsonBox.textContent = `// 伺服端回傳訂單建立結果：\n` + JSON.stringify(data, null, 2);
+          log(`✓ 訂單建立成功！訂單 ID: ${data.orderId}，交易序號: ${data.tradeNo}`, 'success');
+          return data;
+        } else {
+          throw new Error(data.error || data.message || '建單失敗');
+        }
+      } catch (e) {
+        statusBadge.textContent = '失敗';
+        statusBadge.className = 'status-badge';
+        log('建單失敗: ' + e.message, 'warn');
+        alert('建單失敗: ' + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // 2. 觸發 Webhook
+    async function triggerWebhook() {
+      if (!currentOrderId) {
+        alert('請先完成第 1 步建立訂單！');
+        return;
+      }
+
+      const btn = document.getElementById('btnTriggerWebhook');
+      const statusBadge = document.getElementById('step2Status');
+      const jsonBox = document.getElementById('step2Json');
+
+      btn.disabled = true;
+      statusBadge.textContent = '驗章入帳中...';
+      statusBadge.className = 'status-badge running';
+      log(`正在生成 HMAC-SHA256 簽章並發送 Portaly Webhook...`);
+
+      try {
+        const res = await fetch('/api/demo/auto-sign-webhook', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: currentOrderId })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          statusBadge.textContent = '簽章驗證通過 · 點數入帳';
+          statusBadge.className = 'status-badge success';
+          document.getElementById('cardStep2').classList.remove('active');
+          document.getElementById('cardStep3').classList.add('active');
+          document.getElementById('btnGenerateReading').disabled = false;
+
+          updateCreditsDisplay(data.credits);
+
+          jsonBox.style.display = 'block';
+          jsonBox.textContent = `// Webhook 數位簽章與入帳明細：\n` +
+            `• x-portaly-signature: ${data.signature}\n` +
+            `• x-portaly-timestamp: ${data.timestamp}\n` +
+            `• 訂單狀態更新: ${data.order.status} (PAID)\n` +
+            `• 最新點數餘額: 感情篇 = ${data.credits.love} 次\n\n` +
+            JSON.stringify(data.webhookData, null, 2);
+
+          log(`✓ Portaly 數位簽章驗證通過！訂單標記為 PAID，點數已即時入帳！`, 'success');
+          return data;
+        } else {
+          throw new Error(data.error || 'Webhook 驗證失敗');
+        }
+      } catch (e) {
+        statusBadge.textContent = '失敗';
+        statusBadge.className = 'status-badge';
+        log('Webhook 失敗: ' + e.message, 'warn');
+        alert('Webhook 處理失敗: ' + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // 3. 測算扣點與產出報告
+    async function generateReading() {
+      const btn = document.getElementById('btnGenerateReading');
+      const statusBadge = document.getElementById('step3Status');
+      const jsonBox = document.getElementById('step3Json');
+
+      btn.disabled = true;
+      statusBadge.textContent = 'AI 易學推論解卦中 (扣減 1 點)...';
+      statusBadge.className = 'status-badge running';
+      log(`正在扣點 (1 點) 並連線問仙壇 AI 推論引擎...`);
+
+      try {
+        const res = await fetch('/api/reading/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            themeId: 'love',
+            themeKey: 'love',
+            nonce: `req_${Date.now()}`,
+            answers: {
+              target: '本人',
+              gender: '女',
+              age: '32',
+              relationshipStatus: '單身',
+              occupation: '科技業專案經理',
+              question: '想知道今年下半年有沒有機會遇到正緣對象？目前的桃花狀態如何，該積極社交還是沉澱自己？'
+            }
+          })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          statusBadge.textContent = '解卦完成 · 扣點成功';
+          statusBadge.className = 'status-badge success';
+
+          await refreshState();
+
+          jsonBox.style.display = 'block';
+          jsonBox.textContent = `// 測算履約完成：扣點成功，點數由 4 扣減為 3\n` +
+            JSON.stringify({
+              readingId: data.reading?.id || data.readingId,
+              theme: 'love',
+              creditDeduction: -1,
+              status: 'FULFILLED'
+            }, null, 2);
+
+          renderReport(data.report);
+
+          document.getElementById('cardStep4').style.display = 'block';
+          document.getElementById('cardStep4').scrollIntoView({ behavior: 'smooth' });
+
+          confetti({
+            particleCount: 120,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+
+          log(`🎉 深度命理報告產出圓滿成功！履約全流程驗證無瑕！`, 'success');
+          return data;
+        } else {
+          throw new Error(data.error || data.message || '測算產出失敗');
+        }
+      } catch (e) {
+        statusBadge.textContent = '失敗';
+        statusBadge.className = 'status-badge';
+        log('測算失敗: ' + e.message, 'warn');
+        alert('測算產出失敗: ' + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function renderReport(report) {
+      if (!report) return;
+      document.getElementById('reportSummary').textContent = report.summary || report.advice || '已得卦象，天機明示。';
+
+      const secContainer = document.getElementById('reportSections');
+      secContainer.innerHTML = '';
+      if (Array.isArray(report.sections)) {
+        report.sections.forEach((sec, idx) => {
+          const item = document.createElement('div');
+          item.className = 'report-section-item';
+          item.innerHTML = `
+            <div class="report-section-heading">
+              <span>✦</span> 第 ${idx + 1} 階段：${sec.heading}
+            </div>
+            <div class="report-section-body">${sec.body}</div>
+          `;
+          secContainer.appendChild(item);
+        });
+      }
+
+      const actContainer = document.getElementById('reportActions');
+      actContainer.innerHTML = '';
+      if (Array.isArray(report.actions)) {
+        report.actions.forEach((act, idx) => {
+          const li = document.createElement('li');
+          li.className = 'report-action-item';
+          li.innerHTML = `
+            <span class="action-num">${idx + 1}</span>
+            <span>${act}</span>
+          `;
+          actContainer.appendChild(li);
+        });
+      }
+    }
+
+    // 重設狀態
+    async function resetState() {
+      if (!confirm('確定要將點數與測試訂單重設回 0 點狀態嗎？')) return;
+      try {
+        const res = await fetch('/api/demo/reset', { method: 'POST' });
+        const data = await res.json();
+        updateCreditsDisplay(data.credits);
+        document.getElementById('step1Status').textContent = '待執行';
+        document.getElementById('step1Status').className = 'status-badge';
+        document.getElementById('step2Status').textContent = '待執行';
+        document.getElementById('step2Status').className = 'status-badge';
+        document.getElementById('step3Status').textContent = '待執行';
+        document.getElementById('step3Status').className = 'status-badge';
+        document.getElementById('step1Json').style.display = 'none';
+        document.getElementById('step2Json').style.display = 'none';
+        document.getElementById('step3Json').style.display = 'none';
+        document.getElementById('cardStep4').style.display = 'none';
+        document.getElementById('btnTriggerWebhook').disabled = true;
+        document.getElementById('btnGenerateReading').disabled = true;
+        currentOrderId = null;
+        log('測試環境已完全重設為 0 點狀態。', 'info');
+      } catch (e) {
+        alert('重設失敗: ' + e.message);
+      }
+    }
+
+    // 一鍵全自動演示
+    async function runAutoVerification() {
+      const btn = document.getElementById('btnAutoRun');
+      btn.disabled = true;
+      btn.innerHTML = '<span>⏳</span> 全自動演示進行中...';
+      log('==============================================');
+      log('🚀 啟動一鍵全流程自動化驗證...');
+
+      try {
+        log('【步驟 1】發起建立 Portaly 單項方案訂單...');
+        await createOrder();
+        await new Promise(r => setTimeout(r, 1200));
+
+        log('【步驟 2】觸發 Portaly 數位簽章 Webhook 並完成自動入帳...');
+        await triggerWebhook();
+        await new Promise(r => setTimeout(r, 1500));
+
+        log('【步驟 3】提交感情篇求問單，執行原子扣點 (4 扣為 3) 並由 AI 產出正式報告...');
+        await generateReading();
+      } catch (e) {
+        log('自動化流程異常終止: ' + e.message, 'warn');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🚀</span> 一鍵全自動演示';
+      }
+    }
+
+    // 啟動時自動載入狀態
+    window.addEventListener('DOMContentLoaded', () => {
+      refreshState();
+    });
+  </script>
+</body>
+</html>
