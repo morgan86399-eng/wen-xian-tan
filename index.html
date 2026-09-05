@@ -74,7 +74,7 @@
     <header class="app-header">
       <div class="app-header-inner">
         <!-- Brand Logo & Title -->
-        <button type="button" class="brand-wrap" data-goto-tab="hub" aria-label="返回六大篇章">
+        <button type="button" class="brand-wrap" data-goto-tab="hub" aria-label="返回問仙壇首頁" title="回到問仙壇首頁">
           <svg class="brand-svg-icon" viewBox="0 0 200 200" overflow="visible" fill="none">
             <defs>
               <linearGradient id="brandGoldLuxury" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -98,12 +98,13 @@
               <circle cx="0" cy="0" r="3.2" fill="#FFFFFF"/>
             </g>
           </svg>
+          <span class="brand-text-label">問仙壇</span>
         </button>
 
         <!-- Desktop Navigation Tabs -->
         <nav class="app-nav-tabs">
-          <button type="button" class="app-tab-btn active" data-tab="hub">
-            <span>✦</span> 六大篇章
+          <button type="button" class="app-tab-btn active" data-tab="hub" title="回到問仙壇首頁">
+            <span>⛩️</span> 回首頁
           </button>
           <button type="button" class="app-tab-btn" data-tab="member">
             <span>◇</span> 會員與次數
@@ -203,6 +204,16 @@
       <section class="app-view" id="view-member">
         <div class="member-dashboard-container">
           
+          <!-- 0. 頁面頂部導航與返回首頁按鈕 -->
+          <div class="page-breadcrumb-bar">
+            <button type="button" class="btn-return-home" data-goto-tab="hub" aria-label="回到問仙壇首頁">
+              <span class="return-icon">←</span>
+              <span>回到問仙壇首頁</span>
+            </button>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">信士中心與次數</span>
+          </div>
+
           <!-- 1. 信士基本資料卡 -->
           <div id="memberProfileContainer"></div>
 
@@ -262,23 +273,51 @@
             </div>
           </div>
 
+          <!-- 底部返回首頁區塊 -->
+          <div style="text-align:center;margin-top:32px;padding-top:20px;border-top:1px dashed var(--border);">
+            <button type="button" class="btn btn-outline btn-return-home" data-goto-tab="hub" style="padding:10px 24px;">
+              <span class="return-icon">←</span> 回到問仙壇首頁（選擇主題開始測算）
+            </button>
+          </div>
+
         </div>
       </section>
 
       <!-- Tab 3: 歷史測算紀錄簿 (History) -->
       <section class="app-view" id="view-history">
         <div style="max-width:900px;margin:0 auto;">
+          <div class="page-breadcrumb-bar">
+            <button type="button" class="btn-return-home" data-goto-tab="hub" aria-label="回到問仙壇首頁">
+              <span class="return-icon">←</span>
+              <span>回到問仙壇首頁</span>
+            </button>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">歷史測算紀錄簿</span>
+          </div>
           <div style="text-align:center;margin-bottom:24px;">
             <h2>📜 歷史測算紀錄簿</h2>
             <p>您所有產出的專屬命理報告與關聯見證故事皆永久保存在此，隨時登入皆可回看。</p>
           </div>
           <div class="themes-matrix-grid" id="historyReportsGrid"></div>
+          <div style="text-align:center;margin-top:36px;padding-top:20px;border-top:1px dashed var(--border);">
+            <button type="button" class="btn btn-primary btn-return-home" data-goto-tab="hub" style="padding:10px 26px;">
+              <span class="return-icon">⛩️</span> 前往六大篇章進行全新測算
+            </button>
+          </div>
         </div>
       </section>
 
       <!-- Tab 4: 靈驗見證榜 (Stories Feed) -->
       <section class="app-view" id="view-stories">
         <div style="max-width:960px;margin:0 auto;">
+          <div class="page-breadcrumb-bar">
+            <button type="button" class="btn-return-home" data-goto-tab="hub" aria-label="回到問仙壇首頁">
+              <span class="return-icon">←</span>
+              <span>回到問仙壇首頁</span>
+            </button>
+            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-current">靈驗見證榜</span>
+          </div>
           <div style="text-align:center;margin-bottom:20px;">
             <h2>✨ 信眾真實顯化見證榜</h2>
             <p>信眾誠心求問、得到指引後的真實經歷回饋</p>
@@ -296,6 +335,11 @@
           </div>
 
           <div class="themes-matrix-grid" id="storiesGrid"></div>
+          <div style="text-align:center;margin-top:36px;padding-top:20px;border-top:1px dashed var(--border);">
+            <button type="button" class="btn btn-primary btn-return-home" data-goto-tab="hub" style="padding:10px 26px;">
+              <span class="return-icon">⛩️</span> 立即回到首頁測算我的掌紋
+            </button>
+          </div>
         </div>
       </section>
 
@@ -331,9 +375,9 @@
 
     <!-- Mobile Bottom Navigation Dock -->
     <nav class="app-bottom-nav">
-      <button type="button" class="app-bottom-tab active" data-tab="hub">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M9 4v16"/><path d="M14 9l3 3-3 3"/></svg>
-        <span>六大篇章</span>
+      <button type="button" class="app-bottom-tab active" data-tab="hub" aria-label="回到問仙壇首頁">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span>回首頁</span>
       </button>
       <button type="button" class="app-bottom-tab" data-tab="member">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -348,6 +392,12 @@
         <span>見證榜</span>
       </button>
     </nav>
+
+    <!-- Global Floating Return Home Button -->
+    <button type="button" class="floating-home-btn is-hidden" id="floatingHomeBtn" data-goto-tab="hub" aria-label="回到問仙壇首頁" title="回到問仙壇首頁">
+      <span class="floating-home-icon">⛩️</span>
+      <span class="floating-home-text">回到首頁</span>
+    </button>
 
     <!-- Modal Host Container (Wizard, Reports & Auth) -->
     <div class="modal-backdrop" id="readingModalBackdrop" role="dialog" aria-modal="true">

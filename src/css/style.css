@@ -3053,3 +3053,146 @@ p {
 @media (max-width: 480px) {
   .report-consult-btn { width: 100%; padding: 0 16px; }
 }
+
+/* ========================================================
+   全站各頁面返回首頁導覽按鈕與懸浮膠囊 (Return to Home Components)
+   ======================================================== */
+
+.brand-text-label {
+  font-family: var(--font-serif, "Noto Serif TC", serif);
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #FFFFFF 0%, #E8F4FF 30%, #F5CE76 70%, #C7A45A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+.brand-wrap:hover .brand-text-label {
+  opacity: 0.9;
+}
+
+@media (max-width: 600px) {
+  .brand-text-label {
+    display: none;
+  }
+}
+
+/* 頁首麵包屑 / 返回首頁條 */
+.page-breadcrumb-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.btn-return-home {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(18, 38, 77, 0.65);
+  border: 1px solid rgba(145, 205, 255, 0.4);
+  color: #eff6ff;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.btn-return-home:hover {
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.85), rgba(212, 168, 83, 0.45));
+  border-color: var(--gold-bright);
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(80, 158, 255, 0.4);
+}
+
+.btn-return-home:active {
+  transform: translateY(0);
+}
+
+.btn-return-home .return-icon {
+  font-size: 1.05rem;
+  transition: transform 0.2s ease;
+}
+
+.btn-return-home:hover .return-icon {
+  transform: translateX(-3px);
+}
+
+.breadcrumb-separator {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.breadcrumb-current {
+  color: var(--gold-bright);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+/* 懸浮回首頁按鈕（全域跨頁面） */
+.floating-home-btn {
+  position: fixed;
+  bottom: 28px;
+  left: 24px;
+  z-index: 999;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, rgba(12, 10, 28, 0.94), rgba(21, 38, 82, 0.95));
+  border: 1.5px solid var(--border-gold);
+  border-radius: 999px;
+  color: var(--gold-bright);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65), 0 0 16px rgba(212, 168, 83, 0.35);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.floating-home-btn.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(12px);
+}
+
+.floating-home-btn:hover {
+  transform: translateY(-2px) scale(1.03);
+  border-color: #fff1ad;
+  color: #ffffff;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.75), 0 0 24px rgba(212, 168, 83, 0.55);
+}
+
+.floating-home-btn:active {
+  transform: translateY(1px);
+}
+
+.floating-home-btn .floating-home-icon {
+  font-size: 1.15rem;
+}
+
+@media (max-width: 768px) {
+  .floating-home-btn {
+    bottom: 82px;
+    left: 14px;
+    padding: 8px 14px;
+    font-size: 0.82rem;
+  }
+}

@@ -283,6 +283,15 @@ document.addEventListener('DOMContentLoaded', () => {
       view.classList.toggle('active', view.id === `view-${tabId}`);
     });
 
+    const floatingHomeBtn = document.getElementById('floatingHomeBtn');
+    if (floatingHomeBtn) {
+      if (tabId === 'hub') {
+        floatingHomeBtn.classList.add('is-hidden');
+      } else {
+        floatingHomeBtn.classList.remove('is-hidden');
+      }
+    }
+
     if (tabId === 'auth') {
       renderAuthPage();
     } else if (tabId === 'member') {
@@ -304,8 +313,13 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.addEventListener('click', () => switchTab(btn.dataset.tab));
   });
 
-  document.querySelectorAll('[data-goto-tab]').forEach((el) => {
-    el.addEventListener('click', () => switchTab(el.dataset.gotoTab));
+  // 全域委派事件：所有 [data-goto-tab] 按鈕點擊切換
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('[data-goto-tab]');
+    if (target && target.dataset.gotoTab) {
+      e.preventDefault();
+      switchTab(target.dataset.gotoTab);
+    }
   });
 
   // ============ 3. Top Right Bar (Auth / Profile Button) ============
@@ -594,6 +608,16 @@ document.addEventListener('DOMContentLoaded', () => {
     ` : '';
 
     authPageContainer.innerHTML = `
+      <!-- 頂部返回首頁導航與麵包屑 -->
+      <div class="page-breadcrumb-bar" style="margin-bottom:16px;">
+        <button type="button" class="btn-return-home" data-goto-tab="hub" aria-label="回到問仙壇首頁">
+          <span class="return-icon">←</span>
+          <span>回到問仙壇首頁</span>
+        </button>
+        <span class="breadcrumb-separator">/</span>
+        <span class="breadcrumb-current">信士登入 / 註冊</span>
+      </div>
+
       <div class="auth-page-header">
         <h2>🔮 仙壇結緣 ｜ 信士登入 / 註冊</h2>
         <p>一鍵登入仙壇帳號，永久保存您的各篇掌紋解讀報告與測算次數</p>
@@ -619,15 +643,21 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
 
-          <div style="display:flex;gap:10px;margin-top:4px;">
-            <button type="button" class="btn btn-gold btn-sm" id="authGoToMemberBtn" style="flex:1;">
-              👉 進入會員中心查看額度與購買方案
+          <!-- 登入卡片內快捷返回首頁與會員中心 -->
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+            <button type="button" class="btn btn-primary" data-goto-tab="hub" style="width:100%;font-weight:900;font-size:1rem;padding:12px 18px;box-shadow:0 4px 20px rgba(59,130,246,0.35);display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+              <span style="font-size:1.18rem;">⛩️</span> 回到問仙壇首頁開始測算
             </button>
-            <button type="button" class="btn btn-outline btn-sm" id="authLogoutBtn">
-              登出當前帳號
-            </button>
+            <div style="display:flex;gap:10px;">
+              <button type="button" class="btn btn-gold btn-sm" id="authGoToMemberBtn" style="flex:1;">
+                👉 進入會員中心查看額度與購買方案
+              </button>
+              <button type="button" class="btn btn-outline btn-sm" id="authLogoutBtn">
+                登出當前帳號
+              </button>
+            </div>
           </div>
-          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px;">
+          <div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px;">
             💡 若需改用其他身分，可直接點選下方 LINE、Google 或輸入其他帳號登入，系統將自動為您切換。
           </div>
         </div>
@@ -688,6 +718,13 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="auth-guarantee-badge">
         <span>🔒</span>
         <span>仙壇嚴格保障每位信士隱私，掌紋及個資不作商業轉售</span>
+      </div>
+
+      <!-- 登入頁底部返回首頁按鈕 -->
+      <div style="text-align:center;margin-top:22px;padding-top:16px;border-top:1px dashed var(--border);">
+        <button type="button" class="btn btn-outline btn-return-home" data-goto-tab="hub" style="padding:10px 22px;">
+          <span class="return-icon">←</span> 返回問仙壇首頁（瀏覽六大篇章）
+        </button>
       </div>
     `;
 
@@ -2176,6 +2213,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('closeReportBtn')?.addEventListener('click', () => {
       readingModalBackdrop.classList.remove('show');
+      switchTab('hub');
     });
 
     document.getElementById('viewAllReportsBtn')?.addEventListener('click', () => {
