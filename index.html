@@ -154,6 +154,19 @@
 
         <!-- Right Side: User Profile & Balance Capsule -->
         <div style="display:flex;align-items:center;gap:10px;">
+          <!-- 畫面縮放控制器（精緻小巧，支援 75%~150% 自由放大縮小與重設） -->
+          <div class="zoom-pill-wrap" id="zoomPillWrap">
+            <button type="button" class="zoom-toggle-btn" id="zoomToggleBtn" aria-label="畫面縮放控制器" aria-expanded="false" title="自訂畫面縮放比例 (75%~150%)">
+              <span class="zoom-icon" aria-hidden="true">🔍</span>
+              <span class="zoom-level-label" id="zoomLevelLabel">100%</span>
+            </button>
+            <div class="zoom-popup-panel" id="zoomPopupPanel" hidden>
+              <span class="zoom-popup-val" id="zoomPopupVal">100%</span>
+              <button type="button" class="zoom-btn zoom-btn-minus" id="zoomBtnMinus" aria-label="縮小畫面" title="縮小 (每次 -10%)">−</button>
+              <button type="button" class="zoom-btn zoom-btn-plus" id="zoomBtnPlus" aria-label="放大畫面" title="放大 (每次 +10%)">+</button>
+              <button type="button" class="zoom-reset-btn" id="zoomBtnReset" title="重設為 100%">重設</button>
+            </div>
+          </div>
           <button type="button" class="motion-toggle" id="motionToggle" aria-pressed="true" aria-label="動畫特效：開" title="切換動畫特效">
             <span aria-hidden="true">✦</span><span class="motion-toggle__label">動畫：開</span>
           </button>

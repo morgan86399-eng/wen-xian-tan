@@ -237,6 +237,107 @@ document.addEventListener('DOMContentLoaded', () => {
 
   initSapphireMotion();
 
+  // ============ 1.1 Page Zoom Controller ============
+  function initPageZoomController() {
+    const zoomToggleBtn = document.getElementById('zoomToggleBtn');
+    const zoomPopupPanel = document.getElementById('zoomPopupPanel');
+    const zoomLevelLabel = document.getElementById('zoomLevelLabel');
+    const zoomPopupVal = document.getElementById('zoomPopupVal');
+    const zoomBtnMinus = document.getElementById('zoomBtnMinus');
+    const zoomBtnPlus = document.getElementById('zoomBtnPlus');
+    const zoomBtnReset = document.getElementById('zoomBtnReset');
+
+    if (!zoomToggleBtn || !zoomPopupPanel) return;
+
+    // Standard zoom stops (75% ~ 150%, matching Chrome defaults & user requirement)
+    const ZOOM_STOPS = [75, 80, 90, 100, 110, 125, 150];
+    let currentZoom = 100;
+
+    const savedZoom = parseInt(localStorage.getItem('wx_custom_zoom') || '100', 10);
+    if (!isNaN(savedZoom) && savedZoom >= 70 && savedZoom <= 160) {
+      currentZoom = savedZoom;
+    }
+
+    const applyZoom = (zoom) => {
+      currentZoom = Math.min(160, Math.max(70, zoom));
+      try {
+        localStorage.setItem('wx_custom_zoom', currentZoom.toString());
+      } catch (_) {}
+
+      const ratio = currentZoom / 100;
+      if ('zoom' in document.body.style) {
+        document.body.style.zoom = ratio;
+      } else {
+        document.body.style.transform = `scale(${ratio})`;
+        document.body.style.transformOrigin = 'top center';
+        document.body.style.width = `${100 / ratio}%`;
+      }
+
+      if (zoomLevelLabel) zoomLevelLabel.textContent = `${currentZoom}%`;
+      if (zoomPopupVal) zoomPopupVal.textContent = `${currentZoom}%`;
+    };
+
+    // Apply initial saved zoom
+    applyZoom(currentZoom);
+
+    // Toggle dropdown
+    const togglePanel = (show) => {
+      const isHidden = zoomPopupPanel.hasAttribute('hidden');
+      const shouldOpen = show !== undefined ? show : isHidden;
+      if (shouldOpen) {
+        zoomPopupPanel.removeAttribute('hidden');
+        zoomToggleBtn.setAttribute('aria-expanded', 'true');
+      } else {
+        zoomPopupPanel.setAttribute('hidden', '');
+        zoomToggleBtn.setAttribute('aria-expanded', 'false');
+      }
+    };
+
+    zoomToggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      togglePanel();
+    });
+
+    zoomPopupPanel.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+
+    // Minus button: snap to next lower stop or -10
+    zoomBtnMinus?.addEventListener('click', () => {
+      const lowerStops = ZOOM_STOPS.filter(s => s < currentZoom);
+      const nextZoom = lowerStops.length > 0 ? lowerStops[lowerStops.length - 1] : currentZoom - 10;
+      applyZoom(nextZoom);
+    });
+
+    // Plus button: snap to next higher stop or +10
+    zoomBtnPlus?.addEventListener('click', () => {
+      const higherStops = ZOOM_STOPS.filter(s => s > currentZoom);
+      const nextZoom = higherStops.length > 0 ? higherStops[0] : currentZoom + 10;
+      applyZoom(nextZoom);
+    });
+
+    // Reset button
+    zoomBtnReset?.addEventListener('click', () => {
+      applyZoom(100);
+    });
+
+    // Close on outside click
+    document.addEventListener('click', (e) => {
+      if (!zoomPopupPanel.hasAttribute('hidden') && !zoomToggleBtn.contains(e.target) && !zoomPopupPanel.contains(e.target)) {
+        togglePanel(false);
+      }
+    });
+
+    // Close on Esc
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !zoomPopupPanel.hasAttribute('hidden')) {
+        togglePanel(false);
+      }
+    });
+  }
+
+  initPageZoomController();
+
   // ============ 1.5 Purchase Transition ============
   function startCelestialPurchaseTransition(onComplete) {
     if (!celestialPurchaseTransition) {
