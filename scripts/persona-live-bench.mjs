@@ -9,11 +9,15 @@ import { runReportPipeline } from '../functions/lib/wxt/report-pipeline.mjs';
 import { PERSONAS } from './persona-cases.mjs';
 
 const env = {
-  GROQ_API_KEY: process.env.GROQ_API_KEY || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   GROQ_TEXT_MODEL: process.env.GROQ_TEXT_MODEL || 'openai/gpt-oss-120b',
   GEMINI_TEXT_MODEL: process.env.GEMINI_TEXT_MODEL || 'gemini-3.5-flash'
 };
+/* Groq 可以掛多把金鑰，這裡把所有 GROQ_API_KEY* 原樣帶過去，
+   不要再手動挑欄位——漏掉一把就等於整條輪替機制沒生效。 */
+for (const [name, value] of Object.entries(process.env)) {
+  if (/^GROQ_API_KEYS?(_\d+)?$/.test(name) && value) env[name] = value;
+}
 
 if (!env.GROQ_API_KEY && !env.GEMINI_API_KEY) {
   console.error('沒有金鑰。請先 export GROQ_API_KEY=... 再執行。');
