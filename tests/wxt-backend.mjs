@@ -734,7 +734,7 @@ await check('前端送的 all 方案後端收得到，六篇金額 999', async (
   assert.equal(getProduct('six'), null, '舊的 six 代號不應該再存在');
 });
 
-await check('六篇方案各篇點數不同且合計 18 次', async (env) => {
+await check('六篇方案每篇各一點、合計 6 次', async (env) => {
   const themes = ['love', 'work', 'career', 'wealth', 'family', 'children'];
   const tradeNo = 'WXT250904120000ALL';
   const { userId, orderId } = await seedOrder(env, {
@@ -745,10 +745,10 @@ await check('六篇方案各篇點數不同且合計 18 次', async (env) => {
   assert.equal(res.body, '1|OK');
 
   const credits = await getCreditsMap(env, userId);
-  // 感情篇多出來的那一點是註冊禮，不是方案內容
-  assert.deepEqual(credits, { love: 4 + SIGNUP_BONUS_AMOUNT, wealth: 4, career: 3, work: 3, family: 2, children: 2 });
+  // 一個篇章買一次就是一點；感情篇多出來的那一點是註冊禮
+  assert.deepEqual(credits, { love: 1 + SIGNUP_BONUS_AMOUNT, wealth: 1, career: 1, work: 1, family: 1, children: 1 });
   const total = Object.values(credits).reduce((sum, n) => sum + n, 0);
-  assert.equal(total, 18 + SIGNUP_BONUS_AMOUNT);
+  assert.equal(total, 6 + SIGNUP_BONUS_AMOUNT);
 });
 
 console.log('\n[付款成功但核發中斷]');
@@ -788,8 +788,8 @@ await check('核發中斷時不留付款事件，綠界重送會把點數補齊'
   const retry = await postForm(ecpayCallback, env, params);
   assert.equal(retry.body, '1|OK');
   const credits = await getCreditsMap(env, userId);
-  // 感情篇多出來的那一點是註冊禮，不是方案內容
-  assert.deepEqual(credits, { love: 4 + SIGNUP_BONUS_AMOUNT, wealth: 4, career: 3, work: 3, family: 2, children: 2 });
+  // 一個篇章買一次就是一點；感情篇多出來的那一點是註冊禮
+  assert.deepEqual(credits, { love: 1 + SIGNUP_BONUS_AMOUNT, wealth: 1, career: 1, work: 1, family: 1, children: 1 });
 });
 
 console.log('\n[報告不可跨帳號讀取]');

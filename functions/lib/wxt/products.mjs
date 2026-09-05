@@ -2,14 +2,15 @@
 
 import { isThemeId } from './http.mjs';
 
-/* 各篇報告篇幅不同，配給的測算次數也不同；三種方案共用同一張表 */
+/* 一個篇章買一次就是一點，不分篇章長短；三種方案共用同一張表。
+   （weiyo 2026-09-06 決定：原本依篇幅配 2~4 次的算法作廢） */
 export const CREDITS_BY_THEME = {
-  love: 4,
-  wealth: 4,
-  career: 3,
-  work: 3,
-  family: 2,
-  children: 2
+  love: 1,
+  wealth: 1,
+  career: 1,
+  work: 1,
+  family: 1,
+  children: 1
 };
 
 export const PRODUCTS = {

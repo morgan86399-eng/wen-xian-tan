@@ -80,9 +80,9 @@ async function runWebhookTests() {
 
   // 4. 驗證會員主題點數已正確入帳
   const credits = await getCreditsMap(env, userId);
-  assert.equal(credits.love, 4, 'love 篇應核發 4 點');
-  assert.equal(credits.career, 3, 'career 篇應核發 3 點');
-  assert.equal(credits.wealth, 4, 'wealth 篇應核發 4 點');
+  assert.equal(credits.love, 1, 'love 篇應核發 1 點');
+  assert.equal(credits.career, 1, 'career 篇應核發 1 點');
+  assert.equal(credits.wealth, 1, 'wealth 篇應核發 1 點');
   assert.equal(credits.work, 0, '未選主題應為 0 點');
   console.log('  ✓ 各篇章測算額度已正確入帳到資料庫');
 
@@ -103,9 +103,9 @@ async function runWebhookTests() {
   assert.equal(replayJson.message, 'ALREADY_PAID');
 
   const creditsReplay = await getCreditsMap(env, userId);
-  assert.equal(creditsReplay.love, 4, '重放請求不得重複加點');
-  assert.equal(creditsReplay.career, 3);
-  assert.equal(creditsReplay.wealth, 4);
+  assert.equal(creditsReplay.love, 1, '重放請求不得重複加點');
+  assert.equal(creditsReplay.career, 1);
+  assert.equal(creditsReplay.wealth, 1);
   console.log('  ✓ Webhook 冪等性防重複加點測試通過');
 
   // 6. 測試偽造簽章防禦
