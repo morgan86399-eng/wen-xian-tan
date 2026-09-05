@@ -40,6 +40,38 @@ function scorePersonaFit(report, persona) {
   };
 }
 
+/* 模板感與可讀性：這是這次提示詞改造要修的東西，所以要量得出來 */
+const 時間詞開頭 = /^(今晚|今天|今早|明天|後天|本週|這週|下週|週末|這個週末|本月|這個月|睡前)/;
+
+function scoreTexture(report) {
+  const actions = extractActions(report);
+  const sections = extractSections(report);
+  const 首四字 = (t) => String(t || '').slice(0, 4);
+
+  const 建議時間開頭 = actions.filter((a) => 時間詞開頭.test(a)).length;
+  const 建議句首重複 = new Set(actions.map(首四字)).size < actions.length;
+  const 段落句首重複 = new Set(sections.map((x) => 首四字(x.body))).size < sections.length;
+
+  const lens = sections.map((x) => (x.body || '').length);
+  const 平均 = lens.length ? lens.reduce((a, b) => a + b, 0) / lens.length : 0;
+  const 標準差 = lens.length
+    ? Math.sqrt(lens.reduce((a, b) => a + (b - 平均) ** 2, 0) / lens.length)
+    : 0;
+
+  const 全文 = JSON.stringify(report);
+  const 破字 = ['信用停滯', '停滯片', '關停滯', '停滯路里', '打停滯'].filter((w) => 全文.includes(w));
+
+  return {
+    建議時間開頭,
+    建議句首不重複: !建議句首重複,
+    段落句首不重複: !段落句首重複,
+    段落長度標準差: Math.round(標準差),
+    長度不平均: 標準差 >= 25,
+    無破字: 破字.length === 0,
+    破字
+  };
+}
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /* Groq 免費層每分鐘 8000 token，撞到 429 就等一分鐘再來，最多等四次 */
@@ -97,12 +129,13 @@ for (const persona of PERSONAS) {
   }
 
   const fit = report ? scorePersonaFit(report, persona) : {};
+  const texture = report ? scoreTexture(report) : {};
   const forbidden = report ? scanForbidden(JSON.stringify(report)) : [];
   const sections = report ? extractSections(report) : [];
   const actions = report ? extractActions(report) : [];
 
   rows.push({
-    index, persona, report, attempts, model, lastError, fit, forbidden, forbiddenReplaced, degraded, stage,
+    index, persona, report, attempts, model, lastError, fit, texture, forbidden, forbiddenReplaced, degraded, stage,
     sectionCount: sections.length,
     actionCount: actions.length,
     minActionLen: actions.length ? Math.min(...actions.map((a) => a.length)) : 0,
@@ -114,11 +147,12 @@ for (const persona of PERSONAS) {
 }
 
 const lines = ['# 問仙壇 × 20 人格 真實 AI 報告測試', '', `執行時間：${new Date().toLocaleString('zh-TW')}`, ''];
-lines.push('| # | 人格 | 篇章 | 產出 | 嘗試 | 段數 | 建議 | 最短建議 | 引用問題 | 提到本人處境 | 非通用範本 | 內文夠長 | 禁用詞替換 | 走保底 | 產出階段 |');
-lines.push('|---|------|------|------|------|------|------|---------|---------|-------------|-----------|---------|-----------|--------|---------|');
+lines.push('| # | 人格 | 篇章 | 產出 | 段數 | 建議 | 引用問題 | 提到本人處境 | 內文夠長 | 建議時間詞開頭 | 建議句首不重複 | 段落句首不重複 | 長度不平均 | 無破字 | 走保底 | 產出階段 |');
+lines.push('|---|------|------|------|------|------|---------|-------------|---------|--------------|--------------|--------------|-----------|-------|--------|---------|');
 for (const r of rows) {
   const y = (v) => (v ? '✅' : '❌');
-  lines.push(`| ${String(r.index).padStart(2, '0')} | ${r.persona.name} | ${r.persona.theme} | ${r.report ? '✅' : '❌'} | ${r.attempts} | ${r.sectionCount} | ${r.actionCount} | ${r.minActionLen} | ${y(r.fit.引用使用者問題)} | ${y(r.fit.提到本人處境關鍵字)} | ${y(r.fit.沒有寫成通用範本)} | ${y(r.fit.內文夠長)} | ${r.forbiddenReplaced ? '✅' : '—'} | ${r.degraded ? '⚠️' : '—'} | ${r.stage || r.lastError.slice(0, 20)} |`);
+  const t = r.texture || {};
+  lines.push(`| ${String(r.index).padStart(2, '0')} | ${r.persona.name} | ${r.persona.theme} | ${r.report ? '✅' : '❌'} | ${r.sectionCount} | ${r.actionCount} | ${y(r.fit.引用使用者問題)} | ${y(r.fit.提到本人處境關鍵字)} | ${y(r.fit.內文夠長)} | ${t.建議時間開頭 == null ? '—' : `${t.建議時間開頭}/3`} | ${y(t.建議句首不重複)} | ${y(t.段落句首不重複)} | ${y(t.長度不平均)}（${t.段落長度標準差 ?? '—'}） | ${y(t.無破字)} | ${r.degraded ? '⚠️' : '—'} | ${r.stage || r.lastError.slice(0, 20)} |`);
 }
 
 const ok = rows.filter((r) => r.report).length;
@@ -128,6 +162,44 @@ for (const r of rows) {
   lines.push(`- **${r.persona.name}**（${r.persona.theme}）：${r.sample || `產出失敗：${r.lastError}`}`);
 }
 
+/* 模板感彙總：這幾個數字才是這次提示詞改造要看的 */
+const 有報告 = rows.filter((r) => r.report);
+const 時間開頭首條 = 有報告.filter((r) => {
+  const a = extractActions(r.report)[0] || '';
+  return 時間詞開頭.test(a);
+}).length;
+const 開頭詞 = {};
+for (const r of 有報告) {
+  const a = extractActions(r.report)[0] || '';
+  const m = a.match(時間詞開頭);
+  const k = m ? m[1] : '（非時間開頭）';
+  開頭詞[k] = (開頭詞[k] || 0) + 1;
+}
+lines.push('', '## 模板感彙總（提示詞改造的驗收指標）', '');
+lines.push(`- 第一條建議以時間詞開頭：**${時間開頭首條} / ${有報告.length}**（改造前是 20/20）`);
+lines.push(`- 第一條建議的開頭詞分佈：${Object.entries(開頭詞).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}×${v}`).join('、')}`);
+lines.push(`- 三條建議句首不重複：${有報告.filter((r) => r.texture.建議句首不重複).length} / ${有報告.length}`);
+lines.push(`- 四段開頭不重複：${有報告.filter((r) => r.texture.段落句首不重複).length} / ${有報告.length}`);
+lines.push(`- 四段長度不平均（標準差 ≥ 25）：${有報告.filter((r) => r.texture.長度不平均).length} / ${有報告.length}`);
+lines.push(`- 沒有替換破字：${有報告.filter((r) => r.texture.無破字).length} / ${有報告.length}`);
+
 const out = new URL('../persona-live-bench-output.md', import.meta.url).pathname;
 writeFileSync(out, lines.join('\n'), 'utf8');
-console.log(`\n報告已寫入：${out}`);
+
+/* 完整報告落檔：四段內文一直沒有人看過，這份是拿來人工審的 */
+const full = ['# 問仙壇 20 人格 完整報告全文', '', `執行時間：${new Date().toLocaleString('zh-TW')}`, ''];
+for (const r of rows) {
+  full.push(`---`, '', `## ${String(r.index).padStart(2, '0')} ${r.persona.name}（${r.persona.theme}｜${r.persona.age}｜${r.persona.role}）`, '');
+  full.push(`**他問的**：${r.persona.question}`, '');
+  if (!r.report) { full.push(`產出失敗：${r.lastError}`, ''); continue; }
+  full.push(`**標題**：${r.report.title || '（無）'}`, '');
+  for (const sec of extractSections(r.report)) full.push(`### ${sec.heading}`, '', sec.body, '');
+  full.push('**三條建議**：', '');
+  extractActions(r.report).forEach((a, i) => full.push(`${i + 1}. ${a}`));
+  full.push('', `**總結**：${r.report.summary || '（無）'}`, '');
+}
+const fullOut = new URL('../persona-live-bench-full.md', import.meta.url).pathname;
+writeFileSync(fullOut, full.join('\n'), 'utf8');
+
+console.log(`\n指標報告：${out}`);
+console.log(`完整全文：${fullOut}`);
