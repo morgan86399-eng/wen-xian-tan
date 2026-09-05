@@ -1430,25 +1430,131 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ============ 10. Intelligent Story Matcher Engine ============
-  function matchStoriesForReport(themeId, userQuestion = '') {
-    const qLower = (userQuestion || '').toLowerCase();
+  // ============ 10. Intelligent Story Matcher Engine (量身定做顯化案例引擎) ============
+  function matchStoriesForReport(themeId, answersOrQuestion = '') {
+    let questionText = '';
+    let roleText = '';
+    let goalText = '';
+    let relationText = '';
+
+    if (typeof answersOrQuestion === 'string') {
+      questionText = answersOrQuestion;
+    } else if (answersOrQuestion && typeof answersOrQuestion === 'object') {
+      questionText = answersOrQuestion.question || answersOrQuestion.questionCustom || '';
+      roleText = [
+        answersOrQuestion.role || '',
+        answersOrQuestion.roleLabel || '',
+        answersOrQuestion.roleCustom || ''
+      ].filter(Boolean).join(' ');
+      goalText = [
+        answersOrQuestion.goal || '',
+        answersOrQuestion.goalLabel || '',
+        answersOrQuestion.goalCustom || ''
+      ].filter(Boolean).join(' ');
+      relationText = [
+        answersOrQuestion.relation || '',
+        answersOrQuestion.relationLabel || '',
+        answersOrQuestion.relationCustom || ''
+      ].filter(Boolean).join(' ');
+    }
+
+    const fullSearchText = `${questionText} ${roleText} ${goalText} ${relationText}`.toLowerCase();
+
+    // 專屬情境需求判定 (User Situations & Intent Detection)
+    const isSingleSeeking = /single|單身|尋覓|正緣|桃花|找對象|另一半|姻緣|孤單|戀愛|脫單/.test(fullSearchText);
+    const isBreakupOrConflict = /breakup|conflict|divorced|分手|冷戰|吵架|挽回|看清|暴力|離開|情傷|心結|復合/.test(fullSearchText);
+    const isMarriedOrCouple = /married|dating|夫妻|先生|太太|結婚|婚姻|攜手|相處|公婆|熱戀/.test(fullSearchText);
+    const isFriendOrPast = /知己|朋友|重新聯繫|好感|友達以上|遺憾/.test(fullSearchText);
+
+    const isJobSeeking = /job_seeking|求職|換工作|面試|履歷|待業|錄取|轉職|第一家|跳槽|上班/.test(fullSearchText);
+    const isWorkWisdom = /智慧|理解|溝通|表達|思路|提升|得心應手|重點|順遂/.test(fullSearchText);
+
+    const isBusiness = /業績|團隊|低迷|公司|生意|合夥|創業|業務/.test(fullSearchText);
+    const isExamOrSuccession = /執照|考試|接班|傳承|會計師|升等/.test(fullSearchText);
+
+    const isLawsuit = /官司|債務|法院|免賠|被訴|法官|律師/.test(fullSearchText);
+    const isInvestment = /投資|本金|退款|借|拿回錢|六十萬/.test(fullSearchText);
+    const isIncome = /款項|入帳|報價|設計|收入|加薪|意外之財/.test(fullSearchText);
+
+    const isBuyingHouse = /買房|置產|新成屋|頭期款|房子|新家|看房|換屋/.test(fullSearchText);
+    const isElderCare = /生病|住院|開刀|手術|心臟|骨折|復原|長輩|母親|父親|阿嬤|大姊/.test(fullSearchText);
+    const isInsomnia = /失眠|酒精|喝酒|睡眠|放鬆|安眠|戒酒/.test(fullSearchText);
+    const isLifeEnd = /最後一程|釋懷|人生終點|安詳|生死/.test(fullSearchText);
+
+    const isPregnancy = /pre_pregnancy|pregnant|備孕|懷孕|生產|剖腹|陣痛|破水|寶寶/.test(fullSearchText);
+    const isChildPeace = /電梯|陰影|害怕|受驚|收驚|哭鬧|安神/.test(fullSearchText);
+    const isPalmistry = /掌紋|手相|智慧線|生命線|感情線|事業線|流年|避坑|破財|投資/.test(fullSearchText);
+    const isChildHealth = /手指|板機指|眼睛|畏光|自責|康復|視力/.test(fullSearchText);
 
     const scored = MANIFESTATION_STORIES.map((story) => {
       let score = 0;
 
-      if (story.themeId === themeId) score += 50;
-
-      if (qLower && story.keywords) {
-        story.keywords.forEach((kw) => {
-          if (qLower.includes(kw.toLowerCase())) score += 25;
-        });
+      // 1. 同篇幅主題最優先 (Base weight)
+      if (story.themeId === themeId) {
+        score += 100;
+      } else if (themeId === 'work' && story.themeId === 'career') {
+        score += 20;
+      } else if (themeId === 'career' && story.themeId === 'work') {
+        score += 20;
+      } else if (themeId === 'family' && story.themeId === 'children') {
+        score += 20;
+      } else if (themeId === 'children' && story.themeId === 'family') {
+        score += 20;
       }
 
-      if (themeId === 'work' && story.themeId === 'career') score += 15;
-      if (themeId === 'career' && story.themeId === 'work') score += 15;
-      if (themeId === 'family' && story.themeId === 'children') score += 15;
-      if (themeId === 'children' && story.themeId === 'family') score += 15;
+      // 2. 篇幅情境高精度加權 (Tailored Persona Matching)
+      if (themeId === 'love') {
+        if (isSingleSeeking && (story.id === 'story_single_love' || story.keywords.includes('單身') || story.keywords.includes('正緣'))) {
+          score += 150;
+        }
+        if (isBreakupOrConflict && (story.id === 'story_14' || story.keywords.includes('分手') || story.keywords.includes('家暴'))) {
+          score += 150;
+        }
+        if (isMarriedOrCouple && (story.id === 'story_27' || story.keywords.includes('夫妻'))) {
+          score += 150;
+        }
+        if (isFriendOrPast && story.id === 'story_19') {
+          score += 160;
+        }
+      } else if (themeId === 'work') {
+        if (isJobSeeking && (story.id === 'story_18' || story.id === 'story_31')) {
+          score += 130;
+        }
+        if (isWorkWisdom && story.id === 'story_26') {
+          score += 140;
+        }
+      } else if (themeId === 'career') {
+        if (isBusiness && story.id === 'story_16') score += 140;
+        if (isExamOrSuccession && story.id === 'story_11') score += 140;
+      } else if (themeId === 'wealth') {
+        if (isLawsuit && story.id === 'story_12') score += 140;
+        if (isInvestment && story.id === 'story_13') score += 140;
+        if (isIncome && story.id === 'story_22') score += 140;
+      } else if (themeId === 'family') {
+        if (isBuyingHouse && story.id === 'story_17') score += 150;
+        if (isInsomnia && story.id === 'story_01') score += 150;
+        if (isLifeEnd && story.id === 'story_23') score += 150;
+        if (/阿嬤|車禍|骨裂/.test(fullSearchText) && story.id === 'story_05') score += 150;
+        if (/父親|爸/.test(fullSearchText) && story.id === 'story_20') score += 150;
+        if (/大姊|姊/.test(fullSearchText) && story.id === 'story_06') score += 150;
+        if (/母親|媽/.test(fullSearchText) && (story.id === 'story_03' || story.id === 'story_04')) score += 140;
+      } else if (themeId === 'children') {
+        if (isPregnancy && story.id === 'story_15') score += 150;
+        if (isChildPeace && story.id === 'story_21') score += 150;
+        if (isPalmistry && story.id === 'story_08') score += 150;
+        if (/手指|板機指/.test(fullSearchText) && story.id === 'story_02') score += 150;
+        if (/眼睛|畏光/.test(fullSearchText) && story.id === 'story_07') score += 150;
+        if (/流產|無緣/.test(fullSearchText) && story.id === 'story_10') score += 150;
+      }
+
+      // 3. 泛用關鍵字命中增益
+      if (story.keywords && fullSearchText) {
+        story.keywords.forEach((kw) => {
+          if (fullSearchText.includes(kw.toLowerCase())) {
+            score += 25;
+          }
+        });
+      }
 
       return { story, score };
     });
@@ -2244,7 +2350,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const theme = THEMES.find((t) => t.id === themeId) || THEMES[0];
     const hasPalm = Boolean(answers.palmDataUrl || answers.palmImageBase64);
 
-    const matchedStories = matchStoriesForReport(themeId, answers.question);
+    const matchedStories = matchStoriesForReport(themeId, answers);
 
     const relConf = THEME_RELATION_CONFIG[themeId] || THEME_RELATION_CONFIG.love;
     const roleConf = THEME_ROLE_CONFIG[themeId] || THEME_ROLE_CONFIG.love;
