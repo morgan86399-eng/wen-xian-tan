@@ -16,7 +16,8 @@ import {
   VERIFY_CODE_MAX_ATTEMPTS,
   upsertEmailUser,
   recordPaymentEvent,
-  markOrderPaid
+  markOrderPaid,
+  SIGNUP_BONUS_AMOUNT
 } from '../functions/lib/wxt/store.mjs';
 import {
   scanForbidden,
@@ -128,7 +129,7 @@ await check('同一 event 重送只發點一次', async (env) => {
   assert.equal(second.body, '1|OK');
 
   const credits = await getCreditsMap(env, userId);
-  assert.equal(credits.love, CREDITS_BY_THEME.love, '應只發一次感情篇的量');
+  assert.equal(credits.love, CREDITS_BY_THEME.love + SIGNUP_BONUS_AMOUNT, '應只發一次感情篇的量（另加註冊禮一點）');
   assert.equal(orderId.length > 0, true);
 });
 
@@ -136,9 +137,10 @@ console.log('\n[原子扣點]');
 
 await check('餘額不足時 UPDATE changes=0', async (env) => {
   const { id: userId } = await upsertEmailUser(env, 'reader@example.test');
+  // 註冊禮只送感情篇，所以要測「零餘額」得挑別篇
   const deduct = await atomicDeductCredit(env, {
     userId,
-    themeId: 'love',
+    themeId: 'wealth',
     idempotencyKey: 'reading:test-1'
   });
   assert.equal(deduct.ok, false);
@@ -150,18 +152,18 @@ await check('有餘額時原子扣 1 點', async (env) => {
   await grantCreditsForOrder(env, {
     userId,
     orderId: 'ord_test',
-    themes: ['love'],
-    creditsByTheme: { love: 1 },
+    themes: ['wealth'],
+    creditsByTheme: { wealth: 1 },
     idempotencyPrefix: 'purchase:ord_test'
   });
   const deduct = await atomicDeductCredit(env, {
     userId,
-    themeId: 'love',
+    themeId: 'wealth',
     idempotencyKey: 'reading:test-2'
   });
   assert.equal(deduct.ok, true);
   const credits = await getCreditsMap(env, userId);
-  assert.equal(credits.love, 0);
+  assert.equal(credits.wealth, 0);
 });
 
 console.log('\n[禁用詞掃描]');
@@ -262,8 +264,9 @@ await check('未登入 generate 回 UNAUTHENTICATED', async (env) => {
 await check('已登入但缺點數回 402', async (env) => {
   const { id } = await upsertEmailUser(env, 'gen@example.test');
   const token = await signUserSession(env, { uid: id, provider: 'email' });
+  // 註冊禮讓感情篇有一點，要驗缺點數得挑沒有贈點的篇章
   const { status, body } = await postJson(generate, env, {
-    themeId: 'love',
+    themeId: 'wealth',
     requestId: 'nonce-def-12345678',
     answers: { question: '測試' }
   }, { cookie: `wx_session=${token}` });
@@ -644,7 +647,7 @@ await check('整條鏈都拿不回任何內容才失敗退點', async (env) => {
     assert.equal(body.error, 'GENERATION_FAILED');
     assert.equal(calls, 3, '三種策略都要試過才准放棄');
     const credits = await getCreditsMap(env, id);
-    assert.equal(credits.love, 3, '完全拿不到內容才退點');
+    assert.equal(credits.love, 3 + SIGNUP_BONUS_AMOUNT, '完全拿不到內容才退點（餘額含註冊禮一點）');
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -689,7 +692,7 @@ await check('TradeAmt 被改小時拒絕入帳', async (env) => {
   assert.equal(res.status, 400);
   assert.equal(res.body, '0|AMOUNT_MISMATCH');
   const credits = await getCreditsMap(env, userId);
-  assert.equal(credits.love, 0, '金額不符不可以發點');
+  assert.equal(credits.love, SIGNUP_BONUS_AMOUNT, '金額不符不可以發點');
   const order = await getOrderByTradeNo(env, tradeNo);
   assert.equal(order.status, 'PENDING', '金額不符訂單不可以變成已付款');
 });
@@ -704,7 +707,7 @@ await check('MerchantID 不是自家商店代號時拒絕入帳', async (env) =>
 
   assert.equal(res.body, '0|MERCHANT_MISMATCH');
   const credits = await getCreditsMap(env, userId);
-  assert.equal(credits.love, 0);
+  assert.equal(credits.love, SIGNUP_BONUS_AMOUNT);
 });
 
 await check('回呼帶到別筆訂單編號時拒絕入帳', async (env) => {
@@ -717,7 +720,7 @@ await check('回呼帶到別筆訂單編號時拒絕入帳', async (env) => {
 
   assert.equal(res.body, '0|ORDER_MISMATCH');
   const credits = await getCreditsMap(env, userId);
-  assert.equal(credits.love, 0);
+  assert.equal(credits.love, SIGNUP_BONUS_AMOUNT);
   assert.ok(orderId.length > 0);
 });
 
@@ -742,9 +745,10 @@ await check('六篇方案各篇點數不同且合計 18 次', async (env) => {
   assert.equal(res.body, '1|OK');
 
   const credits = await getCreditsMap(env, userId);
-  assert.deepEqual(credits, { love: 4, wealth: 4, career: 3, work: 3, family: 2, children: 2 });
+  // 感情篇多出來的那一點是註冊禮，不是方案內容
+  assert.deepEqual(credits, { love: 4 + SIGNUP_BONUS_AMOUNT, wealth: 4, career: 3, work: 3, family: 2, children: 2 });
   const total = Object.values(credits).reduce((sum, n) => sum + n, 0);
-  assert.equal(total, 18);
+  assert.equal(total, 18 + SIGNUP_BONUS_AMOUNT);
 });
 
 console.log('\n[付款成功但核發中斷]');
@@ -784,7 +788,8 @@ await check('核發中斷時不留付款事件，綠界重送會把點數補齊'
   const retry = await postForm(ecpayCallback, env, params);
   assert.equal(retry.body, '1|OK');
   const credits = await getCreditsMap(env, userId);
-  assert.deepEqual(credits, { love: 4, wealth: 4, career: 3, work: 3, family: 2, children: 2 });
+  // 感情篇多出來的那一點是註冊禮，不是方案內容
+  assert.deepEqual(credits, { love: 4 + SIGNUP_BONUS_AMOUNT, wealth: 4, career: 3, work: 3, family: 2, children: 2 });
 });
 
 console.log('\n[報告不可跨帳號讀取]');
@@ -805,8 +810,9 @@ await check('別人拿同一組 nonce 讀不到我的報告', async (env) => {
 
   const { id: strangerId } = await upsertEmailUser(env, 'stranger@example.test');
   const token = await signUserSession(env, { uid: strangerId, provider: 'email' });
+  // 註冊禮讓感情篇有一點，要驗「沒點數被擋」得挑沒有贈點的篇章
   const { status, body } = await postJson(generate, env, {
-    themeId: 'love',
+    themeId: 'wealth',
     requestId: rawNonce,
     answers: { question: '借看一下', goal: 'skip' }
   }, { cookie: `wx_session=${token}` });
@@ -1007,7 +1013,7 @@ await check('模型怎樣都不給建議時，仍然交付報告且不退點', a
     assert.equal(body.degraded, true, '走保底要標記出來，方便日後監控');
     assert.ok(calls > 3, '應該有額外叫過只補建議的那一次');
     const credits = await getCreditsMap(env, id);
-    assert.equal(credits.love, 2, '有交付就不退點');
+    assert.equal(credits.love, 2 + SIGNUP_BONUS_AMOUNT, '有交付就不退點（餘額含註冊禮一點）');
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -1067,7 +1073,7 @@ await check('Groq JSON 模式回 400 時，關掉 JSON 模式仍然交付', asyn
     assert.equal(body.ok, true);
     assert.ok(modes.includes(false), '應該有一次是關掉 JSON 模式打的');
     const credits = await getCreditsMap(env, id);
-    assert.equal(credits.love, 2, '有交付就不退點');
+    assert.equal(credits.love, 2 + SIGNUP_BONUS_AMOUNT, '有交付就不退點（餘額含註冊禮一點）');
   } finally {
     globalThis.fetch = realFetch;
   }
