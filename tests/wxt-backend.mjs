@@ -1073,6 +1073,48 @@ await check('Groq JSON 模式回 400 時，關掉 JSON 模式仍然交付', asyn
   }
 });
 
+console.log('\n[Groq 多把金鑰依序輪替]');
+
+await check('一把額度用完就換下一把 Groq，全部用完才輪到 Gemini', async () => {
+  const realFetch = globalThis.fetch;
+  const 呼叫順序 = [];
+  const 掛掉 = new Set(['k1', 'k2']);
+  globalThis.fetch = async (url, init) => {
+    if (String(url).includes('api.groq.com')) {
+      const key = String((init.headers && init.headers.authorization) || '').replace('Bearer ', '');
+      呼叫順序.push(`groq:${key}`);
+      if (掛掉.has(key)) {
+        return { ok: false, status: 429, text: async () => '{"error":{"message":"tokens per day (TPD)"}}' };
+      }
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({ choices: [{ message: { content: '{"title":"ok"}' } }], usage: { total_tokens: 1 } })
+      };
+    }
+    呼叫順序.push('gemini');
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({ candidates: [{ content: { parts: [{ text: '{"title":"gemini"}' }] } }] })
+    };
+  };
+
+  const env = { GROQ_API_KEY: 'k1', GROQ_API_KEY_2: 'k2', GROQ_API_KEY_3: 'k3', GEMINI_API_KEY: 'gem' };
+  const out = await generateReport(env, { systemPrompt: 's', userPrompt: 'u' });
+  assert.deepEqual(呼叫順序, ['groq:k1', 'groq:k2', 'groq:k3'], '前兩把掛掉就要換到第三把');
+  assert.equal(out.parsed.title, 'ok');
+
+  // 三把全掛才准輪到 Gemini
+  掛掉.add('k3');
+  呼叫順序.length = 0;
+  const 退到Gemini = await generateReport(env, { systemPrompt: 's', userPrompt: 'u' });
+  assert.deepEqual(呼叫順序, ['groq:k1', 'groq:k2', 'groq:k3', 'gemini'], 'Groq 沒用完不可以先跳 Gemini');
+  assert.equal(退到Gemini.parsed.title, 'gemini');
+
+  globalThis.fetch = realFetch;
+});
+
 console.log('\n[提示詞要貼合本人]');
 
 await check('使用者填的自訂欄位會被送進提示詞', async () => {

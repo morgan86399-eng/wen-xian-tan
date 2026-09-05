@@ -8,6 +8,8 @@ import { onRequest as meHandler } from '../functions/api/me.js';
 import { onRequest as createOrderHandler } from '../functions/api/orders/create.js';
 import { onRequest as getOrderHandler } from '../functions/api/orders/[orderId].js';
 import { onRequest as webhookHandler } from '../functions/api/portaly/webhook.js';
+import { onRequest as ecpayCallbackHandler } from '../functions/api/ecpay/callback.js';
+import { onRequest as ecpayClientReturnHandler } from '../functions/api/ecpay/client-return.js';
 import { onRequest as generateHandler } from '../functions/api/reading/generate.js';
 import { onRequest as readingsHandler } from '../functions/api/readings.js';
 import { onRequestGet as configHandler } from '../functions/api/config.js';
@@ -42,6 +44,10 @@ export async function createDemoServer(port = 3456) {
   app.use(cors({ origin: true, credentials: true }));
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  app.use((req, res, next) => {
+    console.log(`[HTTP] ${req.method} ${req.url}`);
+    next();
+  });
 
   const devVars = loadDevVars();
   const db = createFakeD1();
@@ -58,10 +64,14 @@ export async function createDemoServer(port = 3456) {
     GEMINI_API_KEY: devVars.GEMINI_API_KEY || process.env.GEMINI_API_KEY || '',
     GROQ_TEXT_MODEL: 'openai/gpt-oss-20b',
     GEMINI_TEXT_MODEL: devVars.GEMINI_TEXT_MODEL || 'gemini-3.5-flash',
-    PAYMENT_PROVIDER: 'portaly',
+    PAYMENT_PROVIDER: devVars.PAYMENT_PROVIDER || 'ecpay',
     PAYMENTS_ENABLED: 'true',
     ALLOW_DEV_LOGIN: 'true',
     BRAND_NAME: '問仙壇',
+    ECPAY_MERCHANT_ID: devVars.ECPAY_MERCHANT_ID || '3002607',
+    ECPAY_HASH_KEY: devVars.ECPAY_HASH_KEY || 'pwFHCqoQZGmho4w6',
+    ECPAY_HASH_IV: devVars.ECPAY_HASH_IV || 'EkRm7iFT261dpevs',
+    ECPAY_IS_PRODUCTION: 'false',
     SITE_URL: `http://localhost:${port}`
   };
 
@@ -105,9 +115,15 @@ export async function createDemoServer(port = 3456) {
 
         let body = null;
         if (req.method !== 'GET' && req.method !== 'HEAD') {
-          body = JSON.stringify(req.body);
-          if (!headers.get('content-type')) {
-            headers.set('content-type', 'application/json');
+          const contentType = req.headers['content-type'] || '';
+          if (contentType.includes('application/x-www-form-urlencoded')) {
+            body = new URLSearchParams(req.body).toString();
+            headers.set('content-type', 'application/x-www-form-urlencoded');
+          } else {
+            body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+            if (!headers.get('content-type')) {
+              headers.set('content-type', 'application/json');
+            }
           }
         }
 
@@ -119,6 +135,11 @@ export async function createDemoServer(port = 3456) {
 
         const params = req.params || {};
         const response = await handler({ request, env, params });
+
+        if (response.status >= 300 && response.status < 400 && response.headers.get('location')) {
+          res.redirect(response.headers.get('location'));
+          return;
+        }
 
         res.status(response.status);
         response.headers.forEach((val, key) => {
@@ -140,6 +161,48 @@ export async function createDemoServer(port = 3456) {
   app.post('/api/orders/create', adaptHandler(createOrderHandler));
   app.get('/api/orders/:orderId', adaptHandler(getOrderHandler));
   app.post('/api/portaly/webhook', adaptHandler(webhookHandler));
+  app.post('/api/ecpay/callback', adaptHandler(ecpayCallbackHandler));
+  app.post('/api/ecpay/client-return', adaptHandler(ecpayClientReturnHandler));
+  app.post('/api/reading/generate', adaptHandler(generateHandler));
+  app.get('/api/readings', adaptHandler(readingsHandler));
+  app.post('/api/auth/dev-login', adaptHandler(devLoginHandler));
+
+  // 動態更新與取得金流參數
+  app.get('/api/demo/config', (req, res) => {
+    res.json({
+      ok: true,
+      provider: env.PAYMENT_PROVIDER,
+      portalyUrlSingle: env.PORTALY_URL_SINGLE || '',
+      portalyUrlTriple: env.PORTALY_URL_TRIPLE || '',
+      portalyUrlAll: env.PORTALY_URL_ALL || '',
+      hasApiKey: Boolean(env.PORTALY_API_KEY),
+      hasSecret: Boolean(env.PORTALY_CALLBACK_SECRET)
+    });
+  });
+
+  app.post('/api/demo/save-config', (req, res) => {
+    try {
+      const { provider, portalyUrlSingle, portalyUrlTriple, portalyUrlAll, portalyApiKey, portalySecret } = req.body;
+      if (provider) env.PAYMENT_PROVIDER = provider;
+      if (portalyUrlSingle !== undefined) env.PORTALY_URL_SINGLE = portalyUrlSingle.trim();
+      if (portalyUrlTriple !== undefined) env.PORTALY_URL_TRIPLE = portalyUrlTriple.trim();
+      if (portalyUrlAll !== undefined) env.PORTALY_URL_ALL = portalyUrlAll.trim();
+      if (portalyApiKey) env.PORTALY_API_KEY = portalyApiKey.trim();
+      if (portalySecret) env.PORTALY_CALLBACK_SECRET = portalySecret.trim();
+
+      console.log(`[Config Update] 金流模式更新為: ${env.PAYMENT_PROVIDER}`);
+      res.json({
+        ok: true,
+        message: '金流參數已更新成功！',
+        provider: env.PAYMENT_PROVIDER,
+        portalyUrlSingle: env.PORTALY_URL_SINGLE,
+        portalyUrlTriple: env.PORTALY_URL_TRIPLE,
+        portalyUrlAll: env.PORTALY_URL_ALL
+      });
+    } catch (e) {
+      res.status(500).json({ ok: false, error: e.message });
+    }
+  });
   app.post('/api/reading/generate', adaptHandler(generateHandler));
   app.get('/api/readings', adaptHandler(readingsHandler));
   app.post('/api/auth/dev-login', adaptHandler(devLoginHandler));

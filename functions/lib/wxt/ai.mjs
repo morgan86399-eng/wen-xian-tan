@@ -1,4 +1,4 @@
-/* Gemini 主 → Groq 備 → Workers AI 再備 */
+/* Groq（可掛多把金鑰，逐把往下輪）→ Gemini → Workers AI */
 
 import { fetchWithTimeout } from './http.mjs';
 import { requireGroq } from './auth.mjs';
@@ -21,8 +21,24 @@ export function hasGemini(env) {
   return Boolean(envText(env, 'GEMINI_API_KEY'));
 }
 
+/* Groq 金鑰清單，依序輪替：
+   GROQ_API_KEY 為第一把，接著 GROQ_API_KEY_2 … GROQ_API_KEY_5，
+   另外支援 GROQ_API_KEYS 一次填多把（逗號或換行分隔），方便雲端只設一個 secret。
+   一把撞到額度或出錯就換下一把，全部用完才輪到 Gemini。 */
+export function groqKeys(env) {
+  const list = [];
+  const push = (value) => {
+    const key = String(value || '').trim();
+    if (key && !list.includes(key)) list.push(key);
+  };
+  push(envText(env, 'GROQ_API_KEY'));
+  for (let i = 2; i <= 5; i += 1) push(envText(env, `GROQ_API_KEY_${i}`));
+  for (const part of envText(env, 'GROQ_API_KEYS').split(/[,\n]/)) push(part);
+  return list;
+}
+
 export function hasGroq(env) {
-  return Boolean(envText(env, 'GROQ_API_KEY'));
+  return groqKeys(env).length > 0;
 }
 
 function extractText(payload) {
@@ -187,8 +203,8 @@ export async function callGeminiVision(env, imageBase64, { model } = {}) {
    但 max_tokens 不能大於分鐘上限，填 8192 會被退件。實測 8000 可以正常回（7.7 秒，實用 3671）。 */
 const GROQ_MAX_TOKENS = 8000;
 
-export async function callGroqText(env, messages, { model, maxTokens = GROQ_MAX_TOKENS, temperature = 0.55, jsonMode = true } = {}) {
-  const apiKey = requireGroq(env);
+export async function callGroqText(env, messages, { model, maxTokens = GROQ_MAX_TOKENS, temperature = 0.55, jsonMode = true, apiKey: givenKey, keyLabel = 'Groq' } = {}) {
+  const apiKey = givenKey || requireGroq(env);
   const usedModel = groqTextModel(env, model);
   // JSON 模式偶爾會回 400 json_validate_failed（多半是寫到一半被 max_tokens 截斷）；
   // 關掉它改用純文字再自己解析，是那種情況唯一的救命索
@@ -207,19 +223,19 @@ export async function callGroqText(env, messages, { model, maxTokens = GROQ_MAX_
       body: JSON.stringify(requestBody)
     },
     30000,
-    'Groq'
+    keyLabel
   );
   if (!response.ok) {
     const detail = await response.text().catch(() => '');
-    throw new Error(`Groq 回應 ${response.status}${detail ? `：${detail.slice(0, 200)}` : ''}`);
+    throw new Error(`${keyLabel} 回應 ${response.status}${detail ? `：${detail.slice(0, 200)}` : ''}`);
   }
   const payload = await response.json();
   const text = extractText(payload);
   return { text, parsed: parseModelJson(text), model: usedModel, tokens: usageTokens(payload) };
 }
 
-export async function callGroqVision(env, imageBase64, { model } = {}) {
-  const apiKey = requireGroq(env);
+export async function callGroqVision(env, imageBase64, { model, apiKey: givenKey, keyLabel = 'Groq Vision' } = {}) {
+  const apiKey = givenKey || requireGroq(env);
   const usedModel = groqVisionModel(env, model);
   const dataUrl = imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`;
   const response = await fetchWithTimeout(
@@ -241,9 +257,9 @@ export async function callGroqVision(env, imageBase64, { model } = {}) {
       })
     },
     30000,
-    'Groq Vision'
+    keyLabel
   );
-  if (!response.ok) throw new Error(`Groq Vision 回應 ${response.status}`);
+  if (!response.ok) throw new Error(`${keyLabel} 回應 ${response.status}`);
   const payload = await response.json();
   return { text: String(extractText(payload) || '').trim(), model: usedModel, tokens: usageTokens(payload) };
 }
@@ -282,8 +298,13 @@ export async function generateReport(env, { systemPrompt, userPrompt, jsonMode =
   ];
   const options = { jsonMode, temperature };
   const attempts = [];
-  // Groq 是第一順位（weiyo 2026-09-05 指定），Gemini 退為備援，最後才是 Workers AI
-  if (hasGroq(env)) attempts.push(() => callGroqText(env, messages, options));
+  // Groq 是第一順位（weiyo 2026-09-05 指定）。掛幾把金鑰就排幾輪，
+  // 一把額度用完或出錯就換下一把，全部 Groq 都不行才輪到 Gemini，最後才是 Workers AI。
+  const keys = groqKeys(env);
+  keys.forEach((apiKey, index) => {
+    const keyLabel = keys.length > 1 ? `Groq#${index + 1}` : 'Groq';
+    attempts.push(() => callGroqText(env, messages, { ...options, apiKey, keyLabel }));
+  });
   if (hasGemini(env)) {
     const primary = geminiModel(env, 'text');
     const fallback = geminiTextFallbackModel(env);
@@ -299,8 +320,12 @@ export async function generateReport(env, { systemPrompt, userPrompt, jsonMode =
 
 export async function describePalm(env, imageBase64) {
   const attempts = [];
-  // 掌紋視覺同樣以 Groq 為第一順位
-  if (hasGroq(env)) attempts.push(() => callGroqVision(env, imageBase64));
+  // 掌紋視覺同樣以 Groq 為第一順位，一樣逐把金鑰往下輪
+  const palmKeys = groqKeys(env);
+  palmKeys.forEach((apiKey, index) => {
+    const keyLabel = palmKeys.length > 1 ? `Groq Vision#${index + 1}` : 'Groq Vision';
+    attempts.push(() => callGroqVision(env, imageBase64, { apiKey, keyLabel }));
+  });
   if (hasGemini(env)) attempts.push(() => callGeminiVision(env, imageBase64));
   if (!attempts.length) return { text: '', model: '', tokens: 0 };
   try {

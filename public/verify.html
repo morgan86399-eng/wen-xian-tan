@@ -568,6 +568,91 @@
           </div>
         </div>
       </div>
+    <!-- 0. 金流 API 參數配置與刷卡模式切換 -->
+    <div class="member-banner" style="border-color: #38bdf8; background: rgba(15, 23, 42, 0.85); box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);">
+      <div class="member-info" style="border-bottom: 1px solid rgba(56, 189, 248, 0.2);">
+        <div class="member-title" style="color: #38bdf8; font-weight: 700; font-size: 16px;">
+          <span>⚙️ 金流與贊助 API 參數即時配置（填入官網/後台資料或切換刷卡頁面）</span>
+        </div>
+        <span class="status-badge success" id="cfgStatusBadge">設定已即時生效</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 8px; display: block;">
+            👉 選擇您要測試的刷卡收銀台模式：
+          </label>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <label id="lblEcpay" style="display: flex; align-items: flex-start; gap: 10px; background: rgba(255,255,255,0.04); border: 1.5px solid var(--gold-primary); border-radius: 10px; padding: 14px; cursor: pointer;">
+              <input type="radio" name="paymentProvider" value="ecpay" id="radioEcpay" checked style="accent-color: var(--gold-primary); margin-top: 3px;" onchange="toggleProviderUI()">
+              <div>
+                <div style="font-weight: 700; color: var(--gold-primary); font-size: 15px;">綠界 ECPay 官方測試刷卡頁面（立即測卡號）</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5;">
+                  內建台灣官方沙盒收銀台，點擊購買會直接跳轉至真實 3D 刷卡頁，可親自輸入測試卡號 <code>4311-9522-2222-2222</code> 完成真實扣款入帳！
+                </div>
+              </div>
+            </label>
+
+            <label id="lblPortaly" style="display: flex; align-items: flex-start; gap: 10px; background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.15); border-radius: 10px; padding: 14px; cursor: pointer;">
+              <input type="radio" name="paymentProvider" value="portaly" id="radioPortaly" style="accent-color: var(--gold-primary); margin-top: 3px;" onchange="toggleProviderUI()">
+              <div>
+                <div style="font-weight: 700; color: #c084fc; font-size: 15px;">Portaly 官方贊助/數位商品收銀台</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5;">
+                  填入您在 Portaly 建立的三個商品網址與 API Key/Secret，點擊購買直接前往您的專屬 Portaly 收銀台！
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- 綠界測試卡號資訊卡 -->
+        <div id="ecpayCardInfoBox" style="background: rgba(240, 203, 104, 0.08); border: 1px dashed var(--gold-primary); border-radius: 8px; padding: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--gold-primary);">💳 綠界官方測試信用卡資料（前往主頁刷卡時填寫）：</div>
+            <div style="font-size: 12px; color: #e2e8f0; margin-top: 4px; font-family: monospace;">
+              卡號：<strong style="color:#fff;">4311-9522-2222-2222</strong> ｜ 有效月年：<strong style="color:#fff;">12/30</strong> ｜ 末三碼：<strong style="color:#fff;">222</strong> ｜ 手機 OTP：<strong style="color:#fff;">123</strong>
+            </div>
+          </div>
+          <a href="/" target="_blank" class="btn btn-gold" style="font-size: 13px; padding: 8px 16px;">
+            <span>⛩️</span> 前往問仙壇主頁實際刷卡 ↗
+          </a>
+        </div>
+
+        <!-- Portaly 參數填寫表單 -->
+        <div id="portalyInputsBox" style="display: none; background: rgba(192, 132, 252, 0.06); border: 1px solid rgba(192, 132, 252, 0.3); border-radius: 10px; padding: 16px;">
+          <div style="font-size: 14px; font-weight: 700; color: #c084fc; margin-bottom: 12px;">
+            📝 填入您在 Portaly 後台（變現工具 → Payment）複製的商品與金鑰：
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div>
+              <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">商品一：單項體驗方案 (199) 商品網址 / ID：</label>
+              <input type="text" id="cfgPortalySingle" placeholder="例如：https://portaly.cc/.../product/..." style="width: 100%; background: #03060f; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 8px 10px; color: #fff; font-size: 13px;">
+            </div>
+            <div>
+              <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">商品二：三項超值方案 (499) 商品網址 / ID：</label>
+              <input type="text" id="cfgPortalyTriple" placeholder="例如：https://portaly.cc/.../product/..." style="width: 100%; background: #03060f; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 8px 10px; color: #fff; font-size: 13px;">
+            </div>
+            <div>
+              <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">商品三：六項圓滿方案 (999) 商品網址 / ID：</label>
+              <input type="text" id="cfgPortalyAll" placeholder="例如：https://portaly.cc/.../product/..." style="width: 100%; background: #03060f; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 8px 10px; color: #fff; font-size: 13px;">
+            </div>
+            <div>
+              <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Portaly Webhook 密鑰 (Secret)：</label>
+              <input type="password" id="cfgPortalySecret" placeholder="Webhook 頁面顯示的 Secret 密鑰" style="width: 100%; background: #03060f; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 8px 10px; color: #fff; font-size: 13px;">
+            </div>
+          </div>
+          <div>
+            <label style="font-size: 12px; color: var(--text-muted); display: block; margin-bottom: 4px;">Portaly API Key（選填，pcs_test_... 或 pcs_live_...）：</label>
+            <input type="password" id="cfgPortalyKey" placeholder="pcs_test_..." style="width: 100%; background: #03060f; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 8px 10px; color: #fff; font-size: 13px;">
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px;">
+          <button type="button" class="btn btn-gold" onclick="savePaymentConfig()" style="padding: 9px 20px;">
+            <span>💾</span> 保存設定並立即生效
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- 步驟 1 到 4 -->
@@ -1030,9 +1115,72 @@
       }
     }
 
+    function toggleProviderUI() {
+      const isEcpay = document.getElementById('radioEcpay').checked;
+      document.getElementById('ecpayCardInfoBox').style.display = isEcpay ? 'flex' : 'none';
+      document.getElementById('portalyInputsBox').style.display = isEcpay ? 'none' : 'block';
+      document.getElementById('lblEcpay').style.borderColor = isEcpay ? 'var(--gold-primary)' : 'rgba(255,255,255,0.15)';
+      document.getElementById('lblPortaly').style.borderColor = isEcpay ? 'rgba(255,255,255,0.15)' : '#c084fc';
+    }
+
+    async function loadPaymentConfig() {
+      try {
+        const res = await fetch('/api/demo/config');
+        const data = await res.json();
+        if (data.ok) {
+          const isEcpay = data.provider === 'ecpay';
+          document.getElementById('radioEcpay').checked = isEcpay;
+          document.getElementById('radioPortaly').checked = !isEcpay;
+          document.getElementById('cfgPortalySingle').value = data.portalyUrlSingle || '';
+          document.getElementById('cfgPortalyTriple').value = data.portalyUrlTriple || '';
+          document.getElementById('cfgPortalyAll').value = data.portalyUrlAll || '';
+          toggleProviderUI();
+        }
+      } catch (e) {
+        console.warn('載入金流配置失敗:', e);
+      }
+    }
+
+    async function savePaymentConfig() {
+      const isEcpay = document.getElementById('radioEcpay').checked;
+      const provider = isEcpay ? 'ecpay' : 'portaly';
+      const portalyUrlSingle = document.getElementById('cfgPortalySingle').value;
+      const portalyUrlTriple = document.getElementById('cfgPortalyTriple').value;
+      const portalyUrlAll = document.getElementById('cfgPortalyAll').value;
+      const portalySecret = document.getElementById('cfgPortalySecret').value;
+      const portalyApiKey = document.getElementById('cfgPortalyKey').value;
+
+      try {
+        const res = await fetch('/api/demo/save-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider,
+            portalyUrlSingle,
+            portalyUrlTriple,
+            portalyUrlAll,
+            portalySecret,
+            portalyApiKey
+          })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          const badge = document.getElementById('cfgStatusBadge');
+          badge.textContent = `已啟用：${provider === 'ecpay' ? '綠界官方測試刷卡頁' : 'Portaly 贊助收銀台'}`;
+          log(`✓ 金流配置更新成功！模式切換為：${provider}。可在主頁直接進行真實刷卡測試！`, 'success');
+          alert(`金流設定已生效！\n當前模式：${provider === 'ecpay' ? '綠界官方測試刷卡頁面' : 'Portaly 贊助收銀台'}\n您可前往問仙壇主頁進行實際刷卡！`);
+        } else {
+          alert('保存失敗: ' + data.error);
+        }
+      } catch (e) {
+        alert('連線失敗: ' + e.message);
+      }
+    }
+
     // 啟動時自動載入狀態
     window.addEventListener('DOMContentLoaded', () => {
       refreshState();
+      loadPaymentConfig();
     });
   </script>
 </body>

@@ -101,6 +101,53 @@
             submitEcpayForm(action, fields);
             return;
           }
+
+          const isDev = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+          if (isDev && orderId) {
+            let devActions = document.getElementById('kyp-dev-actions');
+            if (!devActions) {
+              devActions = document.createElement('div');
+              devActions.id = 'kyp-dev-actions';
+              devActions.style.marginTop = '16px';
+              devActions.style.display = 'flex';
+              devActions.style.flexDirection = 'column';
+              devActions.style.gap = '10px';
+              const modalBody = document.querySelector('#kaiyun-payment-modal .kyp-modal-body');
+              if (modalBody) modalBody.appendChild(devActions);
+            }
+            devActions.innerHTML = `
+              <button type="button" id="kyp-simulate-pay-btn" style="width:100%;padding:12px 16px;font-weight:700;font-size:14px;background:linear-gradient(135deg,#f0cb68,#c99320);color:#060b17;border-radius:8px;border:none;cursor:pointer;box-shadow:0 4px 12px rgba(240,203,104,0.3);display:flex;align-items:center;justify-content:center;gap:6px;">
+                <span>⚡️</span> 模擬付款成功（觸發 Portaly 簽章 Webhook 入帳）
+              </button>
+              ${checkoutUrl ? `<a href="${checkoutUrl}" target="_blank" style="text-align:center;font-size:0.8rem;color:#94a3b8;text-decoration:underline;">前往 Portaly 外部商品頁面 ↗</a>` : ''}
+            `;
+            const simBtn = document.getElementById('kyp-simulate-pay-btn');
+            if (simBtn) {
+              simBtn.onclick = async () => {
+                simBtn.disabled = true;
+                simBtn.textContent = '⏳ Webhook 簽章驗證中...';
+                try {
+                  const res = await fetch('/api/demo/auto-sign-webhook', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId })
+                  });
+                  const resData = await res.json();
+                  if (resData.ok) {
+                    self._handlePaymentSuccess(resData.order || order);
+                  } else {
+                    alert('模擬入帳失敗: ' + (resData.error || '未知錯誤'));
+                    simBtn.disabled = false;
+                  }
+                } catch (e) {
+                  alert('模擬入帳異常: ' + e.message);
+                  simBtn.disabled = false;
+                }
+              };
+            }
+            return;
+          }
+
           if (checkoutUrl) {
             window.location.assign(checkoutUrl);
             return;
