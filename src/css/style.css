@@ -683,7 +683,8 @@ p {
 }
 
 .hero-description {
-  max-width: 570px;
+  max-width: 440px;
+  padding-right: 1.5rem;
   margin-top: 18px;
   color: rgba(235, 234, 243, .84);
   font-size: clamp(.93rem, 1.4vw, 1.04rem);

@@ -240,7 +240,8 @@ body {
 }
 
 .hero-description {
-  max-width: min(100%, 35rem);
+  max-width: min(100%, 28rem);
+  padding-right: clamp(12px, 2.5vw, 32px);
   color: rgba(222, 236, 252, .86);
   font-size: clamp(.93rem, 1.4vw, 1.04rem);
   line-height: clamp(1.72, 1.8vw, 1.9);
@@ -248,6 +249,11 @@ body {
 }
 
 .hero-keep-together { white-space: nowrap; }
+
+.hero-break-desktop { display: inline; }
+@media (max-width: 640px) {
+  .hero-break-desktop { display: none; }
+}
 
 .hero-actions { display: none; }
 .hero-actions .btn { min-height: 54px; padding-inline: 24px; }

@@ -55,6 +55,7 @@ export async function upsertOAuthUser(env, { provider, providerSubject, displayN
               VALUES (?, ?, ?, ?, ?, 'active', ?)`)
     .bind(id, displayName, normalizeEmail(email) || null, provider, providerSubject, stamp)
     .run();
+  await grantSignupBonus(env, id);
   return { id, created: true };
 }
 
@@ -72,6 +73,7 @@ export async function upsertEmailUser(env, email, displayName = '') {
               VALUES (?, ?, ?, 'email', ?, 'active', ?)`)
     .bind(id, displayName || key.split('@')[0], key, key, now())
     .run();
+  await grantSignupBonus(env, id);
   return { id, created: true };
 }
 
@@ -149,6 +151,37 @@ export async function getCreditsMap(env, userId) {
     if (THEME_IDS.includes(row.theme_id)) out[row.theme_id] = row.balance;
   }
   return out;
+}
+
+/* 註冊禮：新帳號送一點感情篇，讓人可以先問一次再決定要不要買。
+   點數各篇獨立，這一點只能用在感情篇。
+   冪等鍵綁 userId，同一個帳號重複呼叫也只會發一次。 */
+export const SIGNUP_BONUS_THEME = 'love';
+export const SIGNUP_BONUS_AMOUNT = 1;
+
+export function signupBonusKey(userId) {
+  return `signup:${userId}:${SIGNUP_BONUS_THEME}`;
+}
+
+/** 發註冊禮；回傳 true 代表這次真的有發（已發過會回 false） */
+export async function grantSignupBonus(env, userId) {
+  if (!userId) return false;
+  const ledgerId = newId('cl');
+  // 帳本與餘額同進同退：餘額那句用 WHERE EXISTS 綁在本次剛寫進去的帳本列上，
+  // 冪等鍵擋掉帳本時餘額就不會加，跟購買核發用同一套寫法
+  const [inserted] = await db(env).batch([
+    db(env)
+      .prepare(`INSERT INTO credit_ledger (id, user_id, theme_id, delta, reason, order_id, reading_id, idempotency_key, created_at)
+                VALUES (?, ?, ?, ?, 'signup', NULL, NULL, ?, ?)
+                ON CONFLICT(idempotency_key) DO NOTHING`)
+      .bind(ledgerId, userId, SIGNUP_BONUS_THEME, SIGNUP_BONUS_AMOUNT, signupBonusKey(userId), now()),
+    db(env)
+      .prepare(`INSERT INTO credits (user_id, theme_id, balance)
+                SELECT ?, ?, ? WHERE EXISTS (SELECT 1 FROM credit_ledger WHERE id = ?)
+                ON CONFLICT(user_id, theme_id) DO UPDATE SET balance = balance + excluded.balance`)
+      .bind(userId, SIGNUP_BONUS_THEME, SIGNUP_BONUS_AMOUNT, ledgerId)
+  ]);
+  return Boolean(inserted && inserted.meta && inserted.meta.changes);
 }
 
 /** 逐篇核發：每篇點數由 creditsByTheme 決定；每篇各自冪等，中斷後重跑會補齊沒發到的篇章 */
