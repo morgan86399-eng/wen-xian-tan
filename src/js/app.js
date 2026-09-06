@@ -728,6 +728,16 @@ document.addEventListener('DOMContentLoaded', () => {
     switchTab('auth');
   }
 
+  async function handleLogout() {
+    await MemberManager.logout();
+    updateTopBarUserStatus();
+    renderThemesHub();
+    if (state.currentTab === 'member') renderMemberCenter();
+    if (state.currentTab === 'auth') renderAuthPage();
+    if (state.currentTab === 'history') renderHistoryReports();
+    alert('登出已成功');
+  }
+
   // ============ 5. Render User Auth Page (專屬登入/註冊頁面) ============
   function renderAuthPage(formMode = 'login') {
     const authPageContainer = document.getElementById('authPageContainer');
@@ -890,10 +900,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('authGoToMemberBtn')?.addEventListener('click', () => switchTab('member'));
     document.getElementById('authGoToPurchaseBtn')?.addEventListener('click', () => goToPurchaseSection());
-    document.getElementById('authLogoutBtn')?.addEventListener('click', async () => {
-      await MemberManager.logout();
-      await refreshSessionUi();
-      renderAuthPage();
+    document.getElementById('authLogoutBtn')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      await handleLogout();
     });
 
     document.getElementById('authPageForm')?.addEventListener('submit', (e) => {
@@ -980,10 +989,9 @@ document.addEventListener('DOMContentLoaded', () => {
           switchTab('auth');
         });
 
-        document.getElementById('memberLogoutBtn')?.addEventListener('click', () => {
-          MemberManager.logout();
-          updateTopBarUserStatus();
-          renderMemberCenter();
+        document.getElementById('memberLogoutBtn')?.addEventListener('click', async (e) => {
+          e.preventDefault();
+          await handleLogout();
         });
       }
     }
