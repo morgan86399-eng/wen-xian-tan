@@ -9,6 +9,8 @@
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
   background: rgba(10, 10, 18, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -29,6 +31,8 @@
 .kyp-modal-card {
   width: 100%;
   max-width: 440px;
+  max-height: min(90dvh, 640px);
+  overflow: auto;
   background: linear-gradient(165deg, #181926 0%, #11121d 100%);
   border: 1px solid rgba(251, 191, 36, 0.35);
   border-radius: 20px;

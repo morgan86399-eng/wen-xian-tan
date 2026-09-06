@@ -312,6 +312,8 @@ body {
 @media (max-width: 480px) {
   .zoom-level-label { display: none; }
   .zoom-toggle-btn { padding-inline: 8px; min-width: 40px; }
+  .motion-toggle { width: 44px; padding-inline: 0; }
+  .motion-toggle__label { display: none; }
 }
 
 .app-workspace { max-width: 1200px; }
@@ -839,3 +841,60 @@ body {
 :root[data-motion='reduced'] *,
 :root[data-motion='reduced'] *::before,
 :root[data-motion='reduced'] *::after { scroll-behavior: auto !important; }
+
+/* 置中試排：文字與主視覺水平置中；桌面 copy 仍不超過 44%，避免壓到舊中線 */
+.app-hero--centered {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  text-align: center;
+}
+
+.app-hero--centered .hero-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: min(44%, 420px);
+  padding-right: 0;
+  border-right: none;
+  margin-inline: auto;
+}
+
+@media (max-width: 1023px) {
+  .app-hero--centered .hero-copy {
+    max-width: min(100%, 22rem);
+  }
+}
+
+.app-hero--centered .hero-slogan-capsule {
+  margin-inline: auto;
+}
+
+.app-hero--centered .hero-main-title {
+  align-items: center;
+  text-align: center;
+}
+
+.app-hero--centered .hero-description {
+  margin-inline: auto;
+  padding-right: 0;
+  text-align: center;
+}
+
+.app-hero--centered .hero-actions {
+  justify-content: center;
+}
+
+.app-hero--centered .hero-art {
+  width: min(100%, 420px);
+  justify-self: center;
+}
+
+.theme-hub-card {
+  text-align: center;
+}
+
+.theme-hub-card .theme-card-art,
+.theme-hub-card .theme-card-actions,
+.theme-hub-card .theme-card-top {
+  align-self: stretch;
+}
