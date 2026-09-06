@@ -3,16 +3,26 @@ import { requireOAuthConfig, signUserSession, oauthSessionInterstitial } from '.
 import { consumeOAuthState, upsertOAuthUser, hasDb } from '../../../lib/wxt/store.mjs';
 
 export const onRequest = getOnly(async ({ request, env }) => {
-  if (!hasDb(env)) return redirect(`${requireSiteUrl(env)}/?auth=error`);
+  const siteUrl = requireSiteUrl(env);
+  if (!hasDb(env)) return redirect(`${siteUrl}/?auth=error&reason=${encodeURIComponent('資料庫暫時不可用')}`);
+
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
   const state = url.searchParams.get('state');
-  const siteUrl = requireSiteUrl(env);
+  const oauthErr = url.searchParams.get('error');
+  const oauthErrDesc = url.searchParams.get('error_description');
 
-  if (!code || !state) return redirect(`${siteUrl}/?auth=error`);
+  if (oauthErr) {
+    return redirect(`${siteUrl}/?auth=error&reason=${encodeURIComponent(oauthErrDesc || oauthErr)}`);
+  }
+  if (!code || !state) {
+    return redirect(`${siteUrl}/?auth=error&reason=${encodeURIComponent('缺少認證授權碼')}`);
+  }
 
   const stateResult = await consumeOAuthState(env, state, 'line');
-  if (!stateResult.ok) return redirect(`${siteUrl}/?auth=error`);
+  if (!stateResult.ok) {
+    return redirect(`${siteUrl}/?auth=error&reason=${encodeURIComponent('認證逾時或狀態不符，請重新登入')}`);
+  }
 
   const { clientId, clientSecret } = requireOAuthConfig(env, 'line');
   const callback = `${siteUrl}/api/auth/line/callback`;
@@ -28,15 +38,23 @@ export const onRequest = getOnly(async ({ request, env }) => {
     })
   }, 15000, 'LINE');
 
-  if (!tokenRes.ok) return redirect(`${siteUrl}/?auth=error`);
+  if (!tokenRes.ok) {
+    const errText = await tokenRes.text().catch(() => '');
+    console.error('LINE token exchange failed:', tokenRes.status, errText);
+    return redirect(`${siteUrl}/?auth=error&reason=${encodeURIComponent('LINE 授權憑證換取失敗')}`);
+  }
   const tokenJson = await tokenRes.json();
   const accessToken = tokenJson.access_token;
-  if (!accessToken) return redirect(`${siteUrl}/?auth=error`);
+  if (!accessToken) {
+    return redirect(`${siteUrl}/?auth=error&reason=${encodeURIComponent('LINE 回傳憑證無效')}`);
+  }
 
   const profileRes = await fetchWithTimeout('https://api.line.me/v2/profile', {
     headers: { authorization: `Bearer ${accessToken}` }
   }, 10000, 'LINE Profile');
-  if (!profileRes.ok) return redirect(`${siteUrl}/?auth=error`);
+  if (!profileRes.ok) {
+    return redirect(`${siteUrl}/?auth=error&reason=${encodeURIComponent('無法取得 LINE 個人檔案')}`);
+  }
   const profile = await profileRes.json();
 
   const user = await upsertOAuthUser(env, {

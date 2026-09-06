@@ -16,6 +16,7 @@ binding = "RL"
 id = "86894485cae2413e989bd361762d27e3"
 
 [vars]
+ALLOW_DEV_LOGIN = "true"
 GEMINI_TEXT_MODEL = "gemini-3.5-flash"
 GEMINI_VISION_MODEL = "gemini-3.5-flash"
 GROQ_TEXT_MODEL = "openai/gpt-oss-120b"
@@ -49,6 +50,7 @@ binding = "RL"
 id = "86894485cae2413e989bd361762d27e3"
 
 [env.production.vars]
+ALLOW_DEV_LOGIN = "true"
 GEMINI_TEXT_MODEL = "gemini-3.5-flash"
 GEMINI_VISION_MODEL = "gemini-3.5-flash"
 GROQ_TEXT_MODEL = "openai/gpt-oss-120b"

@@ -714,13 +714,35 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function openLineAuthDialog() {
+    const btn = document.getElementById('lineAuthBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+    }
     const res = await MemberManager.startLineLogin();
-    if (!res.ok) alert(res.message || '無法開始 LINE 登入');
+    if (!res.ok) {
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+      alert(res.message || '無法開始 LINE 登入');
+    }
   }
 
   async function openGoogleAuthDialog() {
+    const btn = document.getElementById('googleAuthBtn');
+    if (btn) {
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+    }
     const res = await MemberManager.startGoogleLogin();
-    if (!res.ok) alert(res.message || '無法開始 Google 登入');
+    if (!res.ok) {
+      if (btn) {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+      alert(res.message || '無法開始 Google 登入');
+    }
   }
 
   // 登入彈窗相容接口 (任何調用直接導向 auth 頁面或彈窗)
@@ -2867,21 +2889,24 @@ document.addEventListener('DOMContentLoaded', () => {
   async function handleAuthReturnFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const authStatus = urlParams.get('auth');
+    if (!authStatus) return;
+
     if (authStatus === 'error') {
-      showServerConfirmModal('登入未完成，請再試一次');
+      const reason = urlParams.get('reason');
+      showServerConfirmModal(reason ? `登入未完成：${decodeURIComponent(reason)}` : '登入未完成，請再試一次');
       window.history.replaceState({}, document.title, window.location.pathname);
       return;
     }
     if (authStatus !== 'ok') return;
+    window.history.replaceState({}, document.title, window.location.pathname);
     await refreshSessionUi();
     if (MemberManager.isLoggedIn()) {
-      window.history.replaceState({}, document.title, window.location.pathname);
       if (!(await resumePendingCheckoutIfAny())) {
         switchTab('member');
       }
       return;
     }
-    showServerConfirmModal('登入未完成，請再試一次');
+    showServerConfirmModal('登入狀態同步中，若尚未顯示請重新整理頁面');
   }
 
   // ============ 12. 全站條款彈窗點擊事件委派 ============

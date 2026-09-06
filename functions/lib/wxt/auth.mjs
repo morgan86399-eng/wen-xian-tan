@@ -53,13 +53,15 @@ export function oauthSessionInterstitial(env, sessionToken) {
   <script>window.location.replace(${JSON.stringify(dest)});</script>
 </body>
 </html>`;
+  const headers = new Headers();
+  headers.set('content-type', 'text/html; charset=utf-8');
+  headers.set('cache-control', 'no-store');
+  headers.append('set-cookie', buildSetCookie(SESSION_COOKIE, '', { maxAge: 0, domain: '' }));
+  headers.append('set-cookie', sessionCookieHeader(sessionToken, env));
+
   return new Response(html, {
     status: 200,
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      'cache-control': 'no-store',
-      'set-cookie': sessionCookieHeader(sessionToken, env)
-    }
+    headers
   });
 }
 
