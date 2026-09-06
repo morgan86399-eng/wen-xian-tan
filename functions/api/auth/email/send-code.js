@@ -34,8 +34,8 @@ export const onRequest = postOnly(async ({ request, env }) => {
     body: JSON.stringify({
       from: resend.from,
       to: [email],
-      subject: '問仙壇登入驗證碼',
-      text: `您的問仙壇登入驗證碼為 ${code}，10 分鐘內有效。`
+      subject: 'Zenasker登入驗證碼',
+      text: `您的Zenasker登入驗證碼為 ${code}，10 分鐘內有效。`
     })
   }, 15000, 'Resend');
 

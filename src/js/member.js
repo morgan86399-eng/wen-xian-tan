@@ -1,5 +1,5 @@
 /**
- * 問仙壇 · 會員系統（只信後端 session cookie，不讀不寫 localStorage 憑證）
+ * Zenasker · 會員系統（只信後端 session cookie，不讀不寫 localStorage 憑證）
  */
 
 const THEME_IDS = ['love', 'work', 'career', 'wealth', 'family', 'children'];
@@ -10,7 +10,7 @@ function emptyCredits() {
 
 function normalizeUser(raw) {
   if (!raw || typeof raw !== 'object') return null;
-  const displayName = raw.displayName || raw.name || '信士';
+  const displayName = raw.displayName || raw.name || '會員';
   return {
     id: raw.id,
     displayName,

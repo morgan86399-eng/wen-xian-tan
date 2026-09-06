@@ -1,4 +1,4 @@
-/* 問仙壇後端閉環：冪等 callback、原子扣點、禁用詞、OTP 不回碼、generate 401 */
+/* Zenasker後端閉環：冪等 callback、原子扣點、禁用詞、OTP 不回碼、generate 401 */
 
 import assert from 'node:assert/strict';
 import { createFakeD1 } from './helpers/fake-d1.mjs';
@@ -1220,4 +1220,4 @@ await check('模型寫空話時自動重試，第二次寫具體才入庫', asyn
 });
 
 
-console.log(`\n問仙壇後端測試通過 ${passed} 項`);
+console.log(`\nZenasker後端測試通過 ${passed} 項`);

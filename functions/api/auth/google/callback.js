@@ -1,5 +1,5 @@
 import { getOnly, redirect, requireSiteUrl, fetchWithTimeout } from '../../../lib/wxt/http.mjs';
-import { requireOAuthConfig, signUserSession, sessionCookieHeader } from '../../../lib/wxt/auth.mjs';
+import { requireOAuthConfig, signUserSession, oauthSessionInterstitial } from '../../../lib/wxt/auth.mjs';
 import { consumeOAuthState, upsertOAuthUser, hasDb } from '../../../lib/wxt/store.mjs';
 import { verifyGoogleIdToken } from '../../../lib/wxt/google-id-token.mjs';
 
@@ -47,5 +47,5 @@ export const onRequest = getOnly(async ({ request, env }) => {
   });
 
   const sessionToken = await signUserSession(env, { uid: user.id, provider: 'google' });
-  return redirect(`${siteUrl}/?auth=ok`, 302, { 'set-cookie': sessionCookieHeader(sessionToken) });
+  return oauthSessionInterstitial(env, sessionToken);
 });

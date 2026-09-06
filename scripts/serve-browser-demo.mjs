@@ -71,7 +71,7 @@ export async function createDemoServer(port = 3456) {
     PAYMENT_PROVIDER: devVars.PAYMENT_PROVIDER || 'portaly',
     PAYMENTS_ENABLED: 'true',
     ALLOW_DEV_LOGIN: 'true',
-    BRAND_NAME: '問仙壇',
+    BRAND_NAME: 'Zenasker',
     ECPAY_MERCHANT_ID: devVars.ECPAY_MERCHANT_ID || '3002607',
     ECPAY_HASH_KEY: devVars.ECPAY_HASH_KEY || 'pwFHCqoQZGmho4w6',
     ECPAY_HASH_IV: devVars.ECPAY_HASH_IV || 'EkRm7iFT261dpevs',
@@ -385,9 +385,9 @@ export async function createDemoServer(port = 3456) {
   return new Promise((resolve) => {
     const server = app.listen(port, () => {
       console.log(`\n====================================================`);
-      console.log(`🚀 問仙壇 · Portaly 瀏覽器即時驗證服務已就緒！`);
+      console.log(`🚀 Zenasker · Portaly 瀏覽器即時驗證服務已就緒！`);
       console.log(`🌐 視覺化驗證中控台：http://localhost:${port}/verify`);
-      console.log(`⛩️ 問仙壇前台主頁面：http://localhost:${port}/`);
+      console.log(`⛩️ Zenasker前台主頁面：http://localhost:${port}/`);
       console.log(`====================================================\n`);
       resolve({ server, env, db, port });
     });

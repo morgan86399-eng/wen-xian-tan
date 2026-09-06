@@ -1,5 +1,5 @@
 /**
- * 問仙壇 · 點數與歷史（只信 /api/me 與 /api/readings，不用 localStorage 當餘額）
+ * Zenasker · 點數與歷史（只信 /api/me 與 /api/readings，不用 localStorage 當餘額）
  */
 
 import { MemberManager } from './member.js';

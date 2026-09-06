@@ -2,7 +2,7 @@
   {
     "id": "ORD-WXT-MTLFDXXB-V57B",
     "planId": "triple",
-    "planName": "問仙壇 · 命理解析方案",
+    "planName": "Zenasker · 命理解析方案",
     "themes": [
       "love",
       "wealth",
@@ -12,7 +12,7 @@
     "amount": 499,
     "currency": "TWD",
     "status": "PAID",
-    "userName": "VIP信眾",
+    "userName": "VIP會員",
     "userEmail": "",
     "createdAt": "2026-09-03T11:12:12.287Z",
     "paidAt": "2026-09-03T11:12:12.288Z",
@@ -21,7 +21,7 @@
   {
     "id": "ORD-WXT-MTLFDXX2-4TWM",
     "planId": "single",
-    "planName": "問仙壇 · 命理解析方案",
+    "planName": "Zenasker · 命理解析方案",
     "themes": [
       "love"
     ],
@@ -29,7 +29,7 @@
     "amount": 199,
     "currency": "TWD",
     "status": "PAID",
-    "userName": "測試信眾",
+    "userName": "測試會員",
     "userEmail": "",
     "createdAt": "2026-09-03T11:12:12.278Z",
     "paidAt": "2026-09-03T11:12:12.285Z",

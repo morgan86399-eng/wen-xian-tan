@@ -22,7 +22,7 @@ import { CREDITS_BY_THEME } from '../../functions/lib/wxt/products.mjs';
 import { TERMS_VERSION } from './legal.js';
 
 /**
- * 問仙壇 · 掌心解碼 App - 核心應用邏輯與白話問卷引導引擎
+ * Zenasker · 掌心解碼 App - 核心應用邏輯與白話問卷引導引擎
  */
 document.addEventListener('DOMContentLoaded', () => {
   function escapeHtml(str) {
@@ -711,9 +711,9 @@ document.addEventListener('DOMContentLoaded', () => {
     authPageContainer.innerHTML = `
       <!-- 頂部返回首頁導航與麵包屑 -->
       <div class="page-breadcrumb-bar" style="margin-bottom:16px;">
-        <button type="button" class="btn-return-home" data-goto-tab="hub" aria-label="回到問仙壇首頁">
+        <button type="button" class="btn-return-home" data-goto-tab="hub" aria-label="回到Zenasker首頁">
           <span class="return-icon">←</span>
-          <span>回到問仙壇首頁</span>
+          <span>回到Zenasker首頁</span>
         </button>
         <span class="breadcrumb-separator">/</span>
         <span class="breadcrumb-current">信士登入 / 註冊</span>
@@ -747,7 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <!-- 登入卡片內快捷返回首頁與會員中心 -->
           <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
             <button type="button" class="btn btn-primary" data-goto-tab="hub" style="width:100%;font-weight:900;font-size:1rem;padding:12px 18px;box-shadow:0 4px 20px rgba(59,130,246,0.35);display:inline-flex;align-items:center;justify-content:center;gap:8px;">
-              <span style="font-size:1.18rem;">⛩️</span> 回到問仙壇首頁開始測算
+              <span style="font-size:1.18rem;">⛩️</span> 回到Zenasker首頁開始測算
             </button>
             <div style="display:flex;gap:10px;">
               <button type="button" class="btn btn-gold btn-sm" id="authGoToMemberBtn" style="flex:1;">
@@ -824,7 +824,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <!-- 登入頁底部返回首頁按鈕 -->
       <div style="text-align:center;margin-top:22px;padding-top:16px;border-top:1px dashed var(--border);">
         <button type="button" class="btn btn-outline btn-return-home" data-goto-tab="hub" style="padding:10px 22px;">
-          <span class="return-icon">←</span> 返回問仙壇首頁（瀏覽六大篇章）
+          <span class="return-icon">←</span> 返回Zenasker首頁（瀏覽六大篇章）
         </button>
       </div>
     `;
@@ -1259,7 +1259,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <button type="button" class="btn btn-outline btn-sm" id="closeTermsModalBtn" style="padding:4px 10px;" aria-label="關閉">✕</button>
         </div>
         <p style="margin-top:6px;font-size:0.85rem;color:var(--text-muted);line-height:1.5;">
-          為保障信士消費權益與交易安全，在前往安全支付前，請確認閱讀並勾選同意問仙壇之服務規範。
+          為保障信士消費權益與交易安全，在前往安全支付前，請確認閱讀並勾選同意Zenasker之服務規範。
         </p>
       </div>
 
@@ -1350,7 +1350,7 @@ document.addEventListener('DOMContentLoaded', () => {
       productId: plan.id,
       planId: plan.id,
       termsVersion: TERMS_VERSION,
-      planName: `問仙壇 · ${plan.label} (${themeTitles})`,
+      planName: `Zenasker · ${plan.label} (${themeTitles})`,
       displayPrice: plan.price,
       themeKeys: chosenThemes,
       onSuccess: async (order) => {

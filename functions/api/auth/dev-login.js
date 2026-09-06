@@ -65,5 +65,5 @@ export const onRequest = postOnly(async ({ request, env }) => {
       email: user.email,
       provider: user.provider
     }
-  }, 200, { 'set-cookie': sessionCookieHeader(sessionToken) });
+  }, 200, { 'set-cookie': sessionCookieHeader(sessionToken, env) });
 });

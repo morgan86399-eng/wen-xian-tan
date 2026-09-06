@@ -1,5 +1,5 @@
 /**
- * 問仙壇 · 外部金流結帳（只建單，不模擬付款、不收體驗碼）
+ * Zenasker · 外部金流結帳（只建單，不模擬付款、不收體驗碼）
  */
 (function (global) {
   function readJson(res) {
@@ -55,7 +55,7 @@
       const statusEl = document.getElementById('kyp-polling-status');
       const errorEl = document.getElementById('kyp-error');
 
-      if (planNameEl) planNameEl.textContent = options.planName || '問仙壇方案';
+      if (planNameEl) planNameEl.textContent = options.planName || 'Zenasker方案';
       if (planPriceEl) planPriceEl.textContent = `NT$ ${options.displayPrice || ''}`;
       if (totalEl) totalEl.textContent = `NT$ ${options.displayPrice || ''}`;
       if (orderIdEl) orderIdEl.textContent = '建立訂單中...';

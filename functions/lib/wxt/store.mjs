@@ -1,4 +1,4 @@
-/* 問仙壇 D1 存取層（wenxiantan-db 八表） */
+/* Zenasker D1 存取層（wenxiantan-db 八表） */
 
 import { randomHex, sha256Hex } from '../security/token.mjs';
 import { normalizeEmail, THEME_IDS } from './http.mjs';

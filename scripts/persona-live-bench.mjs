@@ -150,7 +150,7 @@ for (const persona of PERSONAS) {
   if (index < PERSONAS.length) await sleep(35000);
 }
 
-const lines = ['# 問仙壇 × 20 人格 真實 AI 報告測試', '', `執行時間：${new Date().toLocaleString('zh-TW')}`, ''];
+const lines = ['# Zenasker × 20 人格 真實 AI 報告測試', '', `執行時間：${new Date().toLocaleString('zh-TW')}`, ''];
 lines.push('| # | 人格 | 篇章 | 產出 | 段數 | 建議 | 引用問題 | 提到本人處境 | 內文夠長 | 建議時間詞開頭 | 建議句首不重複 | 段落句首不重複 | 長度不平均 | 無破字 | 走保底 | 產出階段 |');
 lines.push('|---|------|------|------|------|------|---------|-------------|---------|--------------|--------------|--------------|-----------|-------|--------|---------|');
 for (const r of rows) {
@@ -191,7 +191,7 @@ const out = new URL('../persona-live-bench-output.md', import.meta.url).pathname
 writeFileSync(out, lines.join('\n'), 'utf8');
 
 /* 完整報告落檔：四段內文一直沒有人看過，這份是拿來人工審的 */
-const full = ['# 問仙壇 20 人格 完整報告全文', '', `執行時間：${new Date().toLocaleString('zh-TW')}`, ''];
+const full = ['# Zenasker 20 人格 完整報告全文', '', `執行時間：${new Date().toLocaleString('zh-TW')}`, ''];
 for (const r of rows) {
   full.push(`---`, '', `## ${String(r.index).padStart(2, '0')} ${r.persona.name}（${r.persona.theme}｜${r.persona.age}｜${r.persona.role}）`, '');
   full.push(`**他問的**：${r.persona.question}`, '');

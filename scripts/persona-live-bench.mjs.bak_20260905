@@ -113,7 +113,7 @@ for (const persona of PERSONAS) {
   if (index < PERSONAS.length) await sleep(35000);
 }
 
-const lines = ['# 問仙壇 × 20 人格 真實 AI 報告測試', '', `執行時間：${new Date().toLocaleString('zh-TW')}`, ''];
+const lines = ['# Zenasker × 20 人格 真實 AI 報告測試', '', `執行時間：${new Date().toLocaleString('zh-TW')}`, ''];
 lines.push('| # | 人格 | 篇章 | 產出 | 嘗試 | 段數 | 建議 | 最短建議 | 引用問題 | 提到本人處境 | 非通用範本 | 內文夠長 | 禁用詞替換 | 走保底 | 產出階段 |');
 lines.push('|---|------|------|------|------|------|------|---------|---------|-------------|-----------|---------|-----------|--------|---------|');
 for (const r of rows) {

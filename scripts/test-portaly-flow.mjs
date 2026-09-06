@@ -30,7 +30,7 @@ function loadDevVars() {
 
 async function runEndToEndFlow() {
   console.log('====================================================');
-  console.log('🌟 問仙壇 · Portaly 扣款、入帳至 AI 測算報告產出全流程測試');
+  console.log('🌟 Zenasker · Portaly 扣款、入帳至 AI 測算報告產出全流程測試');
   console.log('====================================================\n');
 
   const devVars = loadDevVars();
@@ -151,7 +151,7 @@ async function runEndToEndFlow() {
     body: JSON.stringify(generatePayload)
   });
 
-  console.log('  ⏳ 正在呼叫問仙壇 AI 管線（嚴格依循正統易學與四大段落合約）...');
+  console.log('  ⏳ 正在呼叫Zenasker AI 管線（嚴格依循正統易學與四大段落合約）...');
   const generateRes = await generateHandler({ request: generateReq, env });
   const generateData = await generateRes.json();
 

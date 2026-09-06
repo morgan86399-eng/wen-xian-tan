@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>問仙壇 · Portaly 全流程金流與 AI 履約驗證中控台</title>
+  <title>Zenasker · Portaly 全流程金流與 AI 履約驗證中控台</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -508,7 +508,7 @@
     <div class="brand">
       <div class="brand-logo">仙</div>
       <div>
-        <div class="brand-title">問仙壇 · Portaly 驗證中控台</div>
+        <div class="brand-title">Zenasker · Portaly 驗證中控台</div>
         <div class="brand-subtitle">金流付款 · Webhook 簽章入帳 · 原子扣點 · AI 測算全履約</div>
       </div>
     </div>
@@ -520,7 +520,7 @@
         <span>🔄</span> 重設點數與訂單
       </button>
       <a href="/" class="btn btn-outline" target="_blank">
-        <span>⛩️</span> 前往問仙壇主頁 ↗
+        <span>⛩️</span> 前往Zenasker主頁 ↗
       </a>
     </div>
   </header>
@@ -730,13 +730,13 @@
         </div>
         <h3 class="step-title">仙佛開示 · 深度命理透視報告成果</h3>
         <p class="step-desc">
-          完整呈現正統易學四大深度剖析段落與三道仙佛錦囊行動指引，並已完整永久存檔至信眾歷史檔案。
+          完整呈現正統易學四大深度剖析段落與三道仙佛錦囊行動指引，並已完整永久存檔至會員歷史檔案。
         </p>
 
         <!-- 華麗報告卡片 -->
         <div class="report-card" id="reportView">
           <div class="report-header">
-            <div class="report-badge">問仙壇 · 正統命理深度報告</div>
+            <div class="report-badge">Zenasker · 正統命理深度報告</div>
             <h2 class="report-headline" id="reportTitle">【感情篇】紅鸞星動與正緣透視</h2>
           </div>
 
@@ -938,7 +938,7 @@
       btn.disabled = true;
       statusBadge.textContent = 'AI 易學推論解卦中 (扣減 1 點)...';
       statusBadge.className = 'status-badge running';
-      log(`正在扣點 (1 點) 並連線問仙壇 AI 推論引擎...`);
+      log(`正在扣點 (1 點) 並連線Zenasker AI 推論引擎...`);
 
       try {
         const res = await fetch('/api/reading/generate', {
@@ -1142,7 +1142,7 @@
           const badge = document.getElementById('cfgStatusBadge');
           badge.textContent = `已啟用：${provider === 'ecpay' ? '綠界官方測試刷卡頁' : 'Portaly 贊助收銀台'}`;
           log(`✓ 金流配置更新成功！模式切換為：${provider}。可在主頁直接進行真實刷卡測試！`, 'success');
-          alert(`金流設定已生效！\n當前模式：${provider === 'ecpay' ? '綠界官方測試刷卡頁面' : 'Portaly 贊助收銀台'}\n您可前往問仙壇主頁進行實際刷卡！`);
+          alert(`金流設定已生效！\n當前模式：${provider === 'ecpay' ? '綠界官方測試刷卡頁面' : 'Portaly 贊助收銀台'}\n您可前往Zenasker主頁進行實際刷卡！`);
         } else {
           alert('保存失敗: ' + data.error);
         }

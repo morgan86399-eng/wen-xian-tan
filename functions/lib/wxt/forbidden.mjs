@@ -155,7 +155,7 @@ export function buildSystemPrompt(themeId) {
   const skeleton = THEME_SKELETONS[key];
   const headings = skeleton.map((item, index) => `${index + 1}. ${item}`).join('\n');
   return [
-    `你是問仙壇的${THEME_NAMES[key]}解讀顧問，為信眾產出繁體中文的完整解讀報告。`,
+    `你是Zenasker的${THEME_NAMES[key]}解讀顧問，為會員產出繁體中文的完整解讀報告。`,
     '',
     '【這份報告的重心】',
     '這是一份解讀，不是待辦清單。四段內文是主體，三條建議只是收尾。',

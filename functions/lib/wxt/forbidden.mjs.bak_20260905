@@ -107,7 +107,7 @@ export function buildSystemPrompt(themeId) {
   const skeleton = THEME_SKELETONS[key];
   const headings = skeleton.map((item, index) => `${index + 1}. ${item}`).join('\n');
   return [
-    `你是問仙壇的${THEME_NAMES[key]}解讀顧問，為信眾產出繁體中文的完整解讀報告。`,
+    `你是Zenasker的${THEME_NAMES[key]}解讀顧問，為信眾產出繁體中文的完整解讀報告。`,
     '',
     '【資料狀態】使用者的七步問答已經全部完成，下方就是本次可用的全部資料。',
     '欄位標示「未指定」代表使用者選擇不填，請依既有資料與常見情境自行推演，不因此停下。',

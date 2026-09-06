@@ -1,5 +1,5 @@
 /**
- * 問仙壇 · Portaly Payment 整合模組
+ * Zenasker · Portaly Payment 整合模組
  * 包含 WebCrypto 簽章產生／校驗（完全相容 Portaly v1 callback 規格）
  * 以及 Portaly API 結帳 Session 建立函式
  */
@@ -138,22 +138,12 @@ export function getPortalyConfig(env) {
 }
 
 /**
- * 根據問仙壇方案代碼對應 Portaly 商品 ID
+ * 根據方案代碼對應 Portaly Payment plan / product ID
  */
 export function resolvePortalyProductId(config, productId) {
   if (productId === 'single') return config.productSingleId;
   if (productId === 'triple') return config.productTripleId;
   if (productId === 'all') return config.productAllId;
-  return '';
-}
-
-/**
- * 根據問仙壇方案代碼對應 Portaly 直連商品網址
- */
-export function resolvePortalyDirectUrl(config, productId) {
-  if (productId === 'single') return config.productSingleUrl;
-  if (productId === 'triple') return config.productTripleUrl;
-  if (productId === 'all') return config.productAllUrl;
   return '';
 }
 
@@ -193,7 +183,9 @@ export async function createPortalyCheckoutSession({
     };
     if (user.email) {
       subPayload.customerEmail = user.email;
-      subPayload.emailVerified = true;
+      if (user.emailVerified === true) {
+        subPayload.emailVerified = true;
+      }
     }
     if (user.displayName) {
       subPayload.customerName = user.displayName;
@@ -229,11 +221,17 @@ export async function createPortalyCheckoutSession({
       callbackUrl,
       successRedirectUrl: `${siteUrl}/?payment=success&orderId=${encodeURIComponent(orderId)}`,
       cancelRedirectUrl: `${siteUrl}/?payment=cancel&orderId=${encodeURIComponent(orderId)}`,
-      metadata: subPayload.metadata,
-      customerEmail: subPayload.customerEmail,
-      customerName: subPayload.customerName,
-      emailVerified: subPayload.emailVerified
+      metadata: subPayload.metadata
     };
+    if (subPayload.customerEmail) {
+      digitalPayload.customerEmail = subPayload.customerEmail;
+    }
+    if (subPayload.customerName) {
+      digitalPayload.customerName = subPayload.customerName;
+    }
+    if (subPayload.emailVerified === true) {
+      digitalPayload.emailVerified = true;
+    }
 
     try {
       const res = await fetch(`${config.apiHost}/api/digital-products/checkout-sessions`, {
@@ -258,22 +256,11 @@ export async function createPortalyCheckoutSession({
     }
   }
 
-  // 2. 若未配置 API Key 或 API 呼叫未成功，檢查是否有配置直連商品網址
-  const directUrl = resolvePortalyDirectUrl(config, product.id);
-  if (directUrl) {
-    const url = new URL(directUrl);
-    if (user.email && !url.searchParams.has('email')) {
-      url.searchParams.set('email', user.email);
-    }
-    return {
-      ok: true,
-      checkoutUrl: url.toString()
-    };
-  }
-
   return {
     ok: false,
-    error: 'PORTALY_NOT_CONFIGURED',
-    message: '尚未配置 Portaly 商品 ID 或結帳網址'
+    error: config.apiKey && portalyProductId ? 'PORTALY_SESSION_FAILED' : 'PORTALY_NOT_CONFIGURED',
+    message: config.apiKey && portalyProductId
+      ? '無法建立 Portaly 結帳連線，請稍後重試'
+      : '尚未配置 Portaly Payment 結帳，暫時無法付款'
   };
 }

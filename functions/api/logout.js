@@ -6,5 +6,5 @@ export const onRequest = postOnly(async ({ request, env }) => {
   if (!isSameOriginRequest(request, env)) {
     return fail('拒絕跨站登出請求。', 403);
   }
-  return json({ ok: true }, 200, { 'set-cookie': clearSessionCookieHeader() });
+  return json({ ok: true }, 200, { 'set-cookie': clearSessionCookieHeader(env) });
 });

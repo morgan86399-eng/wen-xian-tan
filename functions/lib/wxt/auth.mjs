@@ -1,6 +1,6 @@
-/* 問仙壇認證設定：AUTH_SECRET 未設就 throw，不留 fallback */
+/* Zenasker認證設定：AUTH_SECRET 未設就 throw，不留 fallback */
 
-import { ConfigError, buildSetCookie, parseCookies } from './http.mjs';
+import { ConfigError, buildSetCookie, cookieDomainForSiteUrl, parseCookies, requireSiteUrl } from './http.mjs';
 import { signToken, verifyToken } from '../security/token.mjs';
 
 export const SESSION_COOKIE = 'wx_session';
@@ -27,12 +27,40 @@ export async function readUserSession(env, request) {
 }
 
 
-export function sessionCookieHeader(token) {
-  return buildSetCookie(SESSION_COOKIE, token, { maxAge: SESSION_TTL_SECONDS });
+export function sessionCookieHeader(token, env) {
+  const domain = cookieDomainForSiteUrl(String((env && env.SITE_URL) || ''));
+  return buildSetCookie(SESSION_COOKIE, token, { maxAge: SESSION_TTL_SECONDS, domain });
 }
 
-export function clearSessionCookieHeader() {
-  return `wx_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+export function clearSessionCookieHeader(env) {
+  const domain = cookieDomainForSiteUrl(String((env && env.SITE_URL) || ''));
+  return buildSetCookie(SESSION_COOKIE, '', { maxAge: 0, domain });
+}
+
+/** OAuth 成功：200 HTML 中轉寫 cookie，再 location.replace 回站。不靠跨站 302+Set-Cookie。 */
+export function oauthSessionInterstitial(env, sessionToken) {
+  const siteUrl = requireSiteUrl(env);
+  const dest = `${siteUrl}/?auth=ok`;
+  const html = `<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="0;url=${dest}">
+  <title>登入中</title>
+</head>
+<body>
+  <p>登入完成，正在返回…</p>
+  <script>window.location.replace(${JSON.stringify(dest)});</script>
+</body>
+</html>`;
+  return new Response(html, {
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+      'set-cookie': sessionCookieHeader(sessionToken, env)
+    }
+  });
 }
 
 export function requireOAuthConfig(env, provider) {
@@ -56,7 +84,7 @@ export function requireResend(env) {
   if (!key) throw new ConfigError('RESEND_API_KEY 未設定');
   return {
     apiKey: key,
-    from: String(env.FROM_EMAIL || '').trim() || '問仙壇 <onboarding@resend.dev>'
+    from: String(env.FROM_EMAIL || '').trim() || 'Zenasker <onboarding@resend.dev>'
   };
 }
 

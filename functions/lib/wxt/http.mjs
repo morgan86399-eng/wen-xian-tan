@@ -1,4 +1,4 @@
-/* 問仙壇後端共用 HTTP：JSON、Cookie、路由包裝 */
+/* Zenasker後端共用 HTTP：JSON、Cookie、路由包裝 */
 
 const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8',
@@ -139,12 +139,27 @@ export function parseCookies(request) {
   return out;
 }
 
-export function buildSetCookie(name, value, { maxAge = 0, httpOnly = true, secure = true, sameSite = 'Lax', path = '/' } = {}) {
+/** 只有正式站 zenasker.com / www.zenasker.com 才設 Domain；*.pages.dev 絕不設 */
+export function cookieDomainForSiteUrl(siteUrl) {
+  try {
+    const host = new URL(String(siteUrl || '').trim()).hostname.toLowerCase();
+    if (host === 'zenasker.com' || host === 'www.zenasker.com') return '.zenasker.com';
+    return '';
+  } catch {
+    return '';
+  }
+}
+
+export function buildSetCookie(name, value, { maxAge = 0, httpOnly = true, secure = true, sameSite = 'Lax', path = '/', domain = '' } = {}) {
   const parts = [`${name}=${encodeURIComponent(value)}`, `Path=${path}`, `SameSite=${sameSite}`];
   if (httpOnly) parts.push('HttpOnly');
   if (secure) parts.push('Secure');
   if (maxAge > 0) parts.push(`Max-Age=${maxAge}`);
   else parts.push('Max-Age=0');
+  const safeDomain = String(domain || '').trim().toLowerCase();
+  if (safeDomain === '.zenasker.com' || safeDomain === 'zenasker.com') {
+    parts.push('Domain=.zenasker.com');
+  }
   return parts.join('; ');
 }
 

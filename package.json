@@ -2,7 +2,7 @@
   "name": "wen-xian-tan",
   "version": "1.0.0",
   "private": true,
-  "description": "問仙壇 - 東方美學主題測算與掌紋解讀服務",
+  "description": "Zenasker - 東方美學主題測算與掌紋解讀服務",
   "type": "module",
   "scripts": {
     "dev": "wrangler pages dev dist --d1=DB --kv=RL",

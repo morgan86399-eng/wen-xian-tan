@@ -1,4 +1,4 @@
-import { postOnly, json, readJson, requireSiteUrl } from '../../lib/wxt/http.mjs';
+import { postOnly, json, readJson, requireSiteUrl, isEmail, normalizeEmail } from '../../lib/wxt/http.mjs';
 import { readUserSession } from '../../lib/wxt/auth.mjs';
 import { createOrder, findUserById, hasDb } from '../../lib/wxt/store.mjs';
 import { validateOrderInput, THEME_LABELS } from '../../lib/wxt/products.mjs';
@@ -54,8 +54,8 @@ export const onRequest = postOnly(async ({ request, env }) => {
       MerchantTradeDate: formatTaiwanDateTime(),
       PaymentType: 'aio',
       TotalAmount: String(product.amount),
-      TradeDesc: '問仙壇測算方案',
-      ItemName: `問仙壇-${product.label}#${themeTitles}`,
+      TradeDesc: 'Zenasker測算方案',
+      ItemName: `Zenasker-${product.label}#${themeTitles}`,
       ReturnURL: `${siteUrl}/api/ecpay/callback`,
       OrderResultURL: `${siteUrl}/api/ecpay/client-return`,
       ClientBackURL: `${siteUrl}/`,
@@ -78,6 +78,18 @@ export const onRequest = postOnly(async ({ request, env }) => {
   }
 
   // ---------- Portaly Payment 處理（預設） ----------
+  const userRecord = await findUserById(env, session.uid);
+  const recordEmail = normalizeEmail(userRecord?.email || session.email || '');
+  const bodyEmail = isEmail(body.customerEmail) ? normalizeEmail(body.customerEmail) : '';
+  const checkoutEmail = bodyEmail || recordEmail;
+  if (!checkoutEmail) {
+    return json({
+      ok: false,
+      error: 'EMAIL_REQUIRED',
+      message: '結帳前請先留下電子信箱'
+    }, 400);
+  }
+
   const orderId = await createOrder(env, {
     userId: session.uid,
     productId: product.id,
@@ -88,7 +100,6 @@ export const onRequest = postOnly(async ({ request, env }) => {
     provider: 'portaly'
   });
 
-  const userRecord = await findUserById(env, session.uid);
   const sessionResult = await createPortalyCheckoutSession({
     env,
     orderId,
@@ -97,8 +108,9 @@ export const onRequest = postOnly(async ({ request, env }) => {
     themes,
     user: {
       uid: session.uid,
-      email: userRecord?.email || session.email || '',
-      displayName: userRecord?.display_name || session.displayName || '問仙壇信眾'
+      email: checkoutEmail,
+      emailVerified: Boolean(recordEmail && checkoutEmail === recordEmail),
+      displayName: userRecord?.display_name || session.displayName || '會員'
     },
     siteUrl
   });

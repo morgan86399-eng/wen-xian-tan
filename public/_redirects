@@ -1,0 +1,3 @@
+# 正式站只認 www；apex 一律 301
+https://zenasker.com/* https://www.zenasker.com/:splat 301
+https://zenasker.com https://www.zenasker.com/ 301

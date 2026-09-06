@@ -1,4 +1,4 @@
--- 問仙壇 wenxiantan-db（八張表）
+-- Zenasker wenxiantan-db（八張表）
 -- 套用：wrangler d1 execute wenxiantan-db --file=functions/lib/db/schema.sql --remote
 
 CREATE TABLE IF NOT EXISTS users (

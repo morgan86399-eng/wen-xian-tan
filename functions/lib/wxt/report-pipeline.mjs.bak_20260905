@@ -73,7 +73,7 @@ function finalize(report, extra) {
 }
 
 async function repairActions(env, { themeId, answers, report }) {
-  const systemPrompt = '你是問仙壇的解讀顧問，只負責產出可執行的行動建議，不寫其他內容。';
+  const systemPrompt = '你是Zenasker的解讀顧問，只負責產出可執行的行動建議，不寫其他內容。';
   const userPrompt = buildActionsPrompt(themeId, answers);
   for (const plan of [{ jsonMode: true }, { jsonMode: false }]) {
     try {
