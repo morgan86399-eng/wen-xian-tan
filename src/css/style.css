@@ -706,6 +706,17 @@ p {
   max-width: 100%;
 }
 
+.hero-title-brand {
+  font-size: inherit;
+  line-height: 1.15;
+}
+
+.hero-title-position {
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
 .hero-description {
   max-width: 440px;
   padding-right: 1.5rem;

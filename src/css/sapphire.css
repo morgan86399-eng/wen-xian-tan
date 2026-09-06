@@ -779,7 +779,8 @@ body {
     padding: 28px 20px 20px;
     gap: 24px;
   }
-  .app-hero--editorial .hero-main-title { font-size: clamp(2.5rem, 13vw, 4rem); }
+  .app-hero--editorial .hero-main-title { font-size: clamp(2.1rem, 8vw, 2.7rem); }
+  .app-hero--editorial .hero-title-position { font-size: clamp(1.2rem, 5.2vw, 1.7rem); }
   .hero-description {
     max-width: none;
     margin-top: 14px;

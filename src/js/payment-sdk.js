@@ -73,7 +73,8 @@
         body: JSON.stringify({
           productId: options.productId || options.planId,
           themeKeys: options.themeKeys || options.themes || [],
-          termsVersion: options.termsVersion || ''
+          termsVersion: options.termsVersion || '',
+          customerEmail: options.customerEmail || ''
         })
       })
         .then(async (res) => {
@@ -103,6 +104,9 @@
           }
 
           if (checkoutUrl) {
+            if (/portaly\.cc/i.test(String(checkoutUrl))) {
+              throw new Error('無法建立結帳連線，請稍後重試');
+            }
             window.location.assign(checkoutUrl);
             return;
           }

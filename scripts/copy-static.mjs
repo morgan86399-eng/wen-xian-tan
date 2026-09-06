@@ -8,7 +8,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const TARGETS = [
   { from: 'assets/stories', to: 'dist/assets/stories' },
-  { from: 'assets/og-preview.jpg', to: 'dist/assets/og-preview.jpg' }
+  { from: 'assets/og-preview.jpg', to: 'dist/assets/og-preview.jpg' },
+  { from: 'public/_redirects', to: 'dist/_redirects' }
 ];
 
 let copied = 0;

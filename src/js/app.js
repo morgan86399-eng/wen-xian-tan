@@ -20,6 +20,7 @@ import './payment-sdk.js';
 import { formatAdviceFromReport, pickReportObject, extractActions, extractSections } from '../../functions/lib/wxt/report-format.mjs';
 import { CREDITS_BY_THEME } from '../../functions/lib/wxt/products.mjs';
 import { TERMS_VERSION } from './legal.js';
+import { readPaymentReturnOrderId } from './payment-return.mjs';
 
 /**
  * Zenasker · 掌心解碼 App - 核心應用邏輯與白話問卷引導引擎
@@ -72,6 +73,51 @@ document.addEventListener('DOMContentLoaded', () => {
     if (MemberManager.isLoggedIn()) return true;
     switchTab('auth');
     return false;
+  }
+
+  const PENDING_CHECKOUT_KEY = 'wx_pending_checkout';
+  let pendingCheckout = null;
+  let lastCheckoutEmail = '';
+
+  function rememberPendingCheckout(productId, themeKeys) {
+    const payload = {
+      productId: String(productId || ''),
+      themeKeys: Array.isArray(themeKeys) ? themeKeys.map(String) : []
+    };
+    if (!payload.productId) return;
+    pendingCheckout = payload;
+    try {
+      sessionStorage.setItem(PENDING_CHECKOUT_KEY, JSON.stringify(payload));
+    } catch (_) {}
+  }
+
+  function consumePendingCheckout() {
+    let next = pendingCheckout;
+    pendingCheckout = null;
+    try {
+      const raw = sessionStorage.getItem(PENDING_CHECKOUT_KEY);
+      sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
+      if (!next && raw) next = JSON.parse(raw);
+    } catch (_) {}
+    if (!next || !next.productId) return null;
+    return next;
+  }
+
+  async function resumePendingCheckoutIfAny() {
+    const pending = consumePendingCheckout();
+    if (!pending || !MemberManager.isLoggedIn()) return false;
+    const plan = PLANS.find((p) => p.id === pending.productId);
+    if (!plan) return false;
+    const themes = Array.isArray(pending.themeKeys) ? pending.themeKeys : [];
+    triggerEcpayCheckout(plan, themes);
+    return true;
+  }
+
+  function goToPurchaseSection() {
+    switchTab('member');
+    window.setTimeout(() => {
+      document.getElementById('pricingSectionAnchor')?.scrollIntoView({ behavior: 'smooth' });
+    }, 120);
   }
 
   async function refreshSessionUi() {
@@ -403,6 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderStoriesFeed();
     }
 
+    updateTopBarUserStatus();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -649,8 +696,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!prefersReducedMotion && typeof window.confetti === 'function') {
           window.confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
         }
-        updateTopBarUserStatus();
-        switchTab('member');
+        await refreshSessionUi();
+        if (!(await resumePendingCheckoutIfAny())) {
+          switchTab('member');
+        }
       } else {
         inputs.forEach(i => {
           i.classList.add('error');
@@ -716,12 +765,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <span>回到Zenasker首頁</span>
         </button>
         <span class="breadcrumb-separator">/</span>
-        <span class="breadcrumb-current">信士登入 / 註冊</span>
+        <span class="breadcrumb-current">會員登入 / 註冊</span>
       </div>
 
       <div class="auth-page-header">
-        <h2>🔮 仙壇結緣 ｜ 信士登入 / 註冊</h2>
-        <p>一鍵登入仙壇帳號，永久保存您的各篇掌紋解讀報告與測算次數</p>
+        <h2>🔮 會員登入 ｜ 會員登入 / 註冊</h2>
+        <p>一鍵登入會員帳號，永久保存您的各篇掌紋解讀報告與測算次數</p>
       </div>
 
       ${currentUser ? `
@@ -749,9 +798,12 @@ document.addEventListener('DOMContentLoaded', () => {
             <button type="button" class="btn btn-primary" data-goto-tab="hub" style="width:100%;font-weight:900;font-size:1rem;padding:12px 18px;box-shadow:0 4px 20px rgba(59,130,246,0.35);display:inline-flex;align-items:center;justify-content:center;gap:8px;">
               <span style="font-size:1.18rem;">⛩️</span> 回到Zenasker首頁開始測算
             </button>
-            <div style="display:flex;gap:10px;">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
               <button type="button" class="btn btn-gold btn-sm" id="authGoToMemberBtn" style="flex:1;">
                 👉 進入會員中心查看額度與購買方案
+              </button>
+              <button type="button" class="btn btn-primary btn-sm" id="authGoToPurchaseBtn" style="flex:1;">
+                🪙 前往購買測算次數
               </button>
               <button type="button" class="btn btn-outline btn-sm" id="authLogoutBtn">
                 登出當前帳號
@@ -783,7 +835,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       <!-- Email OTP 表單 -->
       <div class="auth-tabs-row">
-        <button type="button" class="auth-tab-btn ${formMode === 'login' ? 'active' : ''}" id="authPageTabLogin">信士登入</button>
+        <button type="button" class="auth-tab-btn ${formMode === 'login' ? 'active' : ''}" id="authPageTabLogin">會員登入</button>
         <button type="button" class="auth-tab-btn ${formMode === 'register' ? 'active' : ''}" id="authPageTabRegister">免費註冊</button>
       </div>
 
@@ -796,7 +848,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <form id="authPageForm" style="display:grid;gap:14px;">
         ${formMode === 'register' ? `
           <div class="auth-form-group">
-            <label class="auth-form-label" for="pageAuthNameInput">信士尊姓大名：</label>
+            <label class="auth-form-label" for="pageAuthNameInput">會員尊姓大名：</label>
             <input type="text" id="pageAuthNameInput" class="auth-form-input" placeholder="例如：您的稱呼" required>
           </div>
         ` : ''}
@@ -818,7 +870,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       <div class="auth-guarantee-badge">
         <span>🔒</span>
-        <span>仙壇嚴格保障每位信士隱私，掌紋及個資不作商業轉售</span>
+        <span>嚴格保障每位會員隱私，掌紋及個資不作商業轉售</span>
       </div>
 
       <!-- 登入頁底部返回首頁按鈕 -->
@@ -837,9 +889,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('authPageTabRegister')?.addEventListener('click', () => renderAuthPage('register'));
 
     document.getElementById('authGoToMemberBtn')?.addEventListener('click', () => switchTab('member'));
+    document.getElementById('authGoToPurchaseBtn')?.addEventListener('click', () => goToPurchaseSection());
     document.getElementById('authLogoutBtn')?.addEventListener('click', async () => {
       await MemberManager.logout();
-      updateTopBarUserStatus();
+      await refreshSessionUi();
       renderAuthPage();
     });
 
@@ -860,8 +913,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await MemberManager.devLogin(username, password);
       if (btn) { btn.disabled = false; btn.textContent = '測試帳號登入'; }
       if (res.success) {
-        updateTopBarUserStatus();
-        switchTab('member');
+        await refreshSessionUi();
+        if (!(await resumePendingCheckoutIfAny())) {
+          switchTab('member');
+        }
       } else {
         if (errorEl) { errorEl.textContent = res.message; errorEl.style.display = 'block'; }
       }
@@ -881,9 +936,9 @@ document.addEventListener('DOMContentLoaded', () => {
         memberProfileContainer.innerHTML = `
           <div class="member-profile-card" style="text-align:center;padding:28px 20px;">
             <div style="font-size:2.2rem;margin-bottom:8px;">👤</div>
-            <h3 style="color:var(--gold-bright);margin-bottom:8px;">您尚未登入仙壇帳號</h3>
+            <h3 style="color:var(--gold-bright);margin-bottom:8px;">您尚未登入會員帳號</h3>
             <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:18px;max-width:480px;margin-left:auto;margin-right:auto;">
-              登入仙壇帳號後，系統將為您永久保存六大主題的測算次數與掌紋解讀報告。
+              登入會員帳號後，系統將為您永久保存六大主題的測算次數與掌紋解讀報告。
             </p>
             <button type="button" class="btn btn-primary" id="memberGoAuthBtn">
               👉 前往使用者登入 / 免費註冊 (支援 LINE · Google)
@@ -1259,7 +1314,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <button type="button" class="btn btn-outline btn-sm" id="closeTermsModalBtn" style="padding:4px 10px;" aria-label="關閉">✕</button>
         </div>
         <p style="margin-top:6px;font-size:0.85rem;color:var(--text-muted);line-height:1.5;">
-          為保障信士消費權益與交易安全，在前往安全支付前，請確認閱讀並勾選同意Zenasker之服務規範。
+          為保障會員消費權益與交易安全，在前往安全支付前，請確認閱讀並勾選同意Zenasker之服務規範。
         </p>
       </div>
 
@@ -1329,7 +1384,45 @@ document.addEventListener('DOMContentLoaded', () => {
     updateCheckoutSummary();
   });
 
-  function triggerEcpayCheckout(plan, chosenThemes, onCustomSuccess) {
+  function collectCheckoutEmail() {
+    return new Promise((resolve) => {
+      const backdrop = document.getElementById('readingModalBackdrop');
+      const card = document.getElementById('readingModalCard');
+      if (!backdrop || !card) {
+        resolve('');
+        return;
+      }
+      card.innerHTML = `
+        <div class="wizard-header" style="border-bottom:1px solid var(--border-gold);padding-bottom:14px;margin-bottom:16px;">
+          <div class="wizard-title-row">
+            <h3 style="color:var(--gold-bright);font-size:1.15rem;">結帳前請留下電子信箱</h3>
+            <button type="button" class="btn btn-outline btn-sm" id="closeCheckoutEmailBtn" style="padding:4px 10px;">✕</button>
+          </div>
+          <p style="margin-top:8px;font-size:0.85rem;color:var(--text-muted);line-height:1.6;">
+            金流收據與訂單通知需要信箱。LINE 登入若沒有信箱，請在此填寫後再建立結帳。
+          </p>
+        </div>
+        <form id="checkoutEmailForm" style="display:grid;gap:12px;">
+          <input type="email" id="checkoutEmailInput" class="auth-form-input" placeholder="name@example.com" required>
+          <button type="submit" class="btn btn-gold">確認並前往結帳</button>
+        </form>
+      `;
+      const finish = (value) => {
+        backdrop.classList.remove('show', 'active');
+        resolve(value);
+      };
+      card.querySelector('#closeCheckoutEmailBtn')?.addEventListener('click', () => finish(''));
+      card.querySelector('#checkoutEmailForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = String(card.querySelector('#checkoutEmailInput')?.value || '').trim().toLowerCase();
+        if (!email || !email.includes('@')) return;
+        finish(email);
+      });
+      backdrop.classList.add('show', 'active');
+    });
+  }
+
+  async function triggerEcpayCheckout(plan, chosenThemes, onCustomSuccess) {
     if (!requireLogin()) return;
 
     if (siteConfig.paymentsEnabled !== true) {
@@ -1346,6 +1439,14 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const user = MemberManager.getCurrentUser();
+    let checkoutEmail = String((user && user.email) || lastCheckoutEmail || '').trim();
+    if (!checkoutEmail) {
+      checkoutEmail = await collectCheckoutEmail();
+      if (!checkoutEmail) return;
+    }
+    lastCheckoutEmail = checkoutEmail;
+
     PaymentSDK.openCheckout({
       productId: plan.id,
       planId: plan.id,
@@ -1353,11 +1454,9 @@ document.addEventListener('DOMContentLoaded', () => {
       planName: `Zenasker · ${plan.label} (${themeTitles})`,
       displayPrice: plan.price,
       themeKeys: chosenThemes,
+      customerEmail: checkoutEmail,
       onSuccess: async (order) => {
-        await MemberManager.refreshMe();
-        renderThemesHub();
-        renderMemberCenter();
-        updateTopBarUserStatus();
+        await refreshSessionUi();
         if (typeof onCustomSuccess === 'function') {
           onCustomSuccess(order);
         } else {
@@ -1365,7 +1464,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       },
       onError: (err) => {
-        if (err && err.message === 'UNAUTHENTICATED') switchTab('auth');
+        const code = err && err.message;
+        if (code === 'UNAUTHENTICATED') {
+          rememberPendingCheckout(plan.id, chosenThemes);
+          switchTab('auth');
+          return;
+        }
+        if (code === 'EMAIL_REQUIRED') {
+          collectCheckoutEmail().then((email) => {
+            if (!email) return;
+            triggerEcpayCheckout(plan, chosenThemes, onCustomSuccess);
+          });
+        }
       }
     });
   }
@@ -2117,7 +2227,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="ritual-censer-icon">${hasPalm ? '✋' : '🔮'}</span>
           </div>
           <h3 class="ritual-title" id="ritualStageTitle">開壇定壇 · 仙佛降臨</h3>
-          <p class="ritual-subtitle" id="ritualStageSub">恭請仙佛降臨壇前，調閱信士生辰因果簿...</p>
+          <p class="ritual-subtitle" id="ritualStageSub">恭請仙佛降臨壇前，調閱會員生辰因果簿...</p>
 
           <div class="ritual-stepper" role="list" aria-label="測算進度">
             <div class="ritual-step-node active" id="ritualStep1" role="listitem">
@@ -2162,7 +2272,7 @@ document.addEventListener('DOMContentLoaded', () => {
         {
           pct: 22,
           title: '開壇定壇 · 仙佛降臨',
-          sub: '恭請仙佛降臨壇前，調閱信士生辰因果簿...',
+          sub: '恭請仙佛降臨壇前，調閱會員生辰因果簿...',
           activate: [step1]
         },
         {
@@ -2176,13 +2286,13 @@ document.addEventListener('DOMContentLoaded', () => {
         {
           pct: 68,
           title: '靈犀感知 · 剖析叩問煩惱',
-          sub: `深度透視信士所求之因果病灶與轉折契機...`,
+          sub: `深度透視會員所求之因果病灶與轉折契機...`,
           activate: [step1, step2, step3]
         },
         {
           pct: 100,
           title: '天書顯化 · 專屬 AI 報告生成',
-          sub: '專屬解惑指引已排盤完畢，即將為信士揭曉天機...',
+          sub: '專屬解惑指引已排盤完畢，即將為會員揭曉天機...',
           activate: [step1, step2, step3, step4]
         }
       ];
@@ -2259,7 +2369,7 @@ document.addEventListener('DOMContentLoaded', () => {
           goalLabel: answers.goalCustom || (answers.goal === 'skip' ? '略過' : (DESIRED_OUTCOMES.find(g => g.id === answers.goal)?.label || answers.goal)),
           genderLabel: answers.genderCustom || (GENDER_OPTIONS.find(g => g.id === answers.gender)?.label || answers.gender),
           ageLabel: answers.ageCustom || (AGE_OPTIONS.find(a => a.id === answers.age)?.label || answers.age),
-          userName: (MemberManager.getCurrentUser() && MemberManager.getCurrentUser().name) || '信士'
+          userName: (MemberManager.getCurrentUser() && MemberManager.getCurrentUser().name) || '會員'
         },
         nonce: createNonce()
       };
@@ -2706,13 +2816,29 @@ document.addEventListener('DOMContentLoaded', () => {
     backdrop.classList.add('show', 'active');
   }
 
+  async function pollOrderPaid(orderId, { attempts = 12, intervalMs = 2000 } = {}) {
+    const id = String(orderId || '').trim();
+    if (!id) return false;
+    for (let i = 0; i < attempts; i += 1) {
+      try {
+        const res = await fetch(`/api/orders/${encodeURIComponent(id)}`, { credentials: 'include' });
+        const data = await res.json().catch(() => ({}));
+        if (data.isPaid === true || String(data.status || '').toUpperCase() === 'PAID') {
+          return true;
+        }
+      } catch (_) {}
+      await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    }
+    return false;
+  }
+
   async function handlePaymentReturnFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get('payment');
-    const orderId = urlParams.get('order');
+    const orderId = readPaymentReturnOrderId(urlParams);
     if (!paymentStatus && !orderId) return;
 
-    if (paymentStatus === 'failed' || paymentStatus === 'error') {
+    if (paymentStatus === 'failed' || paymentStatus === 'error' || paymentStatus === 'cancel') {
       const msg = urlParams.get('msg') || '交易未完成或已取消';
       alert(`付款未完成：${decodeURIComponent(msg)}`);
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -2720,21 +2846,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     showServerConfirmModal('正在向伺服器確認點數，請稍候...');
-    await MemberManager.refreshMe();
-    renderThemesHub();
-    renderMemberCenter();
-    updateTopBarUserStatus();
-    showServerConfirmModal('已向伺服器確認目前點數。點數不會依網址參數增加。');
+    const paid = orderId ? await pollOrderPaid(orderId) : false;
+    await refreshSessionUi();
+    if (paid) {
+      showPaymentConfirmModal({ id: orderId });
+    } else {
+      showServerConfirmModal('付款已回站，點數入帳中。若次數尚未增加，請稍候再整理頁面。');
+    }
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 
   async function handleAuthReturnFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('auth') !== 'ok') return;
-    await MemberManager.refreshMe();
-    updateTopBarUserStatus();
-    if (MemberManager.isLoggedIn()) switchTab('member');
-    window.history.replaceState({}, document.title, window.location.pathname);
+    const authStatus = urlParams.get('auth');
+    if (authStatus === 'error') {
+      showServerConfirmModal('登入未完成，請再試一次');
+      window.history.replaceState({}, document.title, window.location.pathname);
+      return;
+    }
+    if (authStatus !== 'ok') return;
+    await refreshSessionUi();
+    if (MemberManager.isLoggedIn()) {
+      window.history.replaceState({}, document.title, window.location.pathname);
+      if (!(await resumePendingCheckoutIfAny())) {
+        switchTab('member');
+      }
+      return;
+    }
+    showServerConfirmModal('登入未完成，請再試一次');
   }
 
   // ============ 12. 全站條款彈窗點擊事件委派 ============
