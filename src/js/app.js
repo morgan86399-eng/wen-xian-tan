@@ -207,8 +207,11 @@ document.addEventListener('DOMContentLoaded', () => {
         question: '',
         goal: 'skip',
         goalCustom: '',
-        palmDataUrl: null,
-        palmImageBase64: '',
+        palmLeftDataUrl: null,
+        palmLeftBase64: '',
+        palmRightDataUrl: null,
+        palmRightBase64: '',
+        palmActiveHand: 'left',
         palmConsent: false
       },
       isSubmitting: false,
@@ -1833,8 +1836,11 @@ document.addEventListener('DOMContentLoaded', () => {
       question: '',
       goal: 'skip',
       goalCustom: '',
-      palmDataUrl: null,
-      palmImageBase64: '',
+      palmLeftDataUrl: null,
+      palmLeftBase64: '',
+      palmRightDataUrl: null,
+      palmRightBase64: '',
+      palmActiveHand: 'left',
       palmConsent: false
     };
 
@@ -1969,30 +1975,49 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }
 
-    // Step 7: 手相拍照上傳（選填/可略過）(Palm Upload)
+    // Step 7: 手相拍照上傳 — 左手＋右手雙手拍照 (Palm Upload)
     else if (currentStep === 7) {
-      const targetHand = answers.gender === 'female' ? 'right' : 'left';
-      const handText = targetHand === 'right' ? '右手（女性看右手天賦）' : '左手（男性看左手天賦）';
+      const activeHand = answers.palmActiveHand || 'left';
+      const leftDone = Boolean(answers.palmLeftDataUrl);
+      const rightDone = Boolean(answers.palmRightDataUrl);
+      const bothDone = leftDone && rightDone;
+
+      const currentUrl = activeHand === 'left' ? answers.palmLeftDataUrl : answers.palmRightDataUrl;
+      const handEmoji = activeHand === 'left' ? '✋' : '🤚';
+      const handLabel = activeHand === 'left' ? '左手掌心' : '右手掌心';
 
       stepContentHtml = `
         <div class="wizard-step-body">
           <div>
-            <div class="wizard-question-title">7. 拍照上傳手相照片（選填）</div>
+            <div class="wizard-question-title">7. 拍照上傳手相照片</div>
             <div class="wizard-question-sub">
-              💡 提示：只要拍手掌，不用拍臉！建議拍攝${handText}。有拍照會多為您分析感情線、智慧線、事業線，內容會更完整。若不方便拍照也可以直接略過！
+              💡 請依序拍攝左手與右手掌心。只要拍手掌，不用拍臉！雙手拍照可完整分析感情線、智慧線、事業線。若不方便拍照也可以直接略過。
             </div>
           </div>
-          
+
+          <div style="display:flex;gap:0;margin-bottom:12px;border-radius:10px;overflow:hidden;border:1.5px solid var(--border-gold);">
+            <button type="button" class="btn btn-sm palmHandTab" data-palm-tab="left"
+              style="flex:1;border-radius:0;border:none;font-weight:800;font-size:0.9rem;padding:10px 0;
+              ${activeHand === 'left' ? 'background:var(--gold-bright);color:#1a1a2e;' : 'background:transparent;color:var(--text-secondary);'}">
+              ✋ 左手 ${leftDone ? '<span style="color:#34D399;margin-left:4px;">✓</span>' : ''}
+            </button>
+            <button type="button" class="btn btn-sm palmHandTab" data-palm-tab="right"
+              style="flex:1;border-radius:0;border:none;border-left:1.5px solid var(--border-gold);font-weight:800;font-size:0.9rem;padding:10px 0;
+              ${activeHand === 'right' ? 'background:var(--gold-bright);color:#1a1a2e;' : 'background:transparent;color:var(--text-secondary);'}">
+              🤚 右手 ${rightDone ? '<span style="color:#34D399;margin-left:4px;">✓</span>' : ''}
+            </button>
+          </div>
+
           <div class="wizard-upload-box" id="wizardPalmTriggerBox">
-            ${answers.palmDataUrl ? `
+            ${currentUrl ? `
               <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
-                <img src="${answers.palmDataUrl}" class="wizard-upload-preview" alt="手相預覽">
+                <img src="${currentUrl}" class="wizard-upload-preview" alt="${handLabel}預覽">
                 <div style="font-size:0.86rem;color:#34D399;font-weight:800;display:flex;align-items:center;gap:6px;">
-                  <span>✓</span> 掌心照片已辨識就緒（只拍掌心，不存雲端）
+                  <span>✓</span> ${handLabel}照片已辨識就緒（只拍掌心，不存雲端）
                 </div>
                 <div style="display:flex;gap:8px;margin-top:4px;">
                   <button type="button" class="btn btn-outline btn-sm" id="wizardRetakePalmBtn">
-                    📷 重新啟動相機
+                    📷 重新拍攝${handLabel}
                   </button>
                   <button type="button" class="btn btn-outline btn-sm" id="wizardChangeAlbumBtn">
                     🖼️ 從相簿重選
@@ -2000,10 +2025,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
               </div>
             ` : `
-              <div style="font-size:2.6rem;margin-bottom:8px;">✋</div>
-              <div style="font-weight:800;color:var(--gold-bright);font-size:1.1rem;">點擊開啟相機 · 掌心輪廓對齊辨識</div>
+              <div style="font-size:2.6rem;margin-bottom:8px;">${handEmoji}</div>
+              <div style="font-weight:800;color:var(--gold-bright);font-size:1.1rem;">請拍攝${handLabel} · 掌心輪廓對齊辨識</div>
               <div style="font-size:0.82rem;color:var(--text-muted);margin-top:6px;max-width:400px;margin-left:auto;margin-right:auto;">
-                開啟鏡頭將掌心放入金色引導輪廓內，系統將自動對焦並拍照辨識
+                開啟鏡頭將${handLabel}放入金色引導輪廓內，系統將自動對焦並拍照辨識
               </div>
               <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
                 <button type="button" class="btn btn-gold btn-sm" id="wizardOpenCameraBtn">
@@ -2015,6 +2040,17 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             `}
           </div>
+
+          ${bothDone ? `
+            <div style="text-align:center;margin-top:10px;font-size:0.88rem;color:#34D399;font-weight:800;">
+              ✅ 左手與右手掌心照片皆已就緒！
+            </div>
+          ` : `
+            <div style="text-align:center;margin-top:10px;font-size:0.82rem;color:var(--text-muted);">
+              ${leftDone && !rightDone ? '👉 左手已完成，請繼續拍攝右手' : (!leftDone && rightDone ? '👈 右手已完成，請繼續拍攝左手' : '請依序拍攝左手與右手掌心')}
+            </div>
+          `}
+
           <label style="display:flex;align-items:flex-start;gap:8px;margin-top:14px;font-size:0.82rem;color:var(--text-secondary);line-height:1.55;cursor:pointer;">
             <input type="checkbox" id="wizardPalmConsent" ${answers.palmConsent ? 'checked' : ''} style="margin-top:3px;accent-color:var(--gold-bright);">
             <span>我同意將掌紋影像送 AI 分析，分析完成後不保存原圖。未勾選不能上傳或送出照片；略過拍照仍可繼續。</span>
@@ -2193,7 +2229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (currentStep === 7) {
-      const targetHand = answers.gender === 'female' ? 'right' : 'left';
+      const activeHand = answers.palmActiveHand || 'left';
       const consentBox = document.getElementById('wizardPalmConsent');
       if (consentBox) {
         consentBox.checked = Boolean(answers.palmConsent);
@@ -2209,31 +2245,41 @@ document.addEventListener('DOMContentLoaded', () => {
         return false;
       };
 
+      // 雙手 Tab 切換
+      readingModalCard.querySelectorAll('.palmHandTab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+          answers.palmActiveHand = tab.dataset.palmTab;
+          renderWizardStep();
+        });
+      });
+
       document.getElementById('wizardOpenCameraBtn')?.addEventListener('click', () => {
         if (!requirePalmConsent()) return;
-        openCamera(targetHand);
+        openCamera(activeHand);
       });
 
       document.getElementById('wizardOpenAlbumBtn')?.addEventListener('click', () => {
         if (!requirePalmConsent()) return;
-        openFilePicker(targetHand);
+        openFilePicker(activeHand);
       });
 
       document.getElementById('wizardRetakePalmBtn')?.addEventListener('click', () => {
         if (!requirePalmConsent()) return;
-        openCamera(targetHand);
+        openCamera(activeHand);
       });
 
       document.getElementById('wizardChangeAlbumBtn')?.addEventListener('click', () => {
         if (!requirePalmConsent()) return;
-        openFilePicker(targetHand);
+        openFilePicker(activeHand);
       });
 
       const skipBtn = document.getElementById('wizardSkipPalmBtn');
       if (skipBtn) {
         skipBtn.addEventListener('click', () => {
-          answers.palmDataUrl = null;
-          answers.palmImageBase64 = '';
+          answers.palmLeftDataUrl = null;
+          answers.palmLeftBase64 = '';
+          answers.palmRightDataUrl = null;
+          answers.palmRightBase64 = '';
           executeDecodingFlow({ skipPalm: true });
         });
       }
@@ -2241,7 +2287,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const submitBtn = document.getElementById('wizardSubmitBtn');
       if (submitBtn) {
         submitBtn.addEventListener('click', () => {
-          if (answers.palmDataUrl || answers.palmImageBase64) {
+          const hasPalmData = answers.palmLeftBase64 || answers.palmRightBase64 || answers.palmLeftDataUrl || answers.palmRightDataUrl;
+          if (hasPalmData) {
             if (!requirePalmConsent()) return;
           }
           executeDecodingFlow({ skipPalm: false });
@@ -2293,11 +2340,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeObj = THEMES.find((t) => t.id === activeThemeId) || THEMES[0];
     const themeName = themeObj.name;
     const skipPalm = Boolean(options.skipPalm);
-    const liveBase64 = window.KaiyunPalmCapture && window.KaiyunPalmCapture.lastBase64;
-    if (liveBase64) answers.palmImageBase64 = liveBase64;
 
-    const sendPalm = !skipPalm && Boolean(answers.palmConsent) && Boolean(answers.palmImageBase64);
-    if (!skipPalm && (answers.palmDataUrl || answers.palmImageBase64) && !answers.palmConsent) {
+    const hasPalmData = Boolean(answers.palmLeftBase64 || answers.palmRightBase64 || answers.palmLeftDataUrl || answers.palmRightDataUrl);
+    const sendPalm = !skipPalm && Boolean(answers.palmConsent) && hasPalmData;
+    if (!skipPalm && hasPalmData && !answers.palmConsent) {
       alert('要送出掌紋照片，請先勾選同意。若不想送出，請改點略過拍照。');
       return;
     }
@@ -2471,7 +2517,10 @@ document.addEventListener('DOMContentLoaded', () => {
         nonce: createNonce()
       };
       if (sendPalm) {
-        payload.palmImageBase64 = answers.palmImageBase64;
+        if (answers.palmLeftBase64) payload.palmLeftBase64 = answers.palmLeftBase64;
+        if (answers.palmRightBase64) payload.palmRightBase64 = answers.palmRightBase64;
+        // 向後兼容：也傳一個合併欄位供舊版後端使用
+        payload.palmImageBase64 = answers.palmLeftBase64 || answers.palmRightBase64 || '';
       }
 
       fetch('/api/reading/generate', {
@@ -2555,7 +2604,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showDecodedReport(themeId, answers, renderIntoModal = true, apiResult = null) {
     const theme = THEMES.find((t) => t.id === themeId) || THEMES[0];
-    const hasPalm = Boolean(answers.palmDataUrl || answers.palmImageBase64);
+    const hasPalm = Boolean(answers.palmLeftDataUrl || answers.palmLeftBase64 || answers.palmRightDataUrl || answers.palmRightBase64);
 
     const matchedStories = matchStoriesForReport(themeId, answers);
 
@@ -2876,16 +2925,36 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============ Palm Camera Event Listeners ============
   document.addEventListener('kaiyun-palm-captured', (e) => {
     if (!e.detail) return;
-    if (e.detail.previewUrl) state.wizard.answers.palmDataUrl = e.detail.previewUrl;
-    if (e.detail.palmImageBase64) state.wizard.answers.palmImageBase64 = e.detail.palmImageBase64;
+    const hand = e.detail.hand || state.wizard.answers.palmActiveHand || 'left';
+    if (hand === 'left') {
+      if (e.detail.previewUrl) state.wizard.answers.palmLeftDataUrl = e.detail.previewUrl;
+      if (e.detail.palmImageBase64) state.wizard.answers.palmLeftBase64 = e.detail.palmImageBase64;
+      // 拍完左手後自動切到右手
+      if (!state.wizard.answers.palmRightDataUrl) {
+        state.wizard.answers.palmActiveHand = 'right';
+      }
+    } else {
+      if (e.detail.previewUrl) state.wizard.answers.palmRightDataUrl = e.detail.previewUrl;
+      if (e.detail.palmImageBase64) state.wizard.answers.palmRightBase64 = e.detail.palmImageBase64;
+      // 拍完右手後，若左手尚未拍，自動切到左手
+      if (!state.wizard.answers.palmLeftDataUrl) {
+        state.wizard.answers.palmActiveHand = 'left';
+      }
+    }
     if (readingModalBackdrop.classList.contains('show') && state.wizard.currentStep === 7) {
       renderWizardStep();
     }
   });
 
-  document.addEventListener('kaiyun-palm-cleared', () => {
-    state.wizard.answers.palmDataUrl = null;
-    state.wizard.answers.palmImageBase64 = '';
+  document.addEventListener('kaiyun-palm-cleared', (e) => {
+    const hand = (e.detail && e.detail.hand) || state.wizard.answers.palmActiveHand || 'left';
+    if (hand === 'left') {
+      state.wizard.answers.palmLeftDataUrl = null;
+      state.wizard.answers.palmLeftBase64 = '';
+    } else {
+      state.wizard.answers.palmRightDataUrl = null;
+      state.wizard.answers.palmRightBase64 = '';
+    }
     if (readingModalBackdrop.classList.contains('show') && state.wizard.currentStep === 7) {
       renderWizardStep();
     }
