@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7' fill='%23F59E0B'/></svg>" />
+  <title>Zenasker 隱藏節奏檔 · 規劃註記板</title>
+  <style>
+    :root {
+      --bg: #0C0A1C;
+      --bg-2: #14102a;
+      --card: rgba(22, 18, 42, 0.92);
+      --gold: #F59E0B;
+      --gold-2: #E8C872;
+      --fire: #DC2626;
+      --ink: #F6F1E4;
+      --muted: #B7A98E;
+      --line: rgba(232, 200, 114, 0.22);
+      --ok: #34D399;
+      --gap: #FBBF24;
+      --no: #F87171;
+      --pad: clamp(16px, 4vw, 32px);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "PingFang TC", "Noto Sans TC", "Hiragino Sans", sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(245, 158, 11, 0.16), transparent 55%),
+        radial-gradient(900px 500px at 100% 0%, rgba(220, 38, 38, 0.12), transparent 50%),
+        var(--bg);
+      color: var(--ink);
+      line-height: 1.65;
+    }
+    a { color: var(--gold-2); }
+    code, .path {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 0.82em;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 1px 6px;
+      word-break: break-all;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 0 var(--pad) 80px; }
+    header.hero {
+      padding: 28px 0 8px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 22px;
+    }
+    .eyebrow {
+      color: var(--gold);
+      letter-spacing: 0.18em;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      margin: 0 0 8px;
+    }
+    h1 {
+      font-family: "Songti TC", "Noto Serif TC", serif;
+      font-size: clamp(1.6rem, 4vw, 2.2rem);
+      line-height: 1.25;
+      margin: 0 0 12px;
+    }
+    .lead { color: var(--muted); margin: 0 0 16px; max-width: 46rem; }
+    .status-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; }
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      color: var(--gold-2);
+      background: rgba(245,158,11,0.08);
+    }
+    .pill.ok { color: var(--ok); border-color: rgba(52,211,153,0.35); background: rgba(52,211,153,0.08); }
+    .pill.gap { color: var(--gap); }
+    .pill.no { color: var(--no); border-color: rgba(248,113,113,0.35); background: rgba(248,113,113,0.08); }
+    .sticky {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(12,10,28,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+      margin: 0 calc(var(--pad) * -1);
+      padding: 10px var(--pad);
+    }
+    .sticky-inner {
+      max-width: 980px; margin: 0 auto;
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+    }
+    .progress { color: var(--muted); font-size: 0.88rem; }
+    .progress b { color: var(--gold-2); }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    button, .btn {
+      appearance: none; border: 1px solid var(--line); background: var(--bg-2);
+      color: var(--ink); border-radius: 10px; padding: 8px 12px; cursor: pointer; font: inherit; font-size: 0.85rem;
+    }
+    button:hover, .btn:hover { border-color: var(--gold); color: var(--gold-2); }
+    button.primary { background: linear-gradient(90deg, #F59E0B, #E8C872); color: #1a1204; border: 0; font-weight: 700; }
+    nav.toc { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 18px 0 28px; }
+    @media (min-width: 720px) { nav.toc { grid-template-columns: 1fr 1fr; } }
+    nav.toc a {
+      text-decoration: none; color: var(--ink);
+      border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+      background: var(--card); display: flex; gap: 10px; align-items: flex-start;
+    }
+    nav.toc a:hover { border-color: var(--gold); }
+    nav.toc .n { color: var(--gold); font-weight: 700; min-width: 1.6rem; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px 18px 16px;
+      margin: 0 0 22px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    }
+    .card h2 {
+      font-size: 1.15rem; margin: 0 0 10px;
+      font-family: "Songti TC", "Noto Serif TC", serif;
+    }
+    .found, .miss {
+      display: grid; gap: 8px; margin: 12px 0;
+    }
+    .row {
+      display: grid; grid-template-columns: 72px 1fr; gap: 10px; align-items: start;
+      padding: 8px 0; border-bottom: 1px dashed rgba(232,200,114,0.12);
+    }
+    .tag { font-size: 0.75rem; font-weight: 700; padding-top: 2px; }
+    .tag.ok { color: var(--ok); }
+    .tag.gap { color: var(--gap); }
+    .tag.no { color: var(--no); }
+    ul { margin: 8px 0 0; padding-left: 1.2rem; }
+    li { margin: 4px 0; }
+    .note {
+      margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line);
+    }
+    .note h3 { margin: 0 0 8px; font-size: 0.92rem; color: var(--gold-2); }
+    .choices { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+    .choices label {
+      display: flex; align-items: center; gap: 6px;
+      border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-size: 0.86rem;
+    }
+    .choices label:has(input:checked) { border-color: var(--gold); background: rgba(245,158,11,0.12); }
+    textarea {
+      width: 100%; min-height: 88px; resize: vertical;
+      background: #0a0816; color: var(--ink); border: 1px solid var(--line);
+      border-radius: 12px; padding: 10px 12px; font: inherit;
+    }
+    .hint { color: var(--muted); font-size: 0.8rem; margin: 6px 0 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { border-bottom: 1px solid var(--line); padding: 8px 6px; text-align: left; vertical-align: top; }
+    th { color: var(--gold-2); font-weight: 600; }
+    .flow {
+      display: grid; gap: 8px; margin: 12px 0;
+    }
+    .flow-step {
+      border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: rgba(0,0,0,0.2);
+    }
+    .flow-step b { color: var(--gold); }
+    .map-demo {
+      display: grid; grid-template-columns: 1fr; gap: 12px; margin: 12px 0;
+    }
+    @media (min-width: 720px) { .map-demo { grid-template-columns: 180px 1fr; align-items: center; } }
+    .tw-svg { width: 140px; max-width: 100%; }
+    .warn {
+      border-left: 3px solid var(--fire);
+      padding: 8px 12px; background: rgba(220,38,38,0.08); border-radius: 0 10px 10px 0;
+      margin: 10px 0;
+    }
+    .rec {
+      border-left: 3px solid var(--gold);
+      padding: 8px 12px; background: rgba(245,158,11,0.08); border-radius: 0 10px 10px 0;
+      margin: 10px 0;
+    }
+    footer { color: var(--muted); font-size: 0.8rem; text-align: center; padding: 24px 0; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    @media print {
+      .sticky, .note, nav.toc, .btn-row { display: none !important; }
+      body { background: #fff; color: #111; }
+      .card { break-inside: avoid; border-color: #ccc; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <p class="eyebrow">Zenasker · 內部規劃 · 不部署上線</p>
+      <h1>用出生資料暗中提高報告準度<br>但不讓使用者察覺紫微／八字</h1>
+      <p class="lead">結論：素材找得到，可以做。但「大數據檔案整包灌進 AI」這件事，三重解讀實際不是這樣做的。正確做法是本機排盤 → 先翻成白話節奏檔 → 再餵給現有報告管線，並用禁詞閘門擋住術語外洩。</p>
+      <div class="status-row">
+        <span class="pill ok">舊掌心解碼 UI 找到</span>
+        <span class="pill ok">三重排盤引擎找到</span>
+        <span class="pill gap">知識百科有，案例庫是空的</span>
+        <span class="pill no">正式站目前沒收集出生年月日</span>
+      </div>
+    </header>
+  </div>
+
+  <div class="sticky">
+    <div class="sticky-inner">
+      <div class="progress">已註記 <b id="notedCount">0</b>／12　同意 <b id="agreeCount">0</b>　要改 <b id="editCount">0</b></div>
+      <div class="btn-row">
+        <button type="button" class="primary" id="exportMd">匯出你的註記</button>
+        <button type="button" id="exportJson">匯出 JSON</button>
+        <button type="button" id="printBtn">列印</button>
+        <button type="button" id="resetBtn">清空註記</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <nav class="toc" aria-label="規劃步驟">
+      <a href="#s1"><span class="n">1</span><span>目標與邊界</span></a>
+      <a href="#s2"><span class="n">2</span><span>素材盤點：找到／沒找到</span></a>
+      <a href="#s3"><span class="n">3</span><span>出生地：台灣番薯地圖</span></a>
+      <a href="#s4"><span class="n">4</span><span>時辰時鐘怎麼做</span></a>
+      <a href="#s5"><span class="n">5</span><span>問答流程要插在哪</span></a>
+      <a href="#s6"><span class="n">6</span><span>三重引擎怎麼接進來</span></a>
+      <a href="#s7"><span class="n">7</span><span>知識檔怎麼暗灌</span></a>
+      <a href="#s8"><span class="n">8</span><span>提示詞與禁詞閘門</span></a>
+      <a href="#s9"><span class="n">9</span><span>報告只講白話</span></a>
+      <a href="#s10"><span class="n">10</span><span>一對一諮詢怎麼接</span></a>
+      <a href="#s11"><span class="n">11</span><span>風險：額度、隱私、術語外洩</span></a>
+      <a href="#s12"><span class="n">12</span><span>分期開工與驗收</span></a>
+    </nav>
+
+    <article class="card" id="s1">
+      <h2>1. 目標與邊界</h2>
+      <p>使用者在咖啡時光填出生年月日、時段、出生地。畫面上只當成「讓解讀更貼近你這個人」。後端暗中排出紫微／八字結構，轉成白話節奏檔，再跟現有七步問答、掌紋一起產出報告。</p>
+      <div class="rec"><b>建議做法：</b>正式站文案、報告正文、歷史紀錄，全部不准出現紫微、八字、命宮、十神、四化、干支、星曜。連「我們有用命理大數據」也不講。</div>
+      <div class="warn"><b>不做：</b>不把三重解讀的線上站嵌進 zenasker；不挪用它的 Groq／Service Binding；不把整本符號百科直接丟進模型（一份報告現在大約 3300 token，整包會把額度吃爆）。</div>
+      <div class="note" data-step="s1"></div>
+    </article>
+
+    <article class="card" id="s2">
+      <h2>2. 素材盤點：找到／沒找到</h2>
+      <div class="found">
+        <div class="row"><span class="tag ok">找到</span><div>三重解讀本機：<span class="path">/Users/weiyo/Desktop/ＡＩ/三重解讀</span><br>線上：<a href="https://triple-reading.morgan86399.workers.dev/" target="_blank" rel="noopener">triple-reading.morgan86399.workers.dev</a></div></div>
+        <div class="row"><span class="tag ok">找到</span><div>排盤套件：<code>iztro@2.6.0</code>、<code>lunar-typescript@1.8.6</code>、<code>fortel-ziweidoushu@1.3.4</code></div></div>
+        <div class="row"><span class="tag ok">找到</span><div>引擎檔：<code>charts.mjs</code>、<code>bazi-engine.mjs</code>、<code>domain-engine.mjs</code>、<code>hour.mjs</code>、<code>timeline.mjs</code>、<code>solar-terms-engine.mjs</code>、<code>birth-gate.mjs</code></div></div>
+        <div class="row"><span class="tag ok">找到</span><div>符號百科 <code>symbols-knowledge.mjs</code>（約 14 主星＋四化＋四宮，30KB）。這就是他們灌給後端報告的知識檔，不是另外一份上網爬下來的統計庫。</div></div>
+        <div class="row"><span class="tag ok">找到</span><div>舊掌心解碼 UI：<span class="path">/Users/weiyo/Desktop/ＡＩ/新版掌心解碼/js/page_runner.js</span>（台灣番薯外框、洲別氣泡、十二時辰圓盤）。素描密碼全集有幾乎同一份。</div></div>
+        <div class="row"><span class="tag ok">找到</span><div>城市經緯度：<code>core_engine.js</code> 的 <code>CITY_COORDS</code>（台北／桃園／海外都會＋時區）。</div></div>
+        <div class="row"><span class="tag gap">部分</span><div>三重解讀對 AI 的用法：先本機算出 claims，Groq 只負責把句子改白話。並沒有「把搜尋過的大檔案當附件上傳給模型」。</div></div>
+        <div class="row"><span class="tag no">空的</span><div>公開案例庫 <code>public-cases.mjs</code> 是空陣列。D1 知識表也還沒灌內容。</div></div>
+        <div class="row"><span class="tag no">沒有</span><div>Zenasker 現況：七步問答只有性別、年齡區間、關係、狀態、問題、期望、掌紋。<b>沒有</b>出生年月日、時辰、出生地。</div></div>
+        <div class="row"><span class="tag gap">要注意</span><div>現有性別選項已寫「坤造／乾造」，這本身就是八字用語。若目標是不讓人察覺，這兩個詞之後也要拿掉。</div></div>
+      </div>
+      <div class="note" data-step="s2"></div>
+    </article>
+
+    <article class="card" id="s3">
+      <h2>3. 出生地：沿用舊掌心解碼的番薯地圖</h2>
+      <div class="map-demo">
+        <svg class="tw-svg" viewBox="0 0 400 520" fill="none" aria-hidden="true">
+          <path d="M 344.4 81.5 C 334.3 71.2, 307.4 48.3, 293.6 43.7 C 279.8 39.1, 286.4 51.7, 278.1 59.3 C 269.8 66.9, 263.9 69.9, 253.8 80.2 C 243.7 90.5, 239.6 95.3, 229.5 108.9 C 219.4 122.5, 215.1 131.4, 205.2 145.5 C 195.3 159.6, 189.5 163.2, 182.1 176.8 C 174.7 190.4, 175.7 195.0, 169.9 210.8 C 164.1 226.6, 159.9 234.4, 154.4 252.6 C 148.9 270.8, 147.1 279.2, 143.4 298.2 C 139.7 317.2, 137.7 326.8, 136.8 343.9 C 135.9 361.0, 135.8 367.4, 139.0 380.5 C 142.2 393.6, 145.3 397.9, 152.2 406.6 C 159.1 415.3, 162.4 408.2, 172.1 422.3 C 181.8 436.4, 188.9 460.9, 198.6 474.5 C 208.3 488.1, 211.1 493.0, 218.5 487.6 C 225.9 482.2, 226.6 470.2, 234.0 448.4 C 241.4 426.6, 244.6 410.3, 253.8 383.1 C 263.0 355.9, 268.9 346.4, 278.1 317.8 C 287.3 289.2, 290.6 273.2, 298.0 246.0 C 305.4 218.8, 306.6 213.7, 313.5 187.3 C 320.4 160.9, 325.1 139.0, 331.1 119.4 C 337.1 99.8, 339.4 101.2, 342.2 93.3 C 345.0 85.4, 354.5 91.8, 344.4 81.5 Z" stroke="#E8C872" stroke-width="3" fill="rgba(245,158,11,0.08)"/>
+        </svg>
+        <div>
+          <p>第一層五大區氣泡：台灣、中國大陸、港澳星馬、亞洲鄰國、美國歐美。</p>
+          <p>點進台灣後，白色番薯外框上，台北市、桃園市、台中市、高雄市等依相對位置排列，可點選。海外同樣有白線地圖＋城市標籤（倫敦、雪梨、紐約都有）。</p>
+          <p>選完對到經緯度與時區，後端才能換真太陽時。使用者只要看到「選出生地」。</p>
+        </div>
+      </div>
+      <div class="rec"><b>建議：</b>把 <code>page_runner.js</code> 的地圖區塊抽成 Zenasker 自己的模組，配黑金皮膚，不要整份舊站貼進去。</div>
+      <div class="note" data-step="s3"></div>
+    </article>
+
+    <article class="card" id="s4">
+      <h2>4. 時辰時鐘：舊檔是「十二格圓盤」，不是 24 根刻度</h2>
+      <p>舊 UI 是圓形星盤，12 個泡泡圍一圈，每格 2 小時，加起來就是 24 小時。例如子時 23:00–01:00、午時 11:00–13:00。底下另有「不清楚具體時辰」。</p>
+      <div class="rec"><b>建議預設：</b>視覺沿用這顆圓盤，因為你點名要舊掌心解碼的做法，而且點選速度最快。</div>
+      <div class="warn"><b>要你拍板：</b>圓盤上要不要寫「子時／丑時」？寫了比較像舊版，但也比較容易讓人聯想到八字。另一種：只顯示 23:00–01:00 與生肖圖，不寫時辰名。</div>
+      <p>不清楚時辰時：後端用當天正午估，並把節奏檔標成「時段不確定，只當弱參考」，避免亂編精確到小時的故事。</p>
+      <div class="note" data-step="s4"></div>
+    </article>
+
+    <article class="card" id="s5">
+      <h2>5. 問答流程要插在哪</h2>
+      <p>現在七步：1 性別 → 2 年齡區間 → 3 關係 → 4 狀態 → 5 問題 → 6 期望 → 7 掌紋。</p>
+      <div class="flow">
+        <div class="flow-step"><b>建議改成：</b>1 性別（拿掉坤造／乾造）→ 2 出生年月日（年齡改由日期算出，不再另選區間）→ 3 出生時段圓盤 → 4 出生地地圖 → 5 關係 → 6 狀態 → 7 問題 → 8 期望 → 9 掌紋</div>
+      </div>
+      <p>畫面標題建議用「讓解讀更貼近你」，不要寫命盤、生辰八字、排盤。</p>
+      <p>性別若選保密／自訂：紫微傳統要分男女。建議此時仍產出報告，但節奏檔改弱版（只吃年月日、不吃性別宮位），不要卡住不給報告。</p>
+      <div class="note" data-step="s5"></div>
+    </article>
+
+    <article class="card" id="s6">
+      <h2>6. 三重引擎怎麼接進來</h2>
+      <p>不呼叫 <code>triple-reading.morgan86399.workers.dev</code>。那會把使用者出生資料送到另一個專案，也會混到別人的金鑰與佇列。</p>
+      <div class="rec"><b>建議：</b>把排盤程式複製進本專案 <code>functions/lib/chart/</code>，本機算出結構。套件加進 zenasker 的 <code>package.json</code>。三重解讀的金鑰一概不動。</div>
+      <p>八字引擎裡有臟腑／中醫推演，這塊<b>不搬</b>。Zenasker 報告本來就禁醫療診斷。</p>
+      <p>真太陽時：有出生地經度就自動換，畫面上不講這個詞。</p>
+      <div class="note" data-step="s6"></div>
+    </article>
+
+    <article class="card" id="s7">
+      <h2>7. 知識檔怎麼暗灌（對齊你記得的「連檔案一起灌」）</h2>
+      <p>三重解讀實際流程是：</p>
+      <ol>
+        <li>用 iztro／lunar 排出盤</li>
+        <li>對照 <code>symbols-knowledge.mjs</code> 的星曜／十神解說</li>
+        <li>聚合成 claims</li>
+        <li>Groq 只改寫白話，不准重算</li>
+      </ol>
+      <p>他們沒有把「上網搜尋過的大數據」當檔案附件丟進模型。公開案例庫目前是空的。</p>
+      <div class="rec"><b>我們要做的對等物：</b>後端先查百科、先翻成 6～10 條白話節奏（例如「你作決定時很看重主導權」），只把這份短檔餵進現有 <code>buildUserPrompt</code>。百科留在伺服器，不進使用者畫面、也不整包進提示詞。</div>
+      <p>預估只增加約 500～800 token，比較不會把 Groq 日額打穿。</p>
+      <div class="note" data-step="s7"></div>
+    </article>
+
+    <article class="card" id="s8">
+      <h2>8. 提示詞與禁詞閘門</h2>
+      <p>現行系統提示詞寫著「不排紫微八字」。這句要改成兩層：</p>
+      <ul>
+        <li>內部：可以用「隱藏節奏檔」調整判斷與時機</li>
+        <li>對外：不准出現紫微、八字、命宮、身宮、四化、十神、天干地支、星曜、宮位、流年、大限、坤造、乾造</li>
+      </ul>
+      <p>節奏檔本身就先翻成白話再進模型，降低模型照抄術語的機會。產出後再用 <code>forbidden.mjs</code> 掃描；命中就換詞或重試，跟現有肖像禁令同一套閘門。</p>
+      <p>提示詞最前面繼續扣住使用者自己填的問題。節奏檔是配角，不能蓋過他問的那件事。</p>
+      <div class="note" data-step="s8"></div>
+    </article>
+
+    <article class="card" id="s9">
+      <h2>9. 報告只講白話，而且要跟紫微八字無關</h2>
+      <table>
+        <thead><tr><th>內部依據（使用者看不到）</th><th>報告可以寫</th><th>報告不准寫</th></tr></thead>
+        <tbody>
+          <tr><td>官祿宮要自己當主軸</td><td>合作前先把權責寫清楚，否則後面會互相扯後腿</td><td>官祿宮、化祿、七殺</td></tr>
+          <tr><td>日主偏弱、印星重</td><td>你習慣先想很久再動，這個月先把一件小事做完比再上課有用</td><td>日主、印星、食傷</td></tr>
+          <tr><td>夫妻宮有刑沖</td><td>這段關係的摩擦來自期待沒講開，先約一次只談一件事</td><td>夫妻宮、刑沖、桃花星</td></tr>
+        </tbody>
+      </table>
+      <p>驗收方式：用 3 組真實生辰跑報告，全文 grep 術語清單，命中數必須是 0。再請另一個代理盲讀，看能不能猜出這是命盤報告。</p>
+      <div class="note" data-step="s9"></div>
+    </article>
+
+    <article class="card" id="s10">
+      <h2>10. 一對一諮詢怎麼接</h2>
+      <p>報告頁已經有 LINE 一對一按鈕。會再改兩件事：</p>
+      <ul>
+        <li>文案改成「報告是先看局勢；細節與取捨，適合當面把你的處境攤開來看」</li>
+        <li>仍不提紫微／八字。真人諮詢端後台可以看節奏檔，使用者前台看不到</li>
+      </ul>
+      <p>收款接 Portaly 仍是另一條線，這次規劃不混進去。</p>
+      <div class="note" data-step="s10"></div>
+    </article>
+
+    <article class="card" id="s11">
+      <h2>11. 風險</h2>
+      <ul>
+        <li><b>額度：</b>現在一份約 3300 token。節奏檔要短，否則 Groq 免費層一天份數會往下掉。</li>
+        <li><b>隱私：</b>出生年月日時＋地點是敏感資料，會進現有 <code>input_json</code>。不把盤面結構存回前端、不寫進歷史紀錄標題。</li>
+        <li><b>術語外洩：</b>最可能從兩處漏：模型照抄、畫面上的「子時／坤造」。這兩處都要關。</li>
+        <li><b>醫療：</b>八字引擎的臟腑層不搬。</li>
+        <li><b>Hero 48% 中線：</b>這次只動問答視窗，不動首屏標題。</li>
+      </ul>
+      <div class="note" data-step="s11"></div>
+    </article>
+
+    <article class="card" id="s12">
+      <h2>12. 分期開工（你同意後才動正式產品）</h2>
+      <ol>
+        <li><b>第一期只做畫面：</b>出生日期、時鐘圓盤、出生地地圖進問答。還不改 AI。</li>
+        <li><b>第二期接暗管線：</b>複製排盤引擎、白話節奏檔、提示詞、禁詞掃描、測試。</li>
+        <li><b>第三期轉換：</b>報告頁諮詢文案、真人後台可看節奏檔、20 人格＋3 組生辰實跑。</li>
+      </ol>
+      <p>每期都要過 <code>npm test</code>（現有 57 項不能壞）與 <code>npm run build</code>。這份規劃頁不會進正式站。</p>
+      <div class="rec"><b>這頁你現在只要做一件事：</b>從第 1 步往下勾「同意／不同意／要修改」。三個最需要拍板的點在第 4、5、6 步（時鐘標籤、問答步數、複製引擎還是打線上）。</div>
+      <div class="note" data-step="s12"></div>
+    </article>
+
+    <footer>內部規劃頁 · 不會部署到 zenasker.com · 註記存在這個瀏覽器的本機</footer>
+  </div>
+
+  <script>
+    const KEY = "zenasker-hidden-chart-plan-v1";
+    const STEPS = ["s1","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11","s12"];
+    const CHOICES = [
+      { id: "agree", label: "同意" },
+      { id: "disagree", label: "不同意" },
+      { id: "edit", label: "要修改" },
+      { id: "other", label: "其他" }
+    ];
+
+    function load() {
+      try { return JSON.parse(localStorage.getItem(KEY) || "{}"); }
+      catch { return {}; }
+    }
+    function save(data) { localStorage.setItem(KEY, JSON.stringify(data)); }
+
+    function mountNotes() {
+      const data = load();
+      document.querySelectorAll(".note[data-step]").forEach((box) => {
+        const step = box.getAttribute("data-step");
+        const cur = data[step] || { choice: "", note: "" };
+        box.innerHTML = `
+          <h3>你的註記</h3>
+          <div class="choices">
+            ${CHOICES.map((c) => `
+              <label>
+                <input type="radio" name="${step}" value="${c.id}" ${cur.choice === c.id ? "checked" : ""} />
+                ${c.label}
+              </label>`).join("")}
+          </div>
+          <textarea data-note="${step}" placeholder="要改哪裡、不同意的原因、或其他補充">${cur.note || ""}</textarea>
+          <p class="hint">會自動存在這個瀏覽器。可按上方「匯出你的註記」備份。</p>
+        `;
+      });
+      bind();
+      renderCounts();
+    }
+
+    function bind() {
+      document.querySelectorAll('input[type="radio"]').forEach((el) => {
+        el.addEventListener("change", persist);
+      });
+      document.querySelectorAll("textarea[data-note]").forEach((el) => {
+        el.addEventListener("input", persist);
+      });
+    }
+
+    function persist() {
+      const data = {};
+      STEPS.forEach((step) => {
+        const choice = document.querySelector(`input[name="${step}"]:checked`);
+        const note = document.querySelector(`textarea[data-note="${step}"]`);
+        data[step] = {
+          choice: choice ? choice.value : "",
+          note: note ? note.value : ""
+        };
+      });
+      save(data);
+      renderCounts();
+    }
+
+    function renderCounts() {
+      const data = load();
+      let noted = 0, agree = 0, edit = 0;
+      STEPS.forEach((step) => {
+        const row = data[step] || {};
+        if (row.choice || (row.note && row.note.trim())) noted += 1;
+        if (row.choice === "agree") agree += 1;
+        if (row.choice === "edit") edit += 1;
+      });
+      document.getElementById("notedCount").textContent = String(noted);
+      document.getElementById("agreeCount").textContent = String(agree);
+      document.getElementById("editCount").textContent = String(edit);
+    }
+
+    function exportText(asJson) {
+      const data = load();
+      if (asJson) {
+        download("zenasker-plan-notes.json", JSON.stringify(data, null, 2), "application/json");
+        return;
+      }
+      const labels = { agree: "同意", disagree: "不同意", edit: "要修改", other: "其他" };
+      const titles = {
+        s1: "目標與邊界", s2: "素材盤點", s3: "出生地地圖", s4: "時辰時鐘",
+        s5: "問答流程", s6: "引擎怎麼接", s7: "知識檔暗灌", s8: "提示詞與禁詞",
+        s9: "白話報告", s10: "一對一諮詢", s11: "風險", s12: "分期開工"
+      };
+      const lines = ["# Zenasker 隱藏節奏檔 · 規劃註記", ""];
+      STEPS.forEach((step) => {
+        const row = data[step] || {};
+        lines.push(`## ${step.toUpperCase()} ${titles[step]}`);
+        lines.push(`- 決定：${labels[row.choice] || "尚未勾選"}`);
+        lines.push(`- 註記：${(row.note || "").trim() || "（空白）"}`);
+        lines.push("");
+      });
+      download("zenasker-plan-notes.md", lines.join("\n"), "text/markdown");
+    }
+
+    function download(name, body, type) {
+      const blob = new Blob([body], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = name; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    document.getElementById("exportMd").addEventListener("click", () => exportText(false));
+    document.getElementById("exportJson").addEventListener("click", () => exportText(true));
+    document.getElementById("printBtn").addEventListener("click", () => window.print());
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (confirm("清空這個瀏覽器裡的規劃註記？")) {
+        localStorage.removeItem(KEY);
+        mountNotes();
+      }
+    });
+
+    mountNotes();
+  </script>
+</body>
+</html>
