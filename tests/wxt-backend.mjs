@@ -308,7 +308,7 @@ await check('BlankAPI / grok-4.5 為第一順位，有 Groq 也先打 BlankAPI',
   }
 });
 
-await check('BlankAPI 失敗時依序降級換 Groq', async (env) => {
+await check('BlankAPI 失敗時依序降級換 Gemini', async (env) => {
   const calls = [];
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url) => {
@@ -317,12 +317,12 @@ await check('BlankAPI 失敗時依序降級換 Groq', async (env) => {
     if (href.includes('blankapi.com')) {
       return { ok: false, status: 500, text: async () => 'upstream error' };
     }
-    if (href.includes('api.groq.com')) {
+    if (href.includes('generativelanguage.googleapis.com')) {
       return {
         ok: true,
         json: async () => ({
-          choices: [{ message: { content: '{"summary":"groq-fallback-ok"}' } }],
-          usage: { total_tokens: 15 }
+          candidates: [{ content: { parts: [{ text: '{"summary":"gemini-fallback-ok"}' }] } }],
+          usageMetadata: { totalTokenCount: 15 }
         })
       };
     }
@@ -336,24 +336,25 @@ await check('BlankAPI 失敗時依序降級換 Groq', async (env) => {
       GEMINI_API_KEY: 'AQ.test'
     }, { systemPrompt: 's', userPrompt: 'u' });
     assert.match(calls[0], /blankapi\.com/, '第一通打 BlankAPI');
-    assert.match(calls[1], /api\.groq\.com/, 'BlankAPI 失敗後切換到 Groq');
-    assert.equal(result.parsed.summary, 'groq-fallback-ok');
+    assert.match(calls[1], /generativelanguage\.googleapis\.com/, 'BlankAPI 失敗後切換到 Gemini');
+    assert.equal(calls.length, 2, 'Gemini 成功就不該再打 Groq');
+    assert.equal(result.parsed.summary, 'gemini-fallback-ok');
   } finally {
     globalThis.fetch = realFetch;
   }
 });
 
-await check('Groq 是第一順位，有 Gemini 也先打 Groq', async (env) => {
+await check('沒有 BlankAPI 時，Gemini 先於 Groq', async (env) => {
   const calls = [];
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url) => {
     calls.push(String(url));
-    if (String(url).includes('api.groq.com')) {
+    if (String(url).includes('generativelanguage.googleapis.com')) {
       return {
         ok: true,
         json: async () => ({
-          choices: [{ message: { content: '{"summary":"groq-ok"}' } }],
-          usage: { total_tokens: 11 }
+          candidates: [{ content: { parts: [{ text: '{"summary":"gemini-ok"}' }] } }],
+          usageMetadata: { totalTokenCount: 8 }
         })
       };
     }
@@ -365,29 +366,29 @@ await check('Groq 是第一順位，有 Gemini 也先打 Groq', async (env) => {
       GEMINI_API_KEY: 'AQ.test',
       GROQ_API_KEY: 'gsk_test'
     }, { systemPrompt: 's', userPrompt: 'u' });
-    assert.match(calls[0], /api\.groq\.com/, '第一通應該打 Groq');
-    assert.equal(calls.length, 1, 'Groq 成功就不該再打 Gemini');
-    assert.equal(result.parsed.summary, 'groq-ok');
+    assert.match(calls[0], /generativelanguage\.googleapis\.com/, '第一通應該打 Gemini');
+    assert.equal(calls.length, 1, 'Gemini 成功就不該再打 Groq');
+    assert.equal(result.parsed.summary, 'gemini-ok');
   } finally {
     globalThis.fetch = realFetch;
   }
 });
 
-await check('Groq 撞到速率上限才換 Gemini', async (env) => {
+await check('Gemini 失敗才換 Groq', async (env) => {
   const hosts = [];
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url) => {
     const href = String(url);
     hosts.push(href);
-    if (href.includes('api.groq.com')) {
-      return { ok: false, status: 429, text: async () => 'rate limit' };
-    }
     if (href.includes('generativelanguage.googleapis.com')) {
+      return { ok: false, status: 503, text: async () => 'high demand' };
+    }
+    if (href.includes('api.groq.com')) {
       return {
         ok: true,
         json: async () => ({
-          candidates: [{ content: { parts: [{ text: '{"summary":"gemini-ok"}' }] } }],
-          usageMetadata: { totalTokenCount: 8 }
+          choices: [{ message: { content: '{"summary":"groq-ok"}' } }],
+          usage: { total_tokens: 11 }
         })
       };
     }
@@ -399,44 +400,9 @@ await check('Groq 撞到速率上限才換 Gemini', async (env) => {
       GEMINI_API_KEY: 'AQ.test',
       GROQ_API_KEY: 'gsk_test'
     }, { systemPrompt: 's', userPrompt: 'u' });
-    assert.match(hosts[0], /api\.groq\.com/, '先打 Groq');
-    assert.ok(hosts.some((item) => item.includes('generativelanguage.googleapis.com')), 'Groq 失敗要換 Gemini');
-    assert.equal(result.parsed.summary, 'gemini-ok');
-  } finally {
-    globalThis.fetch = realFetch;
-  }
-});
-
-await check('Groq 不可用時，Gemini 主力型號滿載會換同金鑰的次選型號', async (env) => {
-  const models = [];
-  const realFetch = globalThis.fetch;
-  globalThis.fetch = async (url) => {
-    const href = String(url);
-    if (href.includes('api.groq.com')) return { ok: false, status: 429, text: async () => 'rate limit' };
-    const model = decodeURIComponent(href.split('/models/')[1].split(':')[0]);
-    models.push(model);
-    if (model === 'gemini-3.6-flash') {
-      return { ok: false, status: 503, text: async () => 'high demand' };
-    }
-    return {
-      ok: true,
-      json: async () => ({
-        candidates: [{ content: { parts: [{ text: '{"summary":"fallback-ok"}' }] } }],
-        usageMetadata: { totalTokenCount: 8 }
-      })
-    };
-  };
-  try {
-    const result = await generateReport({
-      ...env,
-      GEMINI_API_KEY: 'AQ.test',
-      GROQ_API_KEY: 'gsk_test',
-      GEMINI_TEXT_MODEL: 'gemini-3.6-flash',
-      GEMINI_TEXT_MODEL_FALLBACK: 'gemini-3.5-flash'
-    }, { systemPrompt: 's', userPrompt: 'u' });
-    assert.deepEqual(models, ['gemini-3.6-flash', 'gemini-3.5-flash']);
-    assert.equal(result.model, 'gemini-3.5-flash');
-    assert.equal(result.parsed.summary, 'fallback-ok');
+    assert.match(hosts[0], /generativelanguage\.googleapis\.com/, '先打 Gemini');
+    assert.ok(hosts.some((item) => item.includes('api.groq.com')), 'Gemini 失敗要換 Groq');
+    assert.equal(result.parsed.summary, 'groq-ok');
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -1138,11 +1104,15 @@ await check('Groq JSON 模式回 400 時，關掉 JSON 模式仍然交付', asyn
 
 console.log('\n[Groq 多把金鑰依序輪替]');
 
-await check('一把額度用完就換下一把 Groq，全部用完才輪到 Gemini', async () => {
+await check('Gemini 失敗後才輪 Groq；Groq 一把額度用完就換下一把', async () => {
   const realFetch = globalThis.fetch;
   const 呼叫順序 = [];
   const 掛掉 = new Set(['k1', 'k2']);
   globalThis.fetch = async (url, init) => {
+    if (String(url).includes('generativelanguage.googleapis.com')) {
+      呼叫順序.push('gemini');
+      return { ok: false, status: 503, text: async () => 'high demand' };
+    }
     if (String(url).includes('api.groq.com')) {
       const key = String((init.headers && init.headers.authorization) || '').replace('Bearer ', '');
       呼叫順序.push(`groq:${key}`);
@@ -1155,25 +1125,13 @@ await check('一把額度用完就換下一把 Groq，全部用完才輪到 Gemi
         json: async () => ({ choices: [{ message: { content: '{"title":"ok"}' } }], usage: { total_tokens: 1 } })
       };
     }
-    呼叫順序.push('gemini');
-    return {
-      ok: true,
-      status: 200,
-      json: async () => ({ candidates: [{ content: { parts: [{ text: '{"title":"gemini"}' }] } }] })
-    };
+    throw new Error(`不該打到 ${url}`);
   };
 
   const env = { GROQ_API_KEY: 'k1', GROQ_API_KEY_2: 'k2', GROQ_API_KEY_3: 'k3', GEMINI_API_KEY: 'gem' };
   const out = await generateReport(env, { systemPrompt: 's', userPrompt: 'u' });
-  assert.deepEqual(呼叫順序, ['groq:k1', 'groq:k2', 'groq:k3'], '前兩把掛掉就要換到第三把');
+  assert.deepEqual(呼叫順序, ['gemini', 'groq:k1', 'groq:k2', 'groq:k3'], 'Gemini 失敗後前兩把 Groq 掛掉就要換到第三把');
   assert.equal(out.parsed.title, 'ok');
-
-  // 三把全掛才准輪到 Gemini
-  掛掉.add('k3');
-  呼叫順序.length = 0;
-  const 退到Gemini = await generateReport(env, { systemPrompt: 's', userPrompt: 'u' });
-  assert.deepEqual(呼叫順序, ['groq:k1', 'groq:k2', 'groq:k3', 'gemini'], 'Groq 沒用完不可以先跳 Gemini');
-  assert.equal(退到Gemini.parsed.title, 'gemini');
 
   globalThis.fetch = realFetch;
 });

@@ -1,4 +1,4 @@
-/* BlankAPI（grok-4.5 第一順位）→ Groq（可掛多把金鑰，逐把往下輪）→ Gemini → Workers AI */
+/* BlankAPI（grok-4.5 第一順位）→ Gemini → Groq（可掛多把金鑰，逐把往下輪）→ Workers AI */
 
 import { fetchWithTimeout } from './http.mjs';
 import { requireGroq } from './auth.mjs';
@@ -10,8 +10,6 @@ const BLANKAPI_MODEL_DEFAULT = 'grok-4.5';
 /* 3.7-flash 回 503、3.6-flash 從 Cloudflare 打過去每次逾時，實測 3.5-flash 穩定約 1.3 秒 */
 const GEMINI_TEXT_DEFAULT = 'gemini-3.5-flash';
 const GEMINI_VISION_DEFAULT = 'gemini-3.5-flash';
-/* 次選型號預設關閉：多掛一支只是多一輪逾時，主力失敗直接交給 Groq 比較快 */
-const GEMINI_TEXT_FALLBACK_DEFAULT = '';
 const TEXT_MODEL_DEFAULT = 'openai/gpt-oss-120b';
 const VISION_MODEL_DEFAULT = 'qwen/qwen3.8-27b';
 const WORKERS_AI_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
@@ -44,7 +42,7 @@ export function hasGemini(env) {
 /* Groq 金鑰清單，依序輪替：
    GROQ_API_KEY 為第一把，接著 GROQ_API_KEY_2 … GROQ_API_KEY_5，
    另外支援 GROQ_API_KEYS 一次填多把（逗號或換行分隔），方便雲端只設一個 secret。
-   一把撞到額度或出錯就換下一把，全部用完才輪到 Gemini。 */
+   一把撞到額度或出錯就換下一把，全部用完才輪到 Workers AI。 */
 export function groqKeys(env) {
   const list = [];
   const push = (value) => {
@@ -116,10 +114,6 @@ function usageTokens(payload) {
 function geminiModel(env, kind) {
   if (kind === 'vision') return envText(env, 'GEMINI_VISION_MODEL') || GEMINI_VISION_DEFAULT;
   return envText(env, 'GEMINI_TEXT_MODEL') || GEMINI_TEXT_DEFAULT;
-}
-
-function geminiTextFallbackModel(env) {
-  return envText(env, 'GEMINI_TEXT_MODEL_FALLBACK') || GEMINI_TEXT_FALLBACK_DEFAULT;
 }
 
 function groqTextModel(env, model) {
@@ -358,22 +352,16 @@ export async function generateReport(env, { systemPrompt, userPrompt, jsonMode =
   if (hasBlankApi(env)) {
     attempts.push(() => callBlankApiText(env, messages, options));
   }
-  // Groq 是第二順位。掛幾把金鑰就排幾輪，
-  // 一把額度用完或出錯就換下一把，全部 Groq 都不行才輪到 Gemini，最後才是 Workers AI。
+  // Gemini 是第二順位。只有一支主力型號，滿載或失敗就往下交給 Groq。
+  if (hasGemini(env)) {
+    attempts.push(() => callGeminiText(env, messages, options));
+  }
+  // Groq 是第三順位。掛幾把金鑰就排幾輪，一把額度用完或出錯就換下一把。
   const keys = groqKeys(env);
   keys.forEach((apiKey, index) => {
     const keyLabel = keys.length > 1 ? `Groq#${index + 1}` : 'Groq';
     attempts.push(() => callGroqText(env, messages, { ...options, apiKey, keyLabel }));
   });
-  if (hasGemini(env)) {
-    const primary = geminiModel(env, 'text');
-    const fallback = geminiTextFallbackModel(env);
-    attempts.push(() => callGeminiText(env, messages, { ...options, model: primary }));
-    // 主力型號滿載（503）時，同一把金鑰換一個型號再試
-    if (fallback && fallback !== primary) {
-      attempts.push(() => callGeminiText(env, messages, { ...options, model: fallback }));
-    }
-  }
   attempts.push(() => callWorkersAi(env, messages));
   return firstAvailable(attempts);
 }
