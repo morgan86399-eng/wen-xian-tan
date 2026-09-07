@@ -1738,8 +1738,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const isInvestment = /投資|本金|退款|借|拿回錢|六十萬/.test(fullSearchText);
     const isIncome = /款項|入帳|報價|設計|收入|加薪|意外之財/.test(fullSearchText);
     const isCashflowLeak = /團購|每個月都在轉|存款一直沒有增加|漏財|流水|做生意|開源|留不住|學顯化|課程|花費|進修/.test(fullSearchText);
-    const isSavingDownPayment = /頭期款|存頭期|存錢|買不起房|物價一直漲|三萬八|每月固定存|薪水/.test(fullSearchText);
-    const isContractorDebt = /倒帳|工班|薪水要怎麼發|發薪|工程統包|師傅/.test(fullSearchText);
+    const isSavingDownPayment = /頭期款|存頭期|存錢買房|首購|買不起房|物價一直漲|三萬八|每月固定存/.test(fullSearchText);
+    const isContractorDebt = /倒帳|工班|薪水要怎麼發|發薪|工程統包|師傅|被欠款|工程款/.test(fullSearchText);
 
     const isBuyingHouse = /買房|置產|新成屋|頭期款|房子|新家|看房|換屋|購置|購屋|起家厝|房貸|搬家|搬遷/.test(fullSearchText);
     const isParentChildConflict = /房門|鎖著|不跟我講話|女兒|兒子|叛逆|哪裡做錯|不理我|心結|冷戰/.test(fullSearchText);
@@ -1813,8 +1813,8 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (themeId === 'wealth') {
         if (isCashflowLeak && story.id === 'story_wealth_cashflow') score += 200;
         if (isSavingDownPayment && story.id === 'story_wealth_saving') score += 200;
-        if (isContractorDebt && story.id === 'story_13') score += 180;
-        if (isContractorDebt && story.id === 'story_12') score += 160;
+        if (isContractorDebt && story.id === 'story_13') score += 220;
+        if (isContractorDebt && story.id === 'story_12') score += 190;
         if (isLawsuit && story.id === 'story_12') score += 160;
         if (isInvestment && story.id === 'story_13') score += 140;
         if (isIncome && story.id === 'story_22') score += 140;
@@ -1822,6 +1822,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // 排他性：存頭期款與小本漏財不推薦舊債務官司免賠
         if ((isCashflowLeak || isSavingDownPayment) && story.id === 'story_12') {
           score -= 150;
+        }
+        // 倒帳與工班欠款嚴格排除買房存頭期與微型漏財
+        if (isContractorDebt && (story.id === 'story_wealth_saving' || story.id === 'story_wealth_cashflow')) {
+          score -= 250;
         }
       } else if (themeId === 'family') {
         if (isParentChildConflict && story.id === 'story_family_parenting') score += 210;
