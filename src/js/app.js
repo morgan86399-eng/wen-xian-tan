@@ -2623,7 +2623,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${story.imageUrl ? `
                   <div class="story-card-banner">
                     <img src="${story.imageUrl}" alt="${escapeHtml(story.title)}" loading="lazy" onerror="this.parentElement.style.display='none'">
-                    <span class="story-banner-tag">✦ 五路祈福金 ✦</span>
+                    <span class="story-banner-tag">✦ 請仙佛幫忙 ✦</span>
                     <span class="story-banner-label">真實顯化見證</span>
                   </div>
                 ` : ''}
@@ -2760,7 +2760,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ${s.imageUrl ? `
           <div class="story-card-banner">
             <img src="${s.imageUrl}" alt="${s.title}" loading="lazy" onerror="this.parentElement.style.display='none'">
-            <span class="story-banner-tag">✦ 五路祈福金 ✦</span>
+            <span class="story-banner-tag">✦ 請仙佛幫忙 ✦</span>
             <span class="story-banner-label">真實顯化見證</span>
           </div>
         ` : ''}
