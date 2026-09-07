@@ -508,7 +508,7 @@ await check('六篇 system prompt 都含禁止追問與自己那四段骨架', a
     const prompt = buildSystemPrompt(themeId);
     assert.match(prompt, /嚴禁向使用者索取任何補充資料/, `${themeId} 少了禁止索取`);
     assert.match(prompt, /嚴禁反問使用者/, `${themeId} 少了禁止反問`);
-    assert.match(prompt, /actions 必須剛好三條/, `${themeId} 少了建設性建議要求`);
+    assert.match(prompt, /具體操作步驟/, `${themeId} 少了具體操作步驟要求`);
     assert.match(prompt, /本次主要問題/, `${themeId} 少了扣住使用者問題的要求`);
     assert.match(prompt, /嚴禁寫成任何人都適用的通用範本/, `${themeId} 少了禁止通用範本`);
     assert.equal(skeleton.length, 4, `${themeId} 骨架不是四段`);
@@ -962,86 +962,30 @@ function groqPayload(obj) {
   };
 }
 
-await check('模型漏掉建議時自動重試，第二次補上才入庫', async (env) => {
-  const id = await seedUserWithCredit(env, 'weakaction@example.test');
+await check('四段內文合格時直接交付，不因缺少 actions 而受阻', async (env) => {
+  const id = await seedUserWithCredit(env, 'direct-report@example.test');
   const token = await signUserSession(env, { uid: id, provider: 'email' });
   const realFetch = globalThis.fetch;
   const prompts = [];
   globalThis.fetch = async (url, init) => {
     if (!String(url).includes('api.groq.com')) throw new Error(`不該打到 ${url}`);
     prompts.push(JSON.parse(init.body).messages[1].content);
-    return groqPayload(prompts.length === 1
-      ? { title: '感情篇', summary: '先看節奏。', sections: FOUR_SECTIONS }
-      : { title: '感情篇', summary: '先看節奏。', sections: FOUR_SECTIONS, actions: GOOD_ACTIONS });
-  };
-  try {
-    const { status, body } = await postJson(generate, env, {
-      themeId: 'love',
-      requestId: 'nonce-weakaction-1234',
-      answers: { question: '這段關係接下來怎麼相處' }
-    }, { cookie: `wx_session=${token}` });
-
-    assert.equal(status, 200);
-    assert.equal(prompts.length, 2, '應該重試一次');
-    assert.match(prompts[1], /actions 不合格/, '第二次要帶建議專用的重試指令');
-    assert.equal((body.report.actions || []).length, 3);
-  } finally {
-    globalThis.fetch = realFetch;
-  }
-});
-
-await check('模型怎樣都不給建議時，仍然交付報告且不退點', async (env) => {
-  const id = await seedUserWithCredit(env, 'noaction@example.test');
-  const token = await signUserSession(env, { uid: id, provider: 'email' });
-  const realFetch = globalThis.fetch;
-  let calls = 0;
-  globalThis.fetch = async (url) => {
-    if (!String(url).includes('api.groq.com')) throw new Error(`不該打到 ${url}`);
-    calls += 1;
     return groqPayload({ title: '感情篇', summary: '先看節奏。', sections: FOUR_SECTIONS });
   };
   try {
     const { status, body } = await postJson(generate, env, {
       themeId: 'love',
-      requestId: 'nonce-noaction-12345',
+      requestId: 'nonce-direct-1234',
       answers: { question: '這段關係接下來怎麼相處' }
     }, { cookie: `wx_session=${token}` });
 
-    assert.equal(status, 200, '付了錢就一定要拿到報告');
+    assert.equal(status, 200);
+    assert.equal(prompts.length, 1, '四段合格應一次交付，無須重試 actions');
     assert.equal(body.ok, true);
-    assert.equal((body.report.actions || []).length, 3, '保底也要給三條建議');
-    assert.equal(body.degraded, true, '走保底要標記出來，方便日後監控');
-    assert.ok(calls > 3, '應該有額外叫過只補建議的那一次');
+    assert.equal(body.degraded, false);
+    assert.equal(body.report.sections.length, 4);
     const credits = await getCreditsMap(env, id);
-    assert.equal(credits.love, 2 + SIGNUP_BONUS_AMOUNT, '有交付就不退點（餘額含註冊禮一點）');
-  } finally {
-    globalThis.fetch = realFetch;
-  }
-});
-
-await check('前面都不給建議，專門補建議那次成功就不算保底', async (env) => {
-  const id = await seedUserWithCredit(env, 'repair@example.test');
-  const token = await signUserSession(env, { uid: id, provider: 'email' });
-  const realFetch = globalThis.fetch;
-  let calls = 0;
-  globalThis.fetch = async (url, init) => {
-    if (!String(url).includes('api.groq.com')) throw new Error(`不該打到 ${url}`);
-    calls += 1;
-    const prompt = JSON.parse(init.body).messages[1].content;
-    if (prompt.includes('只回傳三條')) return groqPayload({ actions: GOOD_ACTIONS });
-    return groqPayload({ title: '感情篇', summary: '先看節奏。', sections: FOUR_SECTIONS });
-  };
-  try {
-    const { status, body } = await postJson(generate, env, {
-      themeId: 'love',
-      requestId: 'nonce-repair-1234567',
-      answers: { question: '這段關係接下來怎麼相處' }
-    }, { cookie: `wx_session=${token}` });
-
-    assert.equal(status, 200);
-    assert.equal(body.degraded, false, '有補到真的建議就不算保底');
-    assert.equal((body.report.actions || []).length, 3);
-    assert.ok(calls >= 4);
+    assert.equal(credits.love, 2 + SIGNUP_BONUS_AMOUNT, '有交付正常扣點（餘額含註冊禮一點）');
   } finally {
     globalThis.fetch = realFetch;
   }
@@ -1182,7 +1126,7 @@ await check('六篇 system prompt 都寫明禁止模稜兩可', async () => {
     assert.match(prompt, /禁止模稜兩可/, `${themeId} 少了禁止模稜兩可`);
     assert.match(prompt, /嚴禁「順其自然」/, `${themeId} 少了空話清單`);
     assert.match(prompt, /軟釘子/, `${themeId} 少了禁止軟釘子`);
-    assert.match(prompt, /至少兩條要明確講出時間/, `${themeId} 少了時間要求`);
+    assert.match(prompt, /每段至少要出現一次時間感/, `${themeId} 少了時間要求`);
   }
 });
 

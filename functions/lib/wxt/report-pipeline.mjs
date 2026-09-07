@@ -139,8 +139,5 @@ export async function runReportPipeline(env, { themeId, answers, palmDescription
     });
   }
 
-
-
-
   return null;
 }

@@ -1729,7 +1729,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isInvestment = /投資|本金|退款|借|拿回錢|六十萬/.test(fullSearchText);
     const isIncome = /款項|入帳|報價|設計|收入|加薪|意外之財/.test(fullSearchText);
 
-    const isBuyingHouse = /買房|置產|新成屋|頭期款|房子|新家|看房|換屋/.test(fullSearchText);
+    const isBuyingHouse = /買房|置產|新成屋|頭期款|房子|新家|看房|換屋|購置|購屋|起家厝|房貸|搬家|搬遷/.test(fullSearchText);
     const isElderCare = /生病|住院|開刀|手術|心臟|骨折|復原|長輩|母親|父親|阿嬤|大姊/.test(fullSearchText);
     const isInsomnia = /失眠|酒精|喝酒|睡眠|放鬆|安眠|戒酒/.test(fullSearchText);
     const isLifeEnd = /最後一程|釋懷|人生終點|安詳|生死/.test(fullSearchText);
@@ -1784,7 +1784,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isInvestment && story.id === 'story_13') score += 140;
         if (isIncome && story.id === 'story_22') score += 140;
       } else if (themeId === 'family') {
-        if (isBuyingHouse && story.id === 'story_17') score += 150;
+        if (isBuyingHouse && (story.id === 'story_17' || story.id === 'story_28')) score += 180;
         if (isInsomnia && story.id === 'story_01') score += 150;
         if (isLifeEnd && story.id === 'story_23') score += 150;
         if (/阿嬤|車禍|骨裂/.test(fullSearchText) && story.id === 'story_05') score += 150;
@@ -1792,13 +1792,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (/大姊|姊/.test(fullSearchText) && story.id === 'story_06') score += 150;
         if (/母親|媽/.test(fullSearchText) && (story.id === 'story_03' || story.id === 'story_04')) score += 140;
 
-        // 意圖排他：買房問題不該配對醫療/長輩安康類見證
-        if (isBuyingHouse && !story.keywords?.some(kw => /買房|置產|新成屋|房子|新家|看房|換屋|頭期款/.test(kw))) {
-          score -= 80;
+        // 意圖排他：買房問題嚴格排除任何非買房/換屋類見證
+        if (isBuyingHouse && !story.keywords?.some(kw => /買房|置產|新成屋|房子|新家|看房|換屋|頭期款|起家厝|購屋/.test(kw))) {
+          score -= 300;
         }
-        // 長輩安康問題不該配對買房見證
-        if (isElderCare && story.id === 'story_17') {
-          score -= 60;
+        // 長輩安康問題排除買房見證
+        if (isElderCare && (story.id === 'story_17' || story.id === 'story_28')) {
+          score -= 100;
         }
       } else if (themeId === 'children') {
         if (isPregnancy && story.id === 'story_15') score += 150;
@@ -1822,7 +1822,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     scored.sort((a, b) => b.score - a.score);
-    return scored.slice(0, 2).map((item) => item.story);
+    const valid = scored.filter((item) => item.score > 0);
+    return (valid.length ? valid : scored).slice(0, 2).map((item) => item.story);
   }
 
   // ============ 11. 7-Step Multi-Page Wizard Engine (自適應 7 步問卷引導) ============
