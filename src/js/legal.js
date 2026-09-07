@@ -92,7 +92,6 @@ export function showLegalModal(docType) {
         <h3 style="display:flex;align-items:center;gap:8px;color:var(--gold-bright);font-size:1.15rem;">
           <span>📜</span> ${doc.title}
         </h3>
-        <button type="button" class="btn btn-outline btn-sm" id="closeLegalModalBtn" style="padding:4px 10px;">✕ 關閉</button>
       </div>
     </div>
 
@@ -109,7 +108,6 @@ export function showLegalModal(docType) {
     backdrop.classList.remove('show', 'active');
   };
 
-  card.querySelector('#closeLegalModalBtn')?.addEventListener('click', close);
   card.querySelector('#confirmReadLegalBtn')?.addEventListener('click', close);
   backdrop.classList.add('show', 'active');
 }

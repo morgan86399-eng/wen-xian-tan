@@ -1410,7 +1410,6 @@ document.addEventListener('DOMContentLoaded', () => {
           <h3 style="display:flex;align-items:center;gap:8px;color:var(--gold-bright);font-size:1.2rem;">
             <span>📜</span> 請先勾選同意服務條款與隱私權政策
           </h3>
-          <button type="button" class="btn btn-outline btn-sm" id="closeTermsModalBtn" style="padding:4px 10px;" aria-label="關閉">✕</button>
         </div>
         <p style="margin-top:6px;font-size:0.85rem;color:var(--text-muted);line-height:1.5;">
           為保障會員消費權益與交易安全，在前往安全支付前，請確認閱讀並勾選同意Zenasker之服務規範。
@@ -1444,7 +1443,6 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
 
     const closeModal = () => backdrop.classList.remove('show', 'active');
-    card.querySelector('#closeTermsModalBtn')?.addEventListener('click', closeModal);
     card.querySelector('#cancelTermsModalBtn')?.addEventListener('click', closeModal);
 
     const modalCheckbox = card.querySelector('#modalTermsCheckbox');
@@ -1495,7 +1493,6 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="wizard-header" style="border-bottom:1px solid var(--border-gold);padding-bottom:14px;margin-bottom:16px;">
           <div class="wizard-title-row">
             <h3 style="color:var(--gold-bright);font-size:1.15rem;">結帳前請留下電子信箱</h3>
-            <button type="button" class="btn btn-outline btn-sm" id="closeCheckoutEmailBtn" style="padding:4px 10px;">✕</button>
           </div>
           <p style="margin-top:8px;font-size:0.85rem;color:var(--text-muted);line-height:1.6;">
             金流收據與訂單通知需要信箱。LINE 登入若沒有信箱，請在此填寫後再建立結帳。
@@ -1506,11 +1503,15 @@ document.addEventListener('DOMContentLoaded', () => {
           <button type="submit" class="btn btn-gold">確認並前往結帳</button>
         </form>
       `;
+      let onFixedClose = null;
       const finish = (value) => {
+        if (onFixedClose) modalCloseFixedBtn?.removeEventListener('click', onFixedClose);
         backdrop.classList.remove('show', 'active');
         resolve(value);
       };
-      card.querySelector('#closeCheckoutEmailBtn')?.addEventListener('click', () => finish(''));
+      onFixedClose = () => finish('');
+      modalCloseFixedBtn?.addEventListener('click', onFixedClose, { once: true });
+
       card.querySelector('#checkoutEmailForm')?.addEventListener('submit', (e) => {
         e.preventDefault();
         const email = String(card.querySelector('#checkoutEmailInput')?.value || '').trim().toLowerCase();
@@ -1592,7 +1593,6 @@ document.addEventListener('DOMContentLoaded', () => {
           <h3 style="display:flex;align-items:center;gap:8px;color:#34D399;font-size:1.25rem;">
             <span>✓</span> 已向伺服器確認點數
           </h3>
-          <button type="button" class="btn btn-outline btn-sm" id="closePaymentSuccessBtn" style="padding:4px 10px;">✕ 關閉</button>
         </div>
       </div>
       <div style="text-align:center;padding:10px 0 20px;">
@@ -1606,7 +1606,6 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
     const closeSuccess = () => backdrop.classList.remove('show', 'active');
-    card.querySelector('#closePaymentSuccessBtn')?.addEventListener('click', closeSuccess);
     card.querySelector('#startReadingNowBtn')?.addEventListener('click', () => {
       closeSuccess();
       switchTab('hub');
