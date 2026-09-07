@@ -433,52 +433,89 @@
       <div class="purchase-modal-shell">
         <button type="button" class="modal-close-fixed purchase-modal-close" id="purchaseModalCloseBtn" aria-label="關閉購買次數視窗">×</button>
         <div class="purchase-modal-card" id="pricingSectionAnchor">
-          <div class="purchase-modal-header">
-            <h2 id="purchaseModalTitle" class="purchase-modal-heading">
-              <span>🪙</span> 購買測算次數
-            </h2>
-            <p class="purchase-modal-subheading">
-              單項 199、三項 499、全項 999。所選之主題各自增加 1 點專屬額度（各篇獨立使用，不可共用）
-            </p>
+          <!-- Step 1: 選擇方案 (截圖 1) -->
+          <div id="purchaseStep1">
+            <div class="purchase-modal-header">
+              <h2 id="purchaseModalTitle" class="purchase-modal-heading">
+                <span>🪙</span> 購買測算次數
+              </h2>
+              <p class="purchase-modal-subheading">
+                單項 199、三項 499、全項 999。所選之主題各自增加 1 點專屬額度（各篇獨立使用，不可共用）
+              </p>
+            </div>
+            <div class="pricing-cards-grid" id="pricingCardsGrid"></div>
           </div>
 
-          <div class="pricing-cards-grid" id="pricingCardsGrid"></div>
-
-          <div class="plan-theme-picker-box" id="themePickerContainer">
-            <h4>👉 請勾選您要開通次數的主題項目： <span id="themePickerCount"></span></h4>
-            <div class="theme-checkbox-list" id="pickerCheckboxesList"></div>
-          </div>
-
-          <div class="purchase-checkout-bar" style="background:var(--bg-card);border:1.5px solid var(--border-gold);border-radius:var(--radius-lg);padding:22px;display:flex;flex-direction:column;gap:16px;">
-            <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;">
-              <div>
-                <div style="font-size:0.85rem;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
-                  <span>當前結算方案</span>
-                  <span style="font-size:0.72rem;background:rgba(212,168,83,0.15);color:var(--gold-bright);padding:2px 8px;border-radius:999px;border:1px solid rgba(212,168,83,0.3);">收款整備中</span>
-                </div>
-                <div style="font-size:1.25rem;font-weight:900;color:var(--gold-bright);margin-top:2px;" id="checkoutSummaryPlan">三項超值方案</div>
-                <div style="font-size:0.82rem;color:var(--text-secondary);margin-top:4px;" id="checkoutSummarySelected">已選：感情篇、事業篇、財運篇</div>
-              </div>
-
-              <div style="display:flex;align-items:center;gap:16px;">
-                <div style="font-family:var(--font-serif);font-size:2.2rem;font-weight:900;color:var(--gold-bright);" id="checkoutSummaryPrice">NT$ 499</div>
-                <button type="button" class="btn btn-primary btn-lg" id="confirmPurchaseBtn" style="box-shadow:0 0 20px rgba(212,168,83,0.3);">
-                  線上收款整備中，暫時無法購買
-                </button>
-              </div>
+          <!-- Step 2: 選擇主題 (截圖 3) -->
+          <div id="purchaseStep2" style="display:none;">
+            <div class="purchase-modal-header">
+              <h2 class="purchase-modal-heading" id="purchaseStep2Heading">
+                <span>👉</span> 請勾選您要開通次數的主題項目
+              </h2>
+              <p class="purchase-modal-subheading" id="purchaseStep2Sub">
+                <span id="themePickerCount"></span>
+              </p>
             </div>
 
-            <!-- 金流支援通道與合規提示 -->
-            <div style="border-top:1px dashed rgba(212,168,83,0.25);padding-top:12px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;font-size:0.78rem;color:var(--text-muted);">
-              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-                <span>💳 線上收款整備中，開放後將公告可用的付款方式</span>
-                <span style="color:#10B981;">🔒 256-bit SSL 銀行級加密</span>
+            <div class="plan-theme-picker-box" id="themePickerContainer">
+              <div class="theme-checkbox-list" id="pickerCheckboxesList"></div>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;gap:12px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-outline" id="purchaseStep2BackBtn">← 返回重選方案</button>
+              <button type="button" class="btn btn-gold" id="purchaseStep2NextBtn" style="font-weight:800;">下一步：確認結帳 →</button>
+            </div>
+          </div>
+
+          <!-- Step 3: 確認訂單結帳 (截圖 4) -->
+          <div id="purchaseStep3" style="display:none;">
+            <div class="purchase-modal-header">
+              <h2 class="purchase-modal-heading">
+                <span>🛒</span> 確認訂單與安全結帳
+              </h2>
+              <p class="purchase-modal-subheading">
+                核對方案與金額，確認無誤後前往支付
+              </p>
+            </div>
+
+            <div class="purchase-checkout-bar" style="background:var(--bg-card);border:1.5px solid var(--border-gold);border-radius:var(--radius-lg);padding:22px;display:flex;flex-direction:column;gap:16px;">
+              <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;">
+                <div>
+                  <div style="font-size:0.85rem;color:var(--text-muted);display:flex;align-items:center;gap:6px;">
+                    <span>當前結算方案</span>
+                    <span id="checkoutStatusBadge" style="font-size:0.72rem;background:rgba(212,168,83,0.15);color:var(--gold-bright);padding:2px 8px;border-radius:999px;border:1px solid rgba(212,168,83,0.3);">即時開通</span>
+                  </div>
+                  <div style="font-size:1.35rem;font-weight:900;color:var(--gold-bright);margin-top:2px;" id="checkoutSummaryPlan">三項超值方案</div>
+                  <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:4px;" id="checkoutSummarySelected">已選：感情篇、事業篇、財運篇</div>
+                </div>
+
+                <div>
+                  <div style="font-family:var(--font-serif);font-size:2.4rem;font-weight:900;color:var(--gold-bright);" id="checkoutSummaryPrice">NT$ 499</div>
+                </div>
               </div>
-              <div id="checkoutTermsAgreementContainer" class="checkout-terms-container is-hidden">
-                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text-secondary);">
-                  <input type="checkbox" id="agreeTermsCheckbox" style="accent-color:var(--gold-bright);width:16px;height:16px;">
-                  <span>我已閱讀並同意 <a href="javascript:void(0)" class="legal-link" data-doc="terms" style="color:var(--gold-bright);text-decoration:underline;">服務條款</a> 與 <a href="javascript:void(0)" class="legal-link" data-doc="privacy" style="color:var(--gold-bright);text-decoration:underline;">隱私權政策</a></span>
+
+              <!-- 服務條款同意勾選 -->
+              <div style="background:rgba(12,10,28,0.7);border:1.5px solid var(--border-gold);border-radius:var(--radius-sm);padding:14px;margin-top:4px;">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:#FFF;font-size:0.92rem;line-height:1.6;">
+                  <input type="checkbox" id="agreeTermsCheckbox" checked style="accent-color:var(--gold-bright);width:18px;height:18px;cursor:pointer;">
+                  <span>我已閱讀並同意 <a href="javascript:void(0)" class="legal-link" data-doc="terms" style="color:var(--gold-bright);text-decoration:underline;font-weight:700;">服務條款</a> 與 <a href="javascript:void(0)" class="legal-link" data-doc="privacy" style="color:var(--gold-bright);text-decoration:underline;font-weight:700;">隱私權政策</a></span>
                 </label>
+              </div>
+
+              <!-- 金流支援通道與合規提示 -->
+              <div style="border-top:1px dashed rgba(212,168,83,0.25);padding-top:12px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;font-size:0.78rem;color:var(--text-muted);">
+                <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                  <span>💳 支援信用卡、LINE Pay 等多元安全支付</span>
+                  <span style="color:#10B981;">🔒 256-bit SSL 銀行級加密</span>
+                </div>
+              </div>
+
+              <!-- 按鈕操作列 -->
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap;">
+                <button type="button" class="btn btn-outline" id="purchaseStep3BackBtn">← 上一步：修改主題</button>
+                <button type="button" class="btn btn-primary btn-lg" id="confirmPurchaseBtn" style="box-shadow:0 0 20px rgba(212,168,83,0.3);font-weight:800;">
+                  ⚡ 前往安全支付 NT$ 499 →
+                </button>
               </div>
             </div>
           </div>

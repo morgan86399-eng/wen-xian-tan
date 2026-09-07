@@ -1311,6 +1311,7 @@ p {
   max-width: 1040px;
   max-height: 94vh;
   max-height: 94dvh;
+  transition: max-width 0.28s ease;
 }
 
 .purchase-modal-close {

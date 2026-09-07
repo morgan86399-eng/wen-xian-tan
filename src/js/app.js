@@ -152,8 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    renderPricingPlans();
-    renderThemePicker();
+    setPurchaseStep(1);
 
     const backdrop = document.getElementById('purchaseModalBackdrop');
     if (backdrop) {
@@ -1230,6 +1229,33 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ============ 7. Render Pricing Plans ($199 / $499 / $999) ============
+  let currentPurchaseStep = 1;
+
+  function setPurchaseStep(step) {
+    currentPurchaseStep = step;
+    const step1El = document.getElementById('purchaseStep1');
+    const step2El = document.getElementById('purchaseStep2');
+    const step3El = document.getElementById('purchaseStep3');
+    const shellEl = document.querySelector('.purchase-modal-shell');
+
+    if (step1El) step1El.style.display = (step === 1) ? 'block' : 'none';
+    if (step2El) step2El.style.display = (step === 2) ? 'block' : 'none';
+    if (step3El) step3El.style.display = (step === 3) ? 'block' : 'none';
+
+    if (shellEl) {
+      shellEl.style.maxWidth = (step === 1) ? '1040px' : '680px';
+    }
+
+    if (step === 1) {
+      renderPricingPlans();
+    } else if (step === 2) {
+      renderThemePicker();
+      updateStep2ButtonState();
+    } else if (step === 3) {
+      updateCheckoutSummary();
+    }
+  }
+
   function renderPricingPlans() {
     if (!pricingCardsGrid) return;
     pricingCardsGrid.innerHTML = '';
@@ -1254,7 +1280,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ${plan.bullets.map((b) => `<li>${b}</li>`).join('')}
         </ul>
         
-        <button type="button" class="btn ${state.selectedPlanId === plan.id ? 'btn-gold' : 'btn-outline'}" style="width:100%;margin-top:10px;">
+        <button type="button" class="btn ${state.selectedPlanId === plan.id ? 'btn-gold' : 'btn-outline'}" style="width:100%;margin-top:10px;font-weight:800;">
           ${state.selectedPlanId === plan.id ? '✓ 當前選擇此方案' : '選擇此方案'}
         </button>
       `;
@@ -1273,14 +1299,37 @@ document.addEventListener('DOMContentLoaded', () => {
             state.customChosenThemes = new Set(['love', 'career', 'wealth']);
           }
         }
-        renderPricingPlans();
-        renderThemePicker();
+        setPurchaseStep(2);
       });
 
       pricingCardsGrid.appendChild(card);
     });
+  }
 
-    updateCheckoutSummary();
+  function updateStep2ButtonState() {
+    const plan = PLANS.find((p) => p.id === state.selectedPlanId) || PLANS[0];
+    const count = state.customChosenThemes.size;
+    const req = plan.requiredCount;
+    const isValid = count === req;
+
+    const subEl = document.getElementById('purchaseStep2Sub');
+    if (subEl) {
+      subEl.innerHTML = `【${plan.label} · <span style="font-family:var(--font-serif);color:var(--gold-bright);font-weight:700;">NT$ ${plan.price}</span>】（已選 <strong style="color:var(--gold-bright);font-size:1.05rem;">${count}</strong> 項／需要 <strong>${req}</strong> 項）`;
+    }
+
+    const nextBtn = document.getElementById('purchaseStep2NextBtn');
+    if (nextBtn) {
+      nextBtn.disabled = !isValid;
+      if (!isValid) {
+        nextBtn.textContent = `請先選滿 ${req} 個主題（已選 ${count} 項）`;
+        nextBtn.style.opacity = '0.55';
+        nextBtn.style.cursor = 'not-allowed';
+      } else {
+        nextBtn.textContent = `下一步：確認結帳 NT$ ${plan.price} →`;
+        nextBtn.style.opacity = '1';
+        nextBtn.style.cursor = 'pointer';
+      }
+    }
   }
 
   // ============ 8. Theme Picker for Custom Plan Selection ============
@@ -1321,13 +1370,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         renderThemePicker();
-        updateCheckoutSummary();
+        updateStep2ButtonState();
       });
 
       pickerCheckboxesList.appendChild(pill);
     });
 
-    updateCheckoutSummary();
+    updateStep2ButtonState();
   }
 
   function updateCheckoutSummary() {
@@ -1340,7 +1389,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const names = Array.from(state.customChosenThemes).map((id) => {
       const found = THEMES.find((t) => t.id === id);
       const label = found ? found.name : id;
-      return `${label} ${CREDITS_BY_THEME[id] || 0} 次`;
+      return `${label} 1 次`;
     });
 
     if (checkoutSummarySelected) {
@@ -1349,43 +1398,39 @@ document.addEventListener('DOMContentLoaded', () => {
         : '尚未選定欲購買的主題';
     }
 
-    const isValid = state.customChosenThemes.size === plan.requiredCount;
-    const agreeCheckbox = document.getElementById('agreeTermsCheckbox');
-    const agreed = Boolean(agreeCheckbox?.checked);
-    // 收款整備中一律關閉：設定還沒載回來也視為關閉，不讓任何人先付下去
     const paymentsOpen = siteConfig.paymentsEnabled === true;
-
-    // 若使用者已經打勾，保持卡片底部的條款區塊顯現
-    const termsContainer = document.getElementById('checkoutTermsAgreementContainer');
-    if (termsContainer && agreed) {
-      termsContainer.classList.remove('is-hidden');
-      termsContainer.classList.add('is-revealed');
+    const badge = document.getElementById('checkoutStatusBadge');
+    if (badge) {
+      badge.textContent = paymentsOpen ? '即時開通' : '收款整備中';
     }
 
     if (confirmPurchaseBtn) {
-      // 只要收款開啟且選滿主題，按鈕即保持可點擊狀態，引導使用者點擊確認條款或直接結帳
-      confirmPurchaseBtn.disabled = !paymentsOpen || !isValid;
-      confirmPurchaseBtn.classList.remove('awaiting-terms', 'ready-to-pay');
-
+      confirmPurchaseBtn.disabled = !paymentsOpen;
       if (!paymentsOpen) {
         confirmPurchaseBtn.textContent = '線上收款整備中，暫時無法購買';
-      } else if (!isValid) {
-        confirmPurchaseBtn.textContent = `請先選滿 ${plan.requiredCount} 個主題（目前已選 ${state.customChosenThemes.size} 項）`;
-      } else if (!agreed) {
-        confirmPurchaseBtn.textContent = '👉 請先勾選同意服務條款與隱私權政策';
-        confirmPurchaseBtn.classList.add('awaiting-terms');
-        confirmPurchaseBtn.title = '點擊開啟服務條款與隱私權政策確認';
       } else {
         confirmPurchaseBtn.textContent = `⚡ 前往安全支付 NT$ ${plan.price} →`;
-        confirmPurchaseBtn.classList.add('ready-to-pay');
-        confirmPurchaseBtn.title = `立即前往安全支付 NT$ ${plan.price}`;
       }
     }
-
-    if (themePickerCountEl) {
-      themePickerCountEl.textContent = `（已選 ${state.customChosenThemes.size} 項／需要 ${plan.requiredCount} 項）`;
-    }
   }
+
+  // 綁定購買彈窗步驟切換按鈕
+  document.getElementById('purchaseStep2BackBtn')?.addEventListener('click', () => {
+    setPurchaseStep(1);
+  });
+
+  document.getElementById('purchaseStep2NextBtn')?.addEventListener('click', () => {
+    const plan = PLANS.find((p) => p.id === state.selectedPlanId) || PLANS[0];
+    if (state.customChosenThemes.size !== plan.requiredCount) {
+      alert(`請先選滿 ${plan.requiredCount} 個主題（目前已選 ${state.customChosenThemes.size} 項）`);
+      return;
+    }
+    setPurchaseStep(3);
+  });
+
+  document.getElementById('purchaseStep3BackBtn')?.addEventListener('click', () => {
+    setPurchaseStep(2);
+  });
 
   // 顯現結帳卡片底部的服務條款勾選區塊
   function revealCheckoutTermsAgreement() {
@@ -1620,8 +1665,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const chosenArray = Array.from(state.customChosenThemes);
       if (chosenArray.length !== plan.requiredCount) {
-        alert(`請先選滿 ${plan.requiredCount} 個主題（目前已選 ${chosenArray.length} 項）\n請在上方勾選您要開通的主題項目`);
-        document.getElementById('themePickerContainer')?.scrollIntoView({ behavior: 'smooth' });
+        alert(`請先選滿 ${plan.requiredCount} 個主題（目前已選 ${chosenArray.length} 項）`);
+        setPurchaseStep(2);
         return;
       }
 
@@ -1629,9 +1674,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const agreeCheckbox = document.getElementById('agreeTermsCheckbox');
       if (!agreeCheckbox || !agreeCheckbox.checked) {
-        // 點擊「請先勾選同意服務條款與隱私權政策」按鈕後，立即顯現閱讀並同意條款！
-        revealCheckoutTermsAgreement();
-        openTermsAgreementModal(plan, chosenArray);
+        alert('請先勾選同意服務條款與隱私權政策，以保障您的消費權益。');
+        agreeCheckbox?.focus();
         return;
       }
 
