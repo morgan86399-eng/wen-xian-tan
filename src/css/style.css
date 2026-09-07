@@ -1294,6 +1294,136 @@ p {
   font-weight: 700;
 }
 
+/* ==========================================================================
+   Purchase Modal Styles (購買測算次數獨立彈窗)
+   ========================================================================== */
+.purchase-modal-backdrop {
+  z-index: 105;
+}
+
+#readingModalBackdrop {
+  z-index: 120;
+}
+
+.purchase-modal-shell {
+  position: relative;
+  width: 100%;
+  max-width: 1040px;
+  max-height: 94vh;
+  max-height: 94dvh;
+}
+
+.purchase-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #FFF;
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  font-size: 24px;
+  line-height: 1;
+  border-radius: 10px;
+  transition: all 0.18s ease;
+  z-index: 30;
+}
+
+.purchase-modal-close:hover {
+  color: var(--gold-bright);
+  border-color: var(--border-gold);
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.purchase-modal-card {
+  background: #0D091B;
+  color: #FFF;
+  border: 1.5px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  padding: clamp(20px, 3.5vw, 36px);
+  width: 100%;
+  max-height: min(92dvh, 880px);
+  overflow-y: auto;
+  box-shadow: 0 0 60px rgba(245, 158, 11, 0.3), 0 30px 80px rgba(0, 0, 0, 0.85);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+}
+
+.purchase-modal-header {
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed rgba(212, 168, 83, 0.3);
+  padding-right: 48px; /* 預留給右上角關閉鍵空間 */
+  padding-left: 12px;
+}
+
+.purchase-modal-heading {
+  font-size: clamp(1.35rem, 3.5vw, 1.85rem);
+  font-weight: 900;
+  color: var(--gold-bright);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.purchase-modal-subheading {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Member Recharge CTA Banner (會員中心快捷儲值橫幅) */
+.member-recharge-cta-banner {
+  background: radial-gradient(circle at 10% 50%, rgba(212, 168, 83, 0.12), transparent 70%), var(--bg-card);
+  border: 1.5px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin-top: 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.recharge-cta-content {
+  flex: 1;
+  min-width: 260px;
+}
+
+.recharge-cta-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--gold-bright);
+  background: rgba(212, 168, 83, 0.15);
+  border: 1px solid rgba(212, 168, 83, 0.3);
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+.member-recharge-cta-banner h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #FFF;
+  margin-bottom: 4px;
+}
+
+.member-recharge-cta-banner p {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
 /* Guided Wizard Styles */
 .reading-modal-shell {
   position: relative;

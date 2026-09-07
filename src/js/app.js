@@ -113,11 +113,65 @@ document.addEventListener('DOMContentLoaded', () => {
     return true;
   }
 
+  function openPurchaseModal(themeId = null, planId = null) {
+    if (themeId) {
+      if (planId === 'single' || (!planId && state.selectedPlanId === 'single')) {
+        state.selectedPlanId = 'single';
+        state.customChosenThemes.clear();
+        state.customChosenThemes.add(themeId);
+      } else if (planId === 'triple' || (!planId && state.selectedPlanId === 'triple')) {
+        state.selectedPlanId = 'triple';
+        state.customChosenThemes.add(themeId);
+        if (state.customChosenThemes.size > 3) {
+          const arr = Array.from(state.customChosenThemes).slice(-3);
+          state.customChosenThemes = new Set(arr);
+        } else if (state.customChosenThemes.size < 3) {
+          const defaults = ['love', 'career', 'wealth'];
+          for (const d of defaults) {
+            if (state.customChosenThemes.size >= 3) break;
+            state.customChosenThemes.add(d);
+          }
+        }
+      } else if (planId === 'all' || (!planId && state.selectedPlanId === 'all')) {
+        state.selectedPlanId = 'all';
+        THEMES.forEach((t) => state.customChosenThemes.add(t.id));
+      } else {
+        state.selectedPlanId = 'single';
+        state.customChosenThemes.clear();
+        state.customChosenThemes.add(themeId);
+      }
+    } else if (planId) {
+      state.selectedPlanId = planId;
+      if (planId === 'all') {
+        THEMES.forEach((t) => state.customChosenThemes.add(t.id));
+      } else if (planId === 'single' && state.customChosenThemes.size !== 1) {
+        const first = Array.from(state.customChosenThemes)[0] || 'love';
+        state.customChosenThemes = new Set([first]);
+      } else if (planId === 'triple' && state.customChosenThemes.size !== 3) {
+        state.customChosenThemes = new Set(['love', 'career', 'wealth']);
+      }
+    }
+
+    renderPricingPlans();
+    renderThemePicker();
+
+    const backdrop = document.getElementById('purchaseModalBackdrop');
+    if (backdrop) {
+      backdrop.classList.add('show', 'active');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closePurchaseModal() {
+    const backdrop = document.getElementById('purchaseModalBackdrop');
+    if (backdrop) {
+      backdrop.classList.remove('show', 'active');
+      document.body.style.overflow = '';
+    }
+  }
+
   function goToPurchaseSection() {
-    switchTab('member');
-    window.setTimeout(() => {
-      document.getElementById('pricingSectionAnchor')?.scrollIntoView({ behavior: 'smooth' });
-    }, 120);
+    openPurchaseModal();
   }
 
   async function refreshSessionUi() {
@@ -201,6 +255,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     state.wizard.isSubmitting = false;
     readingModalBackdrop.classList.remove('show', 'active');
+  });
+
+  // Purchase Modal
+  const purchaseModalBackdrop = document.getElementById('purchaseModalBackdrop');
+  const purchaseModalCloseBtn = document.getElementById('purchaseModalCloseBtn');
+
+  purchaseModalCloseBtn?.addEventListener('click', () => {
+    closePurchaseModal();
+  });
+
+  purchaseModalBackdrop?.addEventListener('click', (e) => {
+    if (e.target === purchaseModalBackdrop) {
+      closePurchaseModal();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (purchaseModalBackdrop?.classList.contains('show')) {
+        closePurchaseModal();
+      }
+    }
   });
 
   // Stories View
@@ -1067,20 +1143,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const quickRechargeBtn = card.querySelector('[data-action="quick-recharge"]');
         if (quickRechargeBtn) {
           quickRechargeBtn.addEventListener('click', () => {
-            startCelestialPurchaseTransition(() => {
-              state.customChosenThemes.clear();
-              state.customChosenThemes.add(theme.id);
-              state.selectedPlanId = 'single';
-              renderPricingPlans();
-              renderThemePicker();
-              document.getElementById('pricingSectionAnchor')?.scrollIntoView({ behavior: 'smooth' });
-            });
+            openPurchaseModal(theme.id, 'single');
           });
         }
 
         memberThemesQuotaGrid.appendChild(card);
       });
     }
+
+    document.getElementById('memberOpenPurchaseModalBtn')?.addEventListener('click', () => {
+      openPurchaseModal();
+    });
+    document.getElementById('memberHeaderRechargeBtn')?.addEventListener('click', () => {
+      openPurchaseModal();
+    });
 
     renderPricingPlans();
     renderThemePicker();
@@ -1143,20 +1219,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function handleThemeClick(themeId) {
-    if (!requireLogin()) return;
     const quota = WalletManager.getThemePoints(themeId);
     if (quota > 0) {
+      if (!requireLogin()) return;
       startGuidedWizard(themeId);
     } else {
-      startCelestialPurchaseTransition(() => {
-        state.customChosenThemes.clear();
-        state.customChosenThemes.add(themeId);
-        state.selectedPlanId = 'single';
-        switchTab('member');
-        setTimeout(() => {
-          document.getElementById('pricingSectionAnchor')?.scrollIntoView({ behavior: 'smooth' });
-        }, 100);
-      });
+      openPurchaseModal(themeId, 'single');
     }
   }
 
@@ -1476,6 +1544,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!checkoutEmail) return;
     }
     lastCheckoutEmail = checkoutEmail;
+    closePurchaseModal();
 
     PaymentSDK.openCheckout({
       productId: plan.id,
