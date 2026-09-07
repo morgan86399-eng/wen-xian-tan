@@ -1670,6 +1670,34 @@ p {
   background: rgba(245, 158, 11, 0.12);
 }
 
+.wizard-privacy-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.wizard-privacy-notice .notice-icon {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.wizard-privacy-notice .notice-text {
+  color: var(--text-secondary);
+}
+
+.wizard-privacy-notice .notice-highlight {
+  color: var(--text-gold);
+  font-weight: 700;
+}
+
 .wizard-upload-box {
   border: 2px dashed rgba(245, 158, 11, 0.4);
   border-radius: var(--radius-md);

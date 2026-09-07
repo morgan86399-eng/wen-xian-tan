@@ -2063,7 +2063,12 @@ document.addEventListener('DOMContentLoaded', () => {
           <div>
             <textarea id="wizardQuestionTextarea" class="app-textarea" rows="4" maxlength="500" placeholder="例如：想了解近期換工作跳槽的最佳月份、或與伴侶之間的未來相處...">${answers.question}</textarea>
             
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+            <div class="wizard-privacy-notice">
+              <span class="notice-icon">🔒</span>
+              <span class="notice-text"><strong>為維護您的隱私，請勿在問題中填寫真實姓名、電話、身分證字號或公司全名</strong>。</span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
               <span style="font-size:0.75rem;color:var(--text-muted);">💡 點擊下方常用問題快速填入：</span>
               <span id="wizardCharCounter" style="font-size:0.78rem;font-weight:800;color:${currentLen >= 500 ? '#EF4444' : 'var(--text-gold)'};">
                 ${currentLen} / 500 字
