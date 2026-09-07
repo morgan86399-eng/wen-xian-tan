@@ -1323,7 +1323,8 @@ p {
 /* ==========================================================================
    Purchase Modal Styles (購買測算次數獨立彈窗)
    ========================================================================== */
-.purchase-modal-backdrop {
+.modal-backdrop.purchase-modal-backdrop,
+#purchaseModalBackdrop {
   z-index: var(--z-purchase-modal);
 }
 
