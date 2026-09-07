@@ -391,14 +391,14 @@ export const DESIRED_OUTCOMES = [
 ];
 
 /**
- * 五路祈福金真實顯化故事資料庫
+ * 請仙佛幫忙真實顯化故事資料庫
  */
 export const MANIFESTATION_STORIES = [
   // --- 感情篇 ---
   {
     id: 'story_single_love',
     themeId: 'love',
-    imageUrl: 'assets/stories/14.jpg',
+    imageUrl: 'assets/stories/01.jpg',
     title: '多年單身尋覓正緣無果，指引後打開心結、半年內遇見契合良緣',
     name: '徐小姐',
     category: '感情姻緣',
@@ -689,7 +689,7 @@ export const MANIFESTATION_STORIES = [
     name: '周小姐',
     category: '子女福澤',
     keywords: ['小孩', '圓滿', '心靈', '流產', '平靜', '釋懷', '福報'],
-    summary: '創業夥伴年輕曾流產掛心多年。經介紹使用五路祈福金為無緣孩子祈福圓滿，幾天後心中湧現前所未有的安定與溫暖平靜。',
+    summary: '創業夥伴年輕曾流產掛心多年。經介紹請仙佛幫忙為無緣孩子祈福圓滿，幾天後心中湧現前所未有的安定與溫暖平靜。',
     result: '長年掛念化為平靜，心靈深層釋懷',
     full: '太太的創業夥伴年輕時曾流產，長年茹素調養心靈。聊起因果時問她願不願請仙佛幫忙圓滿孩子，她立刻答應。祈求後幾天，她分享內心多了一份說不出的溫暖與平靜，先前長年掛心的遺憾徹底釋懷，臉上重現久違的笑容。'
   },
