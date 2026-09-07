@@ -1791,6 +1791,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (/父親|爸/.test(fullSearchText) && story.id === 'story_20') score += 150;
         if (/大姊|姊/.test(fullSearchText) && story.id === 'story_06') score += 150;
         if (/母親|媽/.test(fullSearchText) && (story.id === 'story_03' || story.id === 'story_04')) score += 140;
+
+        // 意圖排他：買房問題不該配對醫療/長輩安康類見證
+        if (isBuyingHouse && !story.keywords?.some(kw => /買房|置產|新成屋|房子|新家|看房|換屋|頭期款/.test(kw))) {
+          score -= 80;
+        }
+        // 長輩安康問題不該配對買房見證
+        if (isElderCare && story.id === 'story_17') {
+          score -= 60;
+        }
       } else if (themeId === 'children') {
         if (isPregnancy && story.id === 'story_15') score += 150;
         if (isChildPeace && story.id === 'story_21') score += 150;
@@ -2686,7 +2695,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const reportObj = pickReportObject(apiResult);
     const adviceText = formatAdviceFromReport(reportObj);
-    const reportActions = extractActions(reportObj);
+    const reportActions = [];
     const reportSections = extractSections(reportObj);
     const reportSummary = typeof reportObj.summary === 'string' ? reportObj.summary.trim() : '';
     const finalThemeTitle = reportObj.title || (hasPalm ? theme.title : (theme.titleNoPalm || theme.title));
@@ -2757,17 +2766,7 @@ document.addEventListener('DOMContentLoaded', () => {
             : `<div style="line-height:1.75;white-space:pre-wrap;">${escapeHtml(reportData.advice || '報告內容尚未回傳，請稍後到歷史紀錄簿查看。')}</div>`}
         </div>
 
-        ${reportActions.length ? `
-        <div class="report-actions-box">
-          <div class="report-actions-title">✦ 建設性建議 · 這週可以開始做 ✦</div>
-          <ol class="report-actions-list report-actions-cards">
-            ${reportActions.map((item, index) => `
-              <li class="report-action-card">
-                <span class="report-action-num">${index + 1}</span>
-                <span>${escapeHtml(item)}</span>
-              </li>`).join('')}
-          </ol>
-        </div>` : ''}
+
 
         <div class="report-consult-box" id="reportConsultBox" style="display:none;"></div>
 

@@ -128,30 +128,19 @@ export async function runReportPipeline(env, { themeId, answers, palmDescription
     if (hasVagueBody(raw)) { hint = VAGUE_RETRY_HINT; continue; }
 
     best = raw;
-    if (!hasWeakActions(raw)) {
-      return finalize(raw, { model, tokens, degraded: false, stage: 'direct' });
-    }
-    hint = WEAK_ACTIONS_RETRY_HINT;
+    // 四段內文合格即直接交付（不再校驗 actions）
+    return finalize(raw, { model, tokens, degraded: false, stage: 'direct' });
   }
 
-  // 四段內文合格、只有建議不過關 → 花一次小成本只補建議
-  if (best) {
-    const repaired = await repairActions(env, { themeId, answers, report: best });
-    if (repaired) {
-      tokens += repaired.tokens;
-      return finalize(mergeActions(best, repaired.actions), { model, tokens, degraded: false, stage: 'actions-repaired' });
-    }
-    return finalize(mergeActions(best, fallbackActions(themeId, answers)), {
-      model, tokens, degraded: true, stage: 'actions-fallback'
-    });
-  }
-
-  // 連四段都湊不齊，但拿得到內容 → 仍然交付，不讓付費的人空手而回
+  // 拿得到內容但段落不夠完整 → 仍然交付，不讓付費的人空手而回
   if (anyContent) {
-    return finalize(mergeActions(anyContent, fallbackActions(themeId, answers)), {
+    return finalize(anyContent, {
       model, tokens, degraded: true, stage: 'salvaged'
     });
   }
+
+
+
 
   return null;
 }
