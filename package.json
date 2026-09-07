@@ -1,8 +1,8 @@
 {
-  "name": "wen-xian-tan",
+  "name": "zenasker",
   "version": "1.0.0",
   "private": true,
-  "description": "Zenasker - 東方美學主題測算與掌紋解讀服務",
+  "description": "Zenasker (咖啡時光) - 掌紋解碼與個人化人生決策服務",
   "type": "module",
   "scripts": {
     "dev": "wrangler pages dev dist --d1=DB --kv=RL",

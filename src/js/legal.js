@@ -12,7 +12,7 @@ export const LEGAL_DOCS = {
     content: `
       <div class="legal-doc-content">
         <h3>一、 認知與接受條款</h3>
-        <p>歡迎您使用「Zenasker · 掌心解碼」（以下簡稱「本平台」）。本平台由Zenasker營運團隊提供服務。當您瀏覽或使用本平台購買各項測算額度、體驗掌紋辨識與命理分析時，即表示您已詳細閱讀、瞭解並同意遵守本服務條款及所有相關法律規範。</p>
+        <p>歡迎您使用「咖啡時光 - 掌紋解碼」（Zenasker，以下簡稱「本平台」）。本平台由Zenasker營運團隊提供服務。當您瀏覽或使用本平台購買各項測算額度、體驗掌紋辨識與命理分析時，即表示您已詳細閱讀、瞭解並同意遵守本服務條款及所有相關法律規範。</p>
 
         <h3>二、 服務內容說明</h3>
         <p>1. 本平台提供之感情、工作、事業、財運、家庭與小孩等篇章，係結合東方傳統民俗哲理、易學文化符號與現代演算法之個人化文化休閒與心理指引數位內容服務。</p>
@@ -67,8 +67,8 @@ export const LEGAL_DOCS = {
         <h3>三、 客服聯繫與爭議申訴</h3>
         <p>若您對於訂單、扣款或服務有任何疑問，歡迎隨時透過以下專屬客服管道聯繫我們：</p>
         <ul>
-          <li><strong>服務名稱</strong>：Zenasker · 掌心解碼</li>
-          <li><strong>客服電子信箱</strong>：<a href="mailto:service@wen-xian-tan.com" style="color:var(--gold-bright);">service@wen-xian-tan.com</a></li>
+          <li><strong>服務名稱</strong>：咖啡時光 - 掌紋解碼 (Zenasker)</li>
+          <li><strong>客服電子信箱</strong>：<a href="mailto:service@zenasker.com" style="color:var(--gold-bright);">service@zenasker.com</a></li>
           <li><strong>服務時間</strong>：週一至週五 10:00 - 18:00（國定例假日除外）</li>
           <li><strong>回覆時效</strong>：我們將於收到信件後 1 至 2 個工作天內由專人主動為您查核與回覆。</li>
         </ul>
