@@ -112,10 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openReadingOverlay({ keepPurchase = false } = {}) {
     if (!keepPurchase) {
-      document.getElementById('purchaseModalBackdrop')?.classList.remove('show', 'active');
-      const purchase = document.getElementById('purchaseModalBackdrop');
-      if (purchase && 'inert' in purchase) purchase.inert = true;
-      purchase?.setAttribute('aria-hidden', 'true');
+      setOverlayOpen(document.getElementById('purchaseModalBackdrop'), false);
     }
     closeCameraDialog();
     closePrivacyOverlay();
@@ -240,9 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setPurchaseStep(1);
 
     closeCameraDialog();
-    closePrivacyOverlay();
-    const reading = document.getElementById('readingModalBackdrop');
-    if (reading) setOverlayOpen(reading, false);
+    closeReadingOverlay();
 
     const backdrop = document.getElementById('purchaseModalBackdrop');
     if (backdrop) setOverlayOpen(backdrop, true);
@@ -338,6 +333,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const readingModalBackdrop = document.getElementById('readingModalBackdrop');
   const readingModalCard = document.getElementById('readingModalCard');
   const modalCloseFixedBtn = document.getElementById('modalCloseFixedBtn');
+  [readingModalBackdrop, document.getElementById('purchaseModalBackdrop')].forEach((el) => {
+    if (!el) return;
+    if ('inert' in el) el.inert = true;
+    el.setAttribute('aria-hidden', 'true');
+  });
   modalCloseFixedBtn?.addEventListener('click', () => {
     closeReadingOverlay();
   });
@@ -562,9 +562,11 @@ document.addEventListener('DOMContentLoaded', () => {
       window.clearTimeout(celestialTransitionTimer);
       celestialPurchaseTransition.classList.remove('is-visible');
       celestialPurchaseTransition.classList.add('is-leaving');
+      syncUiLayerLock();
       window.setTimeout(() => {
         celestialPurchaseTransition.classList.remove('is-leaving');
         celestialPurchaseTransition.setAttribute('aria-hidden', 'true');
+        syncUiLayerLock();
         onComplete();
       }, 900);
     };
@@ -572,6 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
     celestialPurchaseTransition.classList.remove('is-leaving');
     celestialPurchaseTransition.classList.add('is-visible');
     celestialPurchaseTransition.setAttribute('aria-hidden', 'false');
+    syncUiLayerLock();
     window.clearTimeout(celestialTransitionTimer);
     finishCelestialTransition = finishTransition;
     celestialTransitionTimer = window.setTimeout(finishTransition, 4100);
@@ -664,8 +667,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ============ 4. LINE & Google 快速授權互動視窗 與 Email 6 碼驗證 ============
-  let otpCooldownTimer = null;
-
   function openEmailVerifyDialog(email, purpose = 'login', userName = '') {
     state.wizard.decodeToken += 1;
     const cleanEmail = (email || '').trim().toLowerCase();
@@ -724,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    readingModalBackdrop.classList.add('show');
+    openReadingOverlay();
 
     const startCountdown = () => {
       let timeLeft = 60;
@@ -819,8 +820,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('otpCancelBtn')?.addEventListener('click', () => {
-      if (otpCooldownTimer) clearInterval(otpCooldownTimer);
-      readingModalBackdrop.classList.remove('show');
+      closeReadingOverlay();
     });
 
     document.getElementById('otpVerifyForm')?.addEventListener('submit', async (e) => {
@@ -857,8 +857,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (verifyRes.success) {
-        if (otpCooldownTimer) clearInterval(otpCooldownTimer);
-        readingModalBackdrop.classList.remove('show');
+        closeReadingOverlay();
         if (!prefersReducedMotion && typeof window.confetti === 'function') {
           window.confetti({ particleCount: 60, spread: 70, origin: { y: 0.6 } });
         }
@@ -1575,7 +1574,7 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    const closeModal = () => backdrop.classList.remove('show', 'active');
+    const closeModal = () => closeReadingOverlay();
     card.querySelector('#cancelTermsModalBtn')?.addEventListener('click', closeModal);
 
     const modalCheckbox = card.querySelector('#modalTermsCheckbox');
@@ -1603,7 +1602,7 @@ document.addEventListener('DOMContentLoaded', () => {
       triggerEcpayCheckout(plan, chosenArray);
     });
 
-    backdrop.classList.add('show', 'active');
+    openReadingOverlay({ keepPurchase: true });
   }
 
   if (typeof window !== 'undefined' && window.PaymentSDK) {
@@ -1639,7 +1638,7 @@ document.addEventListener('DOMContentLoaded', () => {
       let onFixedClose = null;
       const finish = (value) => {
         if (onFixedClose) modalCloseFixedBtn?.removeEventListener('click', onFixedClose);
-        backdrop.classList.remove('show', 'active');
+        closeReadingOverlay();
         resolve(value);
       };
       onFixedClose = () => finish('');
@@ -1651,7 +1650,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!email || !email.includes('@')) return;
         finish(email);
       });
-      backdrop.classList.add('show', 'active');
+      openReadingOverlay({ keepPurchase: true });
     });
   }
 
@@ -1738,12 +1737,12 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       </div>
     `;
-    const closeSuccess = () => backdrop.classList.remove('show', 'active');
+    const closeSuccess = () => closeReadingOverlay();
     card.querySelector('#startReadingNowBtn')?.addEventListener('click', () => {
       closeSuccess();
       switchTab('hub');
     });
-    backdrop.classList.add('show', 'active');
+    openReadingOverlay();
   }
 
   if (confirmPurchaseBtn) {
@@ -2057,7 +2056,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     renderWizardStep();
-    readingModalBackdrop.classList.add('show');
+    openReadingOverlay();
   }
 
   function renderWizardStep() {
@@ -2584,7 +2583,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (backBtn) {
       backBtn.addEventListener('click', () => {
         if (currentStep === 1) {
-          readingModalBackdrop.classList.remove('show');
+          closeReadingOverlay();
         } else {
           advanceWizardStep(-1);
         }
@@ -2678,10 +2677,10 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    modal.classList.add('show', 'active');
+    setOverlayOpen(modal, true);
 
     const closeModal = () => {
-      modal.classList.remove('show', 'active');
+      setOverlayOpen(modal, false);
     };
 
     const handleConfirm = () => {
@@ -2925,7 +2924,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.status === 401 || data.error === 'UNAUTHENTICATED') {
           state.wizard.isSubmitting = false;
           if (stillCurrent) {
-            readingModalBackdrop.classList.remove('show');
+            closeReadingOverlay();
             switchTab('auth');
           }
           return;
@@ -3150,16 +3149,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('closeReportBtn')?.addEventListener('click', () => {
-      readingModalBackdrop.classList.remove('show');
+      closeReadingOverlay();
       switchTab('hub');
     });
 
     document.getElementById('viewAllReportsBtn')?.addEventListener('click', () => {
-      readingModalBackdrop.classList.remove('show');
+      closeReadingOverlay();
       switchTab('history');
     });
 
-    readingModalBackdrop.classList.add('show');
+    openReadingOverlay();
   }
 
   function historyQuestion(item) {
@@ -3310,7 +3309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.wizard.answers.palmActiveHand = 'left';
       }
     }
-    if (readingModalBackdrop.classList.contains('show') && state.wizard.currentStep === WIZARD_STEP.PALM) {
+    if ((readingModalBackdrop.classList.contains('show') || readingModalBackdrop.classList.contains('active')) && state.wizard.currentStep === WIZARD_STEP.PALM) {
       renderWizardStep();
     }
   });
@@ -3324,7 +3323,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state.wizard.answers.palmRightDataUrl = null;
       state.wizard.answers.palmRightBase64 = '';
     }
-    if (readingModalBackdrop.classList.contains('show') && state.wizard.currentStep === WIZARD_STEP.PALM) {
+    if ((readingModalBackdrop.classList.contains('show') || readingModalBackdrop.classList.contains('active')) && state.wizard.currentStep === WIZARD_STEP.PALM) {
       renderWizardStep();
     }
   });
@@ -3344,11 +3343,11 @@ document.addEventListener('DOMContentLoaded', () => {
     btn.className = 'btn btn-gold';
     btn.style.marginTop = '18px';
     btn.textContent = '關閉';
-    btn.addEventListener('click', () => backdrop.classList.remove('show', 'active'));
+    btn.addEventListener('click', () => closeReadingOverlay());
     wrap.appendChild(p);
     wrap.appendChild(btn);
     card.appendChild(wrap);
-    backdrop.classList.add('show', 'active');
+    openReadingOverlay();
   }
 
   async function pollOrderPaid(orderId, { attempts = 12, intervalMs = 2000 } = {}) {

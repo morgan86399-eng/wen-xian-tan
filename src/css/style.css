@@ -42,6 +42,19 @@
   --font-serif: "Noto Serif TC", "PMingLiU", "Songti TC", serif;
   --font-sans: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", -apple-system, sans-serif;
   --font-cursive: "Ma Shan Zheng", cursive;
+
+  /* Layer scale: later siblings still follow this order; do not inflate to 99999 */
+  --z-content: 1;
+  --z-header: 60;
+  --z-bottom-nav: 50;
+  --z-floating-home: 55;
+  --z-modal: 80;
+  --z-purchase-modal: 90;
+  --z-reading-modal: 100;
+  --z-celestial: 160;
+  --z-privacy: 180;
+  --z-payment: 200;
+  --app-bottom-nav-space: 132px;
 }
 
 /* Light Theme overrides if toggled */
@@ -72,6 +85,18 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   scroll-behavior: smooth;
+  scroll-padding-bottom: calc(var(--app-bottom-nav-space) + env(safe-area-inset-bottom, 0px));
+}
+
+html.ui-layer-open,
+html.ui-layer-open body {
+  overflow: hidden;
+}
+
+html.ui-layer-open .app-bottom-nav,
+html.ui-layer-open .floating-home-btn {
+  pointer-events: none !important;
+  visibility: hidden;
 }
 
 img,
@@ -111,7 +136,7 @@ body {
 .celestial-transition {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: var(--z-celestial);
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -397,7 +422,7 @@ p {
 .app-header {
   position: sticky;
   top: 0;
-  z-index: 60;
+  z-index: var(--z-header);
   background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -837,7 +862,7 @@ p {
 /* Workspace */
 .app-workspace {
   flex: 1;
-  padding: 20px clamp(12px, 3vw, 24px) calc(100px + env(safe-area-inset-bottom, 0px));
+  padding: 20px clamp(12px, 3vw, 24px) calc(var(--app-bottom-nav-space) + env(safe-area-inset-bottom, 0px));
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
@@ -878,6 +903,7 @@ p {
   cursor: pointer;
   transition: all 0.2s ease;
   backdrop-filter: blur(8px);
+  scroll-margin-bottom: calc(var(--app-bottom-nav-space) + env(safe-area-inset-bottom, 0px));
 }
 
 .theme-card-art {
@@ -1298,11 +1324,11 @@ p {
    Purchase Modal Styles (購買測算次數獨立彈窗)
    ========================================================================== */
 .purchase-modal-backdrop {
-  z-index: 105;
+  z-index: var(--z-purchase-modal);
 }
 
 #readingModalBackdrop {
-  z-index: 120;
+  z-index: var(--z-reading-modal);
 }
 
 .purchase-modal-shell {
@@ -1348,6 +1374,7 @@ p {
   width: 100%;
   max-height: min(92dvh, 880px);
   overflow-y: auto;
+  overscroll-behavior: contain;
   box-shadow: 0 0 60px rgba(245, 158, 11, 0.3), 0 30px 80px rgba(0, 0, 0, 0.85);
   display: flex;
   flex-direction: column;
@@ -1468,6 +1495,7 @@ p {
   max-width: 680px;
   max-height: 92vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   box-shadow: 0 0 50px rgba(245, 158, 11, 0.35);
   position: relative;
 }
@@ -1702,7 +1730,7 @@ p {
    Privacy Confirmation Modal (產出報告前個資防護二次確認彈窗)
    ========================================================================== */
 .privacy-confirm-backdrop {
-  z-index: 10050 !important;
+  z-index: var(--z-privacy) !important;
   display: none;
   align-items: center;
   justify-content: center;
@@ -2689,7 +2717,7 @@ p {
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: var(--z-bottom-nav);
   background: rgba(11, 9, 29, 0.92);
   backdrop-filter: blur(16px);
   border-top: 1px solid var(--border);
@@ -2701,6 +2729,10 @@ p {
 @media (min-width: 900px) {
   .app-bottom-nav {
     display: none;
+  }
+
+  .app-workspace {
+    padding-bottom: 48px;
   }
 }
 
@@ -2737,7 +2769,7 @@ p {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: var(--z-modal);
   background: rgba(7, 6, 20, 0.78);
   backdrop-filter: blur(6px);
   display: flex;
@@ -2745,13 +2777,23 @@ p {
   justify-content: center;
   padding: 16px;
   opacity: 0;
+  visibility: hidden;
   pointer-events: none;
-  transition: opacity 0.2s ease;
+  overscroll-behavior: contain;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
 }
 
 .modal-backdrop.show,
 .modal-backdrop.active {
   opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.modal-backdrop.show .modal-close-fixed,
+.modal-backdrop.active .modal-close-fixed,
+.modal-backdrop.show .purchase-modal-close,
+.modal-backdrop.active .purchase-modal-close {
   pointer-events: auto;
 }
 
@@ -2797,6 +2839,7 @@ p {
   background: #0C0818;
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.75), 0 0 40px rgba(245, 158, 11, 0.25);
   overflow: hidden;
+  overscroll-behavior: contain;
 }
 
 .camera-dialog::backdrop {
@@ -3504,7 +3547,7 @@ p {
   position: fixed;
   bottom: 28px;
   left: 24px;
-  z-index: 999;
+  z-index: var(--z-floating-home);
   display: inline-flex;
   align-items: center;
   gap: 8px;
