@@ -633,6 +633,100 @@
   text-align: left;
 }
 
+button.big-bubble-item,
+button.tw-geo-chip,
+button.shichen-bubble,
+button.shichen-unknown-btn,
+button.back-btn-pill {
+  font-family: inherit;
+  appearance: none;
+}
+
+.birth-place-input {
+  min-height: 44px;
+  resize: none;
+}
+
+.birth-date-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  cursor: text;
+}
+.birth-date-box:focus-within {
+  border-color: #A855F7;
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25);
+}
+.birth-date-segment-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+.birth-date-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.birth-date-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #FFF;
+  font-size: 1.12rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-align: center;
+  padding: 2px 2px;
+  border-radius: 6px;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+}
+.birth-date-input::-webkit-outer-spin-button,
+.birth-date-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.birth-date-input:focus {
+  background: rgba(168, 85, 247, 0.25);
+  color: #F3E8FF;
+}
+.birth-date-input::placeholder {
+  color: rgba(255, 255, 255, 0.32);
+  font-weight: 400;
+  font-size: 0.95rem;
+}
+.birth-date-year { width: 56px; }
+.birth-date-month,
+.birth-date-day { width: 34px; }
+.birth-date-slash {
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 1.15rem;
+  font-weight: 300;
+  user-select: none;
+  margin: 0 2px;
+}
+.birth-date-unit {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+  user-select: none;
+}
+.birth-date-icon {
+  font-size: 1.2rem;
+  opacity: 0.7;
+  user-select: none;
+  margin-left: 6px;
+}
+
 /* Responsive Adaptation for Smaller Mobile Screens (< 380px) */
 @media (max-width: 380px) {
   .shichen-wheel-container {
@@ -651,3 +745,11 @@
     font-size: 0.78rem;
   }
   .shichen-hub-desc {
+    font-size: 0.58rem;
+  }
+  .shichen-bubble {
+    width: 48px;
+    height: 48px;
+    transform: translate(-50%, -50%) rotate(var(--deg)) translateY(-118px) rotate(calc(-1 * var(--deg)));
+  }
+}

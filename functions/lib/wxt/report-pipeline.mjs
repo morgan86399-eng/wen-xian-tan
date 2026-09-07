@@ -95,9 +95,9 @@ async function repairActions(env, { themeId, answers, report }) {
  * 回傳 { report, model, tokens, degraded, stage, forbiddenReplaced }；
  * 只有完全拿不到任何內容才回 null（那才是真的斷線，可以退點）。
  */
-export async function runReportPipeline(env, { themeId, answers, palmDescription = '' }) {
+export async function runReportPipeline(env, { themeId, answers, palmDescription = '', hiddenRhythm = '' }) {
   const systemPrompt = buildSystemPrompt(themeId);
-  const basePrompt = buildUserPrompt({ themeId, answers, palmDescription });
+  const basePrompt = buildUserPrompt({ themeId, answers, palmDescription, hiddenRhythm });
 
   let best = null;        // 四段內文合格的最好一份
   let anyContent = null;  // 至少有內容的任何一份

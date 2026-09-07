@@ -8,7 +8,7 @@
     "dev": "wrangler pages dev dist --d1=DB --kv=RL",
     "build": "vite build && node scripts/copy-static.mjs",
     "preview": "vite preview",
-    "test": "node tests/wxt-backend.mjs && node tests/portaly.test.mjs && node tests/portaly-webhook.test.mjs && node tests/zenasker-auth-payment.mjs",
+    "test": "node tests/wxt-backend.mjs && node tests/hidden-chart.mjs && node tests/portaly.test.mjs && node tests/portaly-webhook.test.mjs && node tests/zenasker-auth-payment.mjs",
     "demo": "node scripts/serve-browser-demo.mjs",
     "dev:vite": "vite"
   },
@@ -26,6 +26,8 @@
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "iztro": "^2.6.1",
+    "lunar-typescript": "^1.8.6"
   }
 }

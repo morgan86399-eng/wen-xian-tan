@@ -1,5 +1,7 @@
 /* 禁用詞掃描 W1–W13 與紅線規則 */
 
+import { scanChartTerms, stripChartTerms } from '../chart/terms.mjs';
+
 /* 一律禁：這些詞沒有合法用法，出現就是違規 */
 const FORBIDDEN_WORDS = [
   '纏', '人味', '慘', '愣', '我說', '垃圾', '繞', '斷片', '業配', '打臉',
@@ -91,6 +93,7 @@ export function scanForbidden(text) {
     if (match) hits.push(match[0]);
   }
   if (BODY_PERSONIFICATION.test(value)) hits.push('身體擬人化');
+  hits.push(...scanChartTerms(value));
   return [...new Set(hits)];
 }
 
@@ -99,7 +102,7 @@ export function replaceForbidden(text) {
   for (const [pattern, replacement] of REPLACEMENTS) {
     out = out.replace(pattern, replacement);
   }
-  return out.trim();
+  return stripChartTerms(out);
 }
 
 
@@ -168,7 +171,7 @@ export function buildSystemPrompt(themeId) {
     '不可以換成「家人」「財務狀況」「事業」這種籠統代稱。',
     '嚴禁把他的問題改寫成抽象說法。',
     '',
-    '【資料狀態】使用者的七步問答已經全部完成，下方就是本次可用的全部資料。',
+    '【資料狀態】使用者的十步問答已經全部完成，下方就是本次可用的全部資料。',
     '欄位標示「未指定」代表使用者選擇不填，請依既有資料與常見情境自行推演，不因此停下。',
     '',
     '【最高禁令】',
@@ -180,7 +183,7 @@ export function buildSystemPrompt(themeId) {
     `【固定骨架】依序寫滿以下四段，heading 逐字使用，不可增減、不可改名：\n${headings}`,
     '四段合計至少 600 字，單段不少於 100 字。四段長度不要平均，該多寫的段落就多寫。',
     '',
-    '【文風：直白不迂迴】',
+    '【文風：直白不迂迴，像在講他這個人】',
     '1. 不要描述情境、不要編故事、不要寫「這幾天你可能會看到...」這種虛構場景，更不要編造辦公室對話與心跳劇情。',
     '2. 不要複述使用者已經知道的背景（他的身分、角色、處境、目前職位），他自己填的自己都知道，直接講分析結論。',
     '3. 開場第一句就切入核心問題的判斷，不要鋪陳。',
@@ -188,6 +191,7 @@ export function buildSystemPrompt(themeId) {
     '5. 講清楚「該怎麼做」「風險在哪」「什麼時候要注意」，而不是「你可能會感到...」。',
     '6. 嚴禁用「在一個...的場景中」「想像一下」「你走進辦公室」這類敘事手法。',
     '7. 嚴禁寫成任何人都適用的通用範本，必須直接針對他的具體提問與真實痛點給出直接犀利的判斷。',
+    '8. 用一般人講話的方式寫，像在跟他說他這件事，不要像在念教科書。',
     '',
     '【針對使用者角色與真實處境的實戰指引（全部六大篇章通用）】',
     '1. 角色溝通策略：必須扣住使用者所填寫的身份與對象關係（如手足親屬、購屋換屋者、創業合夥人、求職者、夫妻伴侶、部門主管）。告訴他在這個角色上，面對這件事如何向家人、伴侶、合夥人或主管開口溝通、如何定錨立場與取得共識，避免無謂爭執。',
@@ -224,7 +228,8 @@ export function buildSystemPrompt(themeId) {
     '全篇一律使用繁體中文。用一般人講話的方式寫，不要條列，不要在內文裡再開小標題。',
     '四段的開頭句型不可以相同，也不要每段都用同一個字詞起頭。',
     '',
-    '【紅線】不排紫微八字、不出現百分比與倍數、不做醫療診斷或療效宣稱、不用一定會或保證這類絕對用語。',
+    '【紅線】報告正文禁止出現命理專有名詞。如果一定要講判斷從哪來，只准寫「以掌紋來看」。',
+    '不出現百分比與倍數、不做醫療診斷或療效宣稱、不用一定會或保證這類絕對用語。',
     '掌紋描述只當參考素材，不可當成醫療診斷。',
     '',
     '【輸出格式】只回傳 JSON，前後不要任何額外文字：',
@@ -235,7 +240,7 @@ export function buildSystemPrompt(themeId) {
 const GENDER_FALLBACK = {
   female: '女性',
   male: '男性',
-  other: '不透露'
+  custom_gender: '自訂'
 };
 
 function firstText(...values) {
@@ -246,12 +251,15 @@ function firstText(...values) {
   return '';
 }
 
-export function buildUserPrompt({ themeId, answers, palmDescription = '' }) {
+export function buildUserPrompt({ themeId, answers, palmDescription = '', hiddenRhythm = '' }) {
   const data = (answers && typeof answers === 'object') ? answers : {};
   const key = themeKey(themeId);
 
   const gender = firstText(data.genderLabel, data.genderCustom, GENDER_FALLBACK[data.gender]) || '未指定';
   const age = firstText(data.ageLabel, data.ageCustom, data.age) || '未指定';
+  const birthDate = firstText(data.birthDate) || '未指定';
+  const birthTime = firstText(data.birthTimeLabel) || '未指定';
+  const birthPlace = firstText(data.birthPlace) || '未指定';
   const relation = firstText(data.relationLabel, data.relationCustom) || '未指定';
   const role = firstText(data.roleLabel, data.roleCustom) || '未指定';
   const question = firstText(data.question) || '未指定，請就本篇最常見的處境給出解讀';
@@ -262,20 +270,32 @@ export function buildUserPrompt({ themeId, answers, palmDescription = '' }) {
 
   const lines = [
     `篇章：${THEME_NAMES[key]}`,
-    '七步問答結果（已完整，這是本次的全部資料）：',
+    '十步問答結果（已完整，這是本次的全部資料）：',
     `1. 性別：${gender}`,
     `2. 年齡：${age}`,
-    `3. 稱謂／對象關係：${relation}`,
-    `4. 目前狀態：${role}`,
-    `5. 本次主要問題：${question}`,
-    `6. 期望方向：${goal}`,
-    `7. 掌紋：${palmDescription ? '已提供，客觀描述如下' : '本次未提供，改以前六項推演'}`
+    `3. 出生年月日：${birthDate}`,
+    `4. 出生時段：${birthTime}`,
+    `5. 出生地：${birthPlace}`,
+    `6. 稱謂／對象關係：${relation}`,
+    `7. 目前狀態：${role}`,
+    `8. 本次主要問題：${question}`,
+    `9. 期望方向：${goal}`,
+    `10. 掌紋：${palmDescription ? '已提供，客觀描述如下' : '本次未提供，改以其餘問答推演'}`
   ];
   if (palmDescription) lines.push(`掌紋線條客觀描述：${palmDescription}`);
+
+  const rhythm = String(hiddenRhythm || '').trim();
+  if (rhythm) {
+    lines.push('');
+    lines.push('【內部節奏備註｜禁止把備註原句或命理專有名詞寫進報告】');
+    lines.push(rhythm);
+    lines.push('把這些感覺融進判斷，像在講他這個人。如果一定要講來源，只准寫「以掌紋來看」。');
+  }
 
   // 問卷若有其他自訂輸入，一併送進去，不要讓個人細節在這裡消失
   const KNOWN = new Set([
     'gender', 'genderLabel', 'genderCustom', 'age', 'ageLabel', 'ageCustom',
+    'birthDate', 'birthTime', 'birthTimeLabel', 'birthPlace', 'birthPlaceRegion',
     'relation', 'relationLabel', 'relationCustom', 'role', 'roleLabel', 'roleCustom',
     'question', 'goal', 'goalLabel', 'goalCustom', 'palmDataUrl', 'palmImageBase64'
   ]);
@@ -293,6 +313,7 @@ export function buildUserPrompt({ themeId, answers, palmDescription = '' }) {
   }
 
   lines.push('');
-  lines.push('以上七步資料已齊，請直接輸出完整報告，不得要求補充任何資料，不得反問使用者。');
+  lines.push('以上十步資料已齊，請直接輸出完整報告，不得要求補充任何資料，不得反問使用者。');
   return lines.join('\n');
 }
+

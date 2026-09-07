@@ -131,6 +131,24 @@ export function shichenToClock(value) {
   return hit ? hit.clock : '12:00';
 }
 
+export function isValidBirthDate(iso) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ''))) return false;
+  const [year, month, day] = String(iso).split('-').map(Number);
+  const dt = new Date(year, month - 1, day);
+  if (dt.getFullYear() !== year || dt.getMonth() !== month - 1 || dt.getDate() !== day) return false;
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (year < 1920 || dt > today) return false;
+  return true;
+}
+
+export function shichenLabel(value) {
+  const hit = SHICHEN_OPTIONS.find((item) => item.value === value);
+  if (!hit) return '';
+  if (hit.value === 'unknown') return '不清楚';
+  return hit.shortRange;
+}
+
 export function timezoneFromOffset(tz) {
   const n = Number(tz);
   if (!Number.isFinite(n)) return 'Asia/Taipei';

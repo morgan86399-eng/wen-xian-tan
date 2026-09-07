@@ -180,11 +180,28 @@ export const PLANS = [
 
 // ============ 白話多步驟問卷選項定義 (Step Wizard Options) ============
 
+export const TOTAL_WIZARD_STEPS = 10;
+export const WIZARD_STEP = {
+  GENDER: 1,
+  AGE: 2,
+  BIRTH_DATE: 3,
+  BIRTH_TIME: 4,
+  BIRTH_PLACE: 5,
+  RELATION: 6,
+  ROLE: 7,
+  QUESTION: 8,
+  GOAL: 9,
+  PALM: 10
+};
+
+export function numberedTitle(step, title) {
+  return `${step}. ${String(title || '').replace(/^\s*\d+\.\s*/, '')}`;
+}
+
 // Step 1: 性別
 export const GENDER_OPTIONS = [
-  { id: "female", label: "女性 (坤造)", icon: "👩", desc: "女看右手主天賦後天，左手主先天命格" },
-  { id: "male", label: "男性 (乾造)", icon: "👨", desc: "男看左手主天賦後天，右手主先天命格" },
-  { id: "other", label: "保密 / 雙手照會", icon: "✨", desc: "雙手手相掌紋綜合解析" },
+  { id: "female", label: "女性", icon: "👩", desc: "女看右手主天賦後天，左手主先天傾向" },
+  { id: "male", label: "男性", icon: "👨", desc: "男看左手主天賦後天，右手主先天傾向" },
   { id: "custom_gender", label: "其他 / 自訂性別", icon: "✏️", desc: "點選後可直接在下方打字自訂輸入", isCustom: true, placeholder: "請輸入自訂性別或稱謂..." }
 ];
 

@@ -596,7 +596,7 @@ await check('buildUserPrompt 送白話標籤，略過期望寫成未指定並要
       age: '25-34',
       relation: 'self_love',
       role: 'single_seeking',
-      genderLabel: '男性 (乾造)',
+      genderLabel: '男性',
       ageLabel: '25 ~ 34 歲',
       relationLabel: '本人自身',
       roleLabel: '單身尋覓',
@@ -606,12 +606,14 @@ await check('buildUserPrompt 送白話標籤，略過期望寫成未指定並要
   });
   assert.match(prompt, /本人自身/);
   assert.match(prompt, /單身尋覓/);
-  assert.match(prompt, /男性 \(乾造\)/);
+  assert.match(prompt, /男性/);
+  assert.ok(!prompt.includes('乾造'), '不該把乾造送給模型');
   assert.ok(!prompt.includes('self_love'), '不該把代碼送給模型');
   assert.ok(!prompt.includes('single_seeking'), '不該把代碼送給模型');
   assert.match(prompt, /期望方向：未指定，請全方位推演/);
-  assert.match(prompt, /本次未提供，改以前六項推演/);
+  assert.match(prompt, /本次未提供，改以其餘問答推演/);
   assert.match(prompt, /請直接輸出完整報告，不得要求補充任何資料/);
+  assert.match(prompt, /十步問答結果/);
 });
 
 await check('isIncompleteReport 擋掉追問文、段數不足、放行正常報告', async () => {
@@ -920,6 +922,50 @@ await check('前端原始碼與首頁不得出現肖像或外貌宣稱', async (
     }
   }
   assert.deepEqual(hits, [], `這些檔案還留著外貌宣稱：${hits.join('、')}`);
+});
+
+await check('前端性別選項不得出現坤造、乾造或保密', async () => {
+  const { readFileSync } = await import('node:fs');
+  const text = readFileSync(new URL('../src/js/data.js', import.meta.url), 'utf8');
+  for (const word of ['坤造', '乾造', '保密']) {
+    assert.equal(text.includes(word), false, `data.js 還留著「${word}」`);
+  }
+  const { GENDER_OPTIONS, TOTAL_WIZARD_STEPS } = await import('../src/js/data.js');
+  assert.equal(TOTAL_WIZARD_STEPS, 10);
+  assert.equal(GENDER_OPTIONS.some((item) => item.id === 'custom_gender'), true);
+  assert.equal(GENDER_OPTIONS.some((item) => item.id === 'other'), false);
+});
+
+await check('系統提示詞要求以掌紋來看，且節奏備註會進 user prompt', async () => {
+  const system = buildSystemPrompt('love');
+  assert.match(system, /以掌紋來看/);
+  assert.match(system, /十步問答/);
+  assert.ok(!system.includes('不排紫微八字'));
+  const prompt = buildUserPrompt({
+    themeId: 'love',
+    answers: {
+      genderLabel: '女性',
+      birthDate: '1990-08-08',
+      birthTimeLabel: '09:00-11:00',
+      birthPlace: '台北市',
+      question: '現在該不該結婚'
+    },
+    hiddenRhythm: '你作決定時很看重主導權。'
+  });
+  assert.match(prompt, /1990-08-08/);
+  assert.match(prompt, /09:00-11:00/);
+  assert.match(prompt, /台北市/);
+  assert.match(prompt, /你作決定時很看重主導權/);
+  assert.match(prompt, /以掌紋來看/);
+});
+
+await check('命理專有名詞會被掃描並清掉', async () => {
+  const hits = scanForbidden('以紫微命宮來看，八字顯示坤造流年。');
+  assert.ok(hits.includes('紫微'));
+  assert.ok(hits.includes('命宮') || hits.includes('八字') || hits.includes('坤造'));
+  const cleaned = replaceForbidden('以紫微命宮來看');
+  assert.ok(!cleaned.includes('紫微'));
+  assert.ok(!cleaned.includes('命宮'));
 });
 
 

@@ -10,6 +10,7 @@ import {
 import { describePalm } from '../../lib/wxt/ai.mjs';
 import { runReportPipeline } from '../../lib/wxt/report-pipeline.mjs';
 import { withAdviceField } from '../../lib/wxt/report-format.mjs';
+import { buildHiddenRhythm } from '../../lib/chart/hidden-rhythm.mjs';
 
 export const onRequest = postOnly(async ({ request, env }) => {
   if (!hasDb(env)) return json({ error: 'SERVICE_UNAVAILABLE' }, 503);
@@ -78,9 +79,16 @@ export const onRequest = postOnly(async ({ request, env }) => {
   }
 
   // 保證交付：只有整條模型鏈都拿不回任何內容才准失敗
+  let hiddenRhythm = '';
+  try {
+    hiddenRhythm = buildHiddenRhythm({ answers, themeId }).text || '';
+  } catch {
+    hiddenRhythm = '';
+  }
+
   let outcome = null;
   try {
-    outcome = await runReportPipeline(env, { themeId, answers, palmDescription });
+    outcome = await runReportPipeline(env, { themeId, answers, palmDescription, hiddenRhythm });
   } catch {
     outcome = null;
   }
