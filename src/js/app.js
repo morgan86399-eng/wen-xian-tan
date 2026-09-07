@@ -2003,7 +2003,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="wizard-step-body">
           <div>
             <div class="wizard-question-title">1. 請選擇您的性別</div>
-            <div class="wizard-question-sub">男女手相看法不同，選定後能更精準分析您的手相與命格</div>
+            <div class="wizard-question-sub">男女手相看法不同，選定後能更精準分析您的手相與問答</div>
           </div>
           <div class="wizard-options-grid">
             ${renderOptionCards(GENDER_OPTIONS, answers.gender, answers.genderCustom, 'genderCustom')}
@@ -2739,7 +2739,7 @@ document.addEventListener('DOMContentLoaded', () => {
         {
           pct: 100,
           title: '天書顯化 · 專屬 AI 報告生成',
-          sub: '專屬解惑指引已排盤完畢，即將為會員揭曉天機...',
+          sub: '專屬解惑指引已整理完畢，即將為會員揭曉結果...',
           activate: [step1, step2, step3, step4]
         }
       ];
@@ -2921,7 +2921,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const genderLabel = (answers.gender === 'custom_gender' && answers.genderCustom)
       ? answers.genderCustom
-      : (GENDER_OPTIONS.find(g => g.id === answers.gender)?.label || '不透露');
+      : (GENDER_OPTIONS.find(g => g.id === answers.gender)?.label || '自訂');
 
     const ageLabel = (answers.age === 'custom_age' && answers.ageCustom)
       ? `${answers.ageCustom}`
@@ -3239,7 +3239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.wizard.answers.palmActiveHand = 'left';
       }
     }
-    if (readingModalBackdrop.classList.contains('show') && state.wizard.currentStep === 7) {
+    if (readingModalBackdrop.classList.contains('show') && state.wizard.currentStep === WIZARD_STEP.PALM) {
       renderWizardStep();
     }
   });
@@ -3253,7 +3253,7 @@ document.addEventListener('DOMContentLoaded', () => {
       state.wizard.answers.palmRightDataUrl = null;
       state.wizard.answers.palmRightBase64 = '';
     }
-    if (readingModalBackdrop.classList.contains('show') && state.wizard.currentStep === 7) {
+    if (readingModalBackdrop.classList.contains('show') && state.wizard.currentStep === WIZARD_STEP.PALM) {
       renderWizardStep();
     }
   });

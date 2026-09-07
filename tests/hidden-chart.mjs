@@ -79,3 +79,13 @@ await check('問答步數與標題編號', () => {
   assert.equal(TOTAL_WIZARD_STEPS, 10);
   assert.equal(numberedTitle(6, '3. 您與本次請示對象的關係稱謂是？'), '6. 您與本次請示對象的關係稱謂是？');
 });
+
+await check('掌紋事件接在第 10 步，等待畫面不准寫排盤或天機', async () => {
+  const { readFileSync } = await import('node:fs');
+  const app = readFileSync(new URL('../src/js/app.js', import.meta.url), 'utf8');
+  assert.equal(app.includes('currentStep === 7'), false, '掌紋事件還寫死第 7 步');
+  assert.equal((app.match(/currentStep === WIZARD_STEP\.PALM/g) || []).length >= 2, true, '拍完／清掉掌紋都要重繪第 10 步');
+  assert.equal(app.includes('排盤完畢'), false);
+  assert.equal(app.includes('揭曉天機'), false);
+  assert.equal(app.includes('手相與命格'), false);
+});
