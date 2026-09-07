@@ -251,3 +251,37 @@
 .kyp-btn-sub:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+.kyp-btn-retry {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 9px 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35);
+  transition: transform 0.15s, background 0.15s;
+}
+
+.kyp-btn-retry:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+}
+
+.kyp-btn-cancel {
+  background: rgba(255, 255, 255, 0.08);
+  color: #9CA3AF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 9px 18px;
+  font-size: 13px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.kyp-btn-cancel:hover {
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.4);
+}

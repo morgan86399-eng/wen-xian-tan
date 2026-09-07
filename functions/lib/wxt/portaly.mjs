@@ -137,14 +137,31 @@ export function getPortalyConfig(env) {
   };
 }
 
+export const KNOWN_PORTALY_PLANS = {
+  single: 'kyORFGyPJ2cty6XoPBTc',
+  triple: 'kdilL87Rqv2KFrBND2XA',
+  all: 'k89Kyyoz26xxARBW9rgN'
+};
+
+const OBSOLETE_PORTALY_IDS = new Set([
+  '2LFgafSJfCLGGImzHZcT',
+  'hKb1CetMvVy9LB43S3cT',
+  'GBO3wcPBoYfwu8uolUx8'
+]);
+
 /**
  * 根據方案代碼對應 Portaly Payment plan / product ID
  */
 export function resolvePortalyProductId(config, productId) {
-  if (productId === 'single') return config.productSingleId;
-  if (productId === 'triple') return config.productTripleId;
-  if (productId === 'all') return config.productAllId;
-  return '';
+  let id = '';
+  if (productId === 'single') id = config.productSingleId;
+  else if (productId === 'triple') id = config.productTripleId;
+  else if (productId === 'all') id = config.productAllId;
+
+  if (!id || OBSOLETE_PORTALY_IDS.has(id)) {
+    return KNOWN_PORTALY_PLANS[productId] || id;
+  }
+  return id;
 }
 
 /**
@@ -198,7 +215,8 @@ export async function createPortalyCheckoutSession({
           'Authorization': `Bearer ${config.apiKey}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(subPayload)
+        body: JSON.stringify(subPayload),
+        signal: AbortSignal.timeout(5000)
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.data?.checkoutUrl) {
@@ -240,7 +258,8 @@ export async function createPortalyCheckoutSession({
           'Authorization': `Bearer ${config.apiKey}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(digitalPayload)
+        body: JSON.stringify(digitalPayload),
+        signal: AbortSignal.timeout(5000)
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data?.data?.checkoutUrl) {

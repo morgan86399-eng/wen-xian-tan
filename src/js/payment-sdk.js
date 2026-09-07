@@ -44,6 +44,7 @@
 
     openCheckout: function (options) {
       const self = this;
+      self.lastCheckoutOptions = options;
       self.onSuccessCallback = options.onSuccess || function () {};
       self._injectModalDOM();
 
@@ -54,22 +55,28 @@
       const orderIdEl = document.getElementById('kyp-order-id');
       const statusEl = document.getElementById('kyp-polling-status');
       const errorEl = document.getElementById('kyp-error');
+      const actionContainer = document.getElementById('kyp-action-container');
 
       if (planNameEl) planNameEl.textContent = options.planName || 'Zenasker方案';
       if (planPriceEl) planPriceEl.textContent = `NT$ ${options.displayPrice || ''}`;
       if (totalEl) totalEl.textContent = `NT$ ${options.displayPrice || ''}`;
-      if (orderIdEl) orderIdEl.textContent = '建立訂單中...';
+      if (orderIdEl) orderIdEl.innerHTML = '<span class="kyp-spinner"></span> 建立訂單中...';
       if (statusEl) statusEl.style.display = 'none';
+      if (actionContainer) actionContainer.style.display = 'none';
       if (errorEl) {
         errorEl.style.display = 'none';
         errorEl.textContent = '';
       }
       if (modal) modal.style.display = 'flex';
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       fetch(`${self.serverUrl}/api/orders/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
+        signal: controller.signal,
         body: JSON.stringify({
           productId: options.productId || options.planId,
           themeKeys: options.themeKeys || options.themes || [],
@@ -78,16 +85,18 @@
         })
       })
         .then(async (res) => {
+          clearTimeout(timeoutId);
           const data = await readJson(res);
           if (res.status === 401 || data.error === 'UNAUTHENTICATED') {
             throw new Error('UNAUTHENTICATED');
           }
           if (!res.ok || data.ok === false) {
-            throw new Error(data.error || data.message || '建單失敗');
+            throw new Error(data.message || data.error || '建單失敗');
           }
           return data;
         })
         .then((data) => {
+          clearTimeout(timeoutId);
           const order = data.order || data;
           const orderId = order.id || order.orderId || data.orderId || data.merchantTradeNo;
           self.activeOrder = { id: orderId, ...order };
@@ -107,22 +116,45 @@
             if (/portaly\.cc/i.test(String(checkoutUrl))) {
               throw new Error('無法建立結帳連線，請稍後重試');
             }
+            if (statusEl) {
+              statusEl.style.display = 'flex';
+              statusEl.textContent = '已建立訂單，正在為您導向安全支付頁面...';
+            }
             window.location.assign(checkoutUrl);
             return;
           }
           if (orderId) {
-            if (statusEl) statusEl.style.display = 'block';
+            if (statusEl) statusEl.style.display = 'flex';
             self._startPolling(orderId);
             return;
           }
           throw new Error('伺服器未回傳結帳資訊');
         })
         .catch((err) => {
+          clearTimeout(timeoutId);
+          if (orderIdEl) orderIdEl.textContent = '建立未完成';
+
+          const rawMsg = String((err && err.message) || err || '').trim();
+          let friendlyMsg = '目前無法建立訂單，請稍後重試';
+
+          if (rawMsg === 'UNAUTHENTICATED') {
+            friendlyMsg = '登入狀態已失效，請先登入後再結帳。';
+          } else if (rawMsg === 'EMAIL_REQUIRED') {
+            friendlyMsg = '結帳前請先留下電子信箱，以接收訂單明細。';
+          } else if (rawMsg.includes('PORTALY_SESSION_FAILED') || rawMsg.includes('PORTALY_NOT_CONFIGURED')) {
+            friendlyMsg = '金流服務連線異常或整備中，請稍後重試。';
+          } else if (err && err.name === 'AbortError') {
+            friendlyMsg = '建立訂單逾時，請檢查網路連線後重試。';
+          } else if (rawMsg && rawMsg !== 'Error') {
+            friendlyMsg = rawMsg;
+          }
+
           if (errorEl) {
             errorEl.style.display = 'block';
-            errorEl.textContent = err && err.message === 'UNAUTHENTICATED'
-              ? '請先登入再結帳'
-              : ((err && err.message) || '目前無法建立訂單');
+            errorEl.textContent = friendlyMsg;
+          }
+          if (actionContainer) {
+            actionContainer.style.display = 'flex';
           }
           if (typeof options.onError === 'function') options.onError(err);
         });
@@ -243,12 +275,39 @@
       error.style.color = '#F87171';
       error.style.fontSize = '0.85rem';
 
+      const actionContainer = document.createElement('div');
+      actionContainer.id = 'kyp-action-container';
+      actionContainer.style.display = 'none';
+      actionContainer.style.gap = '10px';
+      actionContainer.style.justifyContent = 'center';
+      actionContainer.style.marginTop = '14px';
+
+      const retryBtn = document.createElement('button');
+      retryBtn.type = 'button';
+      retryBtn.id = 'kyp-retry-btn';
+      retryBtn.className = 'kyp-btn-retry';
+      retryBtn.textContent = '🔄 重新嘗試';
+      retryBtn.addEventListener('click', () => {
+        self.openCheckout(self.lastCheckoutOptions);
+      });
+
+      const cancelBtn = document.createElement('button');
+      cancelBtn.type = 'button';
+      cancelBtn.id = 'kyp-cancel-btn';
+      cancelBtn.className = 'kyp-btn-cancel';
+      cancelBtn.textContent = '關閉';
+      cancelBtn.addEventListener('click', () => self.closeCheckout());
+
+      actionContainer.appendChild(retryBtn);
+      actionContainer.appendChild(cancelBtn);
+
       body.appendChild(nameRow);
       body.appendChild(totalRow);
       body.appendChild(orderBadge);
       body.appendChild(hint);
       body.appendChild(status);
       body.appendChild(error);
+      body.appendChild(actionContainer);
 
       card.appendChild(header);
       card.appendChild(body);
