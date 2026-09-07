@@ -68,6 +68,7 @@
         errorEl.textContent = '';
       }
       if (modal) modal.style.display = 'flex';
+      if (typeof global.ZenaskerSyncUiLayer === 'function') global.ZenaskerSyncUiLayer();
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -164,6 +165,7 @@
       this._stopPolling();
       const modal = document.getElementById('kaiyun-payment-modal');
       if (modal) modal.style.display = 'none';
+      if (typeof global.ZenaskerSyncUiLayer === 'function') global.ZenaskerSyncUiLayer();
     },
 
     _startPolling: function (orderId) {

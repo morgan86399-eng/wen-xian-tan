@@ -199,6 +199,7 @@ export function closeCameraDialog() {
   stopCamera();
   state.cameraHand = "";
   if (dialog?.open) dialog.close();
+  if (typeof window.ZenaskerSyncUiLayer === "function") window.ZenaskerSyncUiLayer();
 }
 
 export function openFilePicker(hand, useCamera = false) {
@@ -511,6 +512,7 @@ export async function openCamera(hand = "left") {
   if (error) error.textContent = "正在開啟相機…";
   if (shutter) shutter.disabled = true;
   dialog.showModal();
+  if (typeof window.ZenaskerSyncUiLayer === "function") window.ZenaskerSyncUiLayer();
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
       video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } },

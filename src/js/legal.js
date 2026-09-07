@@ -4,6 +4,8 @@
  */
 
 /* 使用者按下付款時同意的條款版本，隨訂單一起寫進資料庫；條款內容有實質變動就更新這個日期 */
+import { setOverlayOpen } from './ui-layer.js';
+
 export const TERMS_VERSION = '2026-09-04';
 
 export const LEGAL_DOCS = {
@@ -105,9 +107,9 @@ export function showLegalModal(docType) {
   `;
 
   const close = () => {
-    backdrop.classList.remove('show', 'active');
+    setOverlayOpen(backdrop, false);
   };
 
   card.querySelector('#confirmReadLegalBtn')?.addEventListener('click', close);
-  backdrop.classList.add('show', 'active');
+  setOverlayOpen(backdrop, true);
 }

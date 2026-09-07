@@ -24,8 +24,9 @@ import {
 } from './birth-ui.js';
 import { WalletManager } from './wallet.js';
 import { MemberManager } from './member.js';
-import { openCamera, openFilePicker, ensurePalmCaptureDom } from './palm_capture.js';
+import { openCamera, openFilePicker, ensurePalmCaptureDom, closeCameraDialog } from './palm_capture.js';
 import { showLegalModal } from './legal.js';
+import { setOverlayOpen, syncUiLayerLock } from './ui-layer.js';
 import '../css/payment-modal.css';
 import '../css/sapphire.css';
 import '../css/star-sapphire.css';
@@ -82,15 +83,86 @@ document.addEventListener('DOMContentLoaded', () => {
     return url;
   }
 
-  function requireLogin() {
-    if (MemberManager.isLoggedIn()) return true;
-    switchTab('auth');
-    return false;
-  }
-
   const PENDING_CHECKOUT_KEY = 'wx_pending_checkout';
   let pendingCheckout = null;
   let lastCheckoutEmail = '';
+  let otpCooldownTimer = null;
+
+  function closePrivacyOverlay() {
+    const modal = document.getElementById('privacyConfirmModalBackdrop');
+    if (modal) setOverlayOpen(modal, false);
+    else syncUiLayerLock();
+  }
+
+  function closeReadingOverlay() {
+    const backdrop = document.getElementById('readingModalBackdrop');
+    state.wizard.decodeToken += 1;
+    if (state.wizard.progressTimer) {
+      clearInterval(state.wizard.progressTimer);
+      state.wizard.progressTimer = null;
+    }
+    state.wizard.isSubmitting = false;
+    if (otpCooldownTimer) {
+      clearInterval(otpCooldownTimer);
+      otpCooldownTimer = null;
+    }
+    closePrivacyOverlay();
+    setOverlayOpen(backdrop, false);
+  }
+
+  function openReadingOverlay({ keepPurchase = false } = {}) {
+    if (!keepPurchase) {
+      document.getElementById('purchaseModalBackdrop')?.classList.remove('show', 'active');
+      const purchase = document.getElementById('purchaseModalBackdrop');
+      if (purchase && 'inert' in purchase) purchase.inert = true;
+      purchase?.setAttribute('aria-hidden', 'true');
+    }
+    closeCameraDialog();
+    closePrivacyOverlay();
+    setOverlayOpen(document.getElementById('readingModalBackdrop'), true);
+  }
+
+  function closeTopUiLayer() {
+    const camera = document.getElementById('camera-dialog');
+    if (camera?.open) {
+      closeCameraDialog();
+      return true;
+    }
+    const privacy = document.getElementById('privacyConfirmModalBackdrop');
+    if (privacy && (privacy.classList.contains('show') || privacy.classList.contains('active'))) {
+      closePrivacyOverlay();
+      return true;
+    }
+    const kyp = document.getElementById('kaiyun-payment-modal');
+    if (kyp && kyp.style.display === 'flex' && window.PaymentSDK?.closeCheckout) {
+      window.PaymentSDK.closeCheckout();
+      return true;
+    }
+    const reading = document.getElementById('readingModalBackdrop');
+    if (reading && (reading.classList.contains('show') || reading.classList.contains('active'))) {
+      closeReadingOverlay();
+      return true;
+    }
+    const purchase = document.getElementById('purchaseModalBackdrop');
+    if (purchase && (purchase.classList.contains('show') || purchase.classList.contains('active'))) {
+      closePurchaseModal();
+      return true;
+    }
+    return false;
+  }
+
+  function dismissUiLayers() {
+    closeCameraDialog();
+    closeReadingOverlay();
+    closePurchaseModal();
+  }
+
+  function requireLogin() {
+    if (MemberManager.isLoggedIn()) return true;
+    dismissUiLayers();
+    switchTab('auth');
+    return false;
+  }
 
   function rememberPendingCheckout(productId, themeKeys) {
     const payload = {
@@ -167,19 +239,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setPurchaseStep(1);
 
+    closeCameraDialog();
+    closePrivacyOverlay();
+    const reading = document.getElementById('readingModalBackdrop');
+    if (reading) setOverlayOpen(reading, false);
+
     const backdrop = document.getElementById('purchaseModalBackdrop');
-    if (backdrop) {
-      backdrop.classList.add('show', 'active');
-      document.body.style.overflow = 'hidden';
-    }
+    if (backdrop) setOverlayOpen(backdrop, true);
   }
 
   function closePurchaseModal() {
     const backdrop = document.getElementById('purchaseModalBackdrop');
-    if (backdrop) {
-      backdrop.classList.remove('show', 'active');
-      document.body.style.overflow = '';
-    }
+    if (backdrop) setOverlayOpen(backdrop, false);
+    else syncUiLayerLock();
   }
 
   function goToPurchaseSection() {
@@ -267,13 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const readingModalCard = document.getElementById('readingModalCard');
   const modalCloseFixedBtn = document.getElementById('modalCloseFixedBtn');
   modalCloseFixedBtn?.addEventListener('click', () => {
-    state.wizard.decodeToken += 1; // 讓還沒跑完的解析報告 timeout 失效，不再覆蓋關閉後的彈窗內容
-    if (state.wizard.progressTimer) {
-      clearInterval(state.wizard.progressTimer);
-      state.wizard.progressTimer = null;
-    }
-    state.wizard.isSubmitting = false;
-    readingModalBackdrop.classList.remove('show', 'active');
+    closeReadingOverlay();
   });
 
   // Purchase Modal
@@ -290,11 +356,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  readingModalBackdrop?.addEventListener('click', (e) => {
+    if (e.target === readingModalBackdrop) {
+      closeReadingOverlay();
+    }
+  });
+
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      if (purchaseModalBackdrop?.classList.contains('show')) {
-        closePurchaseModal();
-      }
+      closeTopUiLayer();
     }
   });
 
@@ -511,6 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ============ 2. App Tab Switching ============
   function switchTab(tabId) {
+    dismissUiLayers();
     state.currentTab = tabId;
 
     headerTabBtns.forEach((btn) => {
