@@ -276,17 +276,17 @@ await check('已登入但缺點數回 402', async (env) => {
 
 console.log('\n[AI 呼叫順序]');
 
-await check('BlankAPI / grok-4.5 為第一順位，有 Groq 也先打 BlankAPI', async (env) => {
+await check('Gemini 為第一順位，有 BlankAPI 與 Groq 也先打 Gemini', async (env) => {
   const calls = [];
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url) => {
     calls.push(String(url));
-    if (String(url).includes('blankapi.com')) {
+    if (String(url).includes('generativelanguage.googleapis.com')) {
       return {
         ok: true,
         json: async () => ({
-          choices: [{ message: { content: '{"summary":"blankapi-grok-ok"}' } }],
-          usage: { total_tokens: 18 }
+          candidates: [{ content: { parts: [{ text: '{"summary":"gemini-first-ok"}' }] } }],
+          usageMetadata: { totalTokenCount: 18 }
         })
       };
     }
@@ -299,30 +299,30 @@ await check('BlankAPI / grok-4.5 為第一順位，有 Groq 也先打 BlankAPI',
       GROQ_API_KEY: 'gsk_test',
       GEMINI_API_KEY: 'AQ.test'
     }, { systemPrompt: 's', userPrompt: 'u' });
-    assert.match(calls[0], /blankapi\.com/, '第一通應該打 BlankAPI');
-    assert.equal(calls.length, 1, 'BlankAPI 成功就不該再打 Groq 或 Gemini');
-    assert.equal(result.parsed.summary, 'blankapi-grok-ok');
-    assert.equal(result.model, 'grok-4.5');
+    assert.match(calls[0], /generativelanguage\.googleapis\.com/, '第一通應該打 Gemini');
+    assert.equal(calls.length, 1, 'Gemini 成功就不該再打 BlankAPI 或 Groq');
+    assert.equal(result.parsed.summary, 'gemini-first-ok');
+    assert.equal(result.model, 'gemini-3.5-flash');
   } finally {
     globalThis.fetch = realFetch;
   }
 });
 
-await check('BlankAPI 失敗時依序降級換 Gemini', async (env) => {
+await check('Gemini 失敗時依序降級換 BlankAPI', async (env) => {
   const calls = [];
   const realFetch = globalThis.fetch;
   globalThis.fetch = async (url) => {
     const href = String(url);
     calls.push(href);
-    if (href.includes('blankapi.com')) {
-      return { ok: false, status: 500, text: async () => 'upstream error' };
-    }
     if (href.includes('generativelanguage.googleapis.com')) {
+      return { ok: false, status: 503, text: async () => 'high demand' };
+    }
+    if (href.includes('blankapi.com')) {
       return {
         ok: true,
         json: async () => ({
-          candidates: [{ content: { parts: [{ text: '{"summary":"gemini-fallback-ok"}' }] } }],
-          usageMetadata: { totalTokenCount: 15 }
+          choices: [{ message: { content: '{"summary":"blankapi-fallback-ok"}' } }],
+          usage: { total_tokens: 15 }
         })
       };
     }
@@ -335,10 +335,10 @@ await check('BlankAPI 失敗時依序降級換 Gemini', async (env) => {
       GROQ_API_KEY: 'gsk_test',
       GEMINI_API_KEY: 'AQ.test'
     }, { systemPrompt: 's', userPrompt: 'u' });
-    assert.match(calls[0], /blankapi\.com/, '第一通打 BlankAPI');
-    assert.match(calls[1], /generativelanguage\.googleapis\.com/, 'BlankAPI 失敗後切換到 Gemini');
-    assert.equal(calls.length, 2, 'Gemini 成功就不該再打 Groq');
-    assert.equal(result.parsed.summary, 'gemini-fallback-ok');
+    assert.match(calls[0], /generativelanguage\.googleapis\.com/, '第一通打 Gemini');
+    assert.match(calls[1], /blankapi\.com/, 'Gemini 失敗後切換到 BlankAPI');
+    assert.equal(calls.length, 2, 'BlankAPI 成功就不該再打 Groq');
+    assert.equal(result.parsed.summary, 'blankapi-fallback-ok');
   } finally {
     globalThis.fetch = realFetch;
   }

@@ -1,9 +1,9 @@
-/* BlankAPI（grok-4.5 第一順位）→ Gemini → Groq（可掛多把金鑰，逐把往下輪）→ Workers AI */
+/* Gemini 第一順位 → BlankAPI（grok-4.5）→ Groq（可掛多把金鑰，逐把往下輪）→ Workers AI */
 
 import { fetchWithTimeout } from './http.mjs';
 import { requireGroq } from './auth.mjs';
 
-/* BlankAPI / grok-4.5（weiyo 2026-09-07 指定為最優先順位） */
+/* BlankAPI / grok-4.5（Gemini 失敗後的第二順位） */
 const BLANKAPI_BASE_DEFAULT = 'https://blankapi.com/v1';
 const BLANKAPI_MODEL_DEFAULT = 'grok-4.5';
 
@@ -348,13 +348,13 @@ export async function generateReport(env, { systemPrompt, userPrompt, jsonMode =
   ];
   const options = { jsonMode, temperature };
   const attempts = [];
-  // BlankAPI (grok-4.5) 是第一順位（weiyo 2026-09-07 指定）。
-  if (hasBlankApi(env)) {
-    attempts.push(() => callBlankApiText(env, messages, options));
-  }
-  // Gemini 是第二順位。只有一支主力型號，滿載或失敗就往下交給 Groq。
+  // Gemini 是第一順位（weiyo 2026-09-07：原第 2 升成第 1）。
   if (hasGemini(env)) {
     attempts.push(() => callGeminiText(env, messages, options));
+  }
+  // BlankAPI (grok-4.5) 改為第二順位。
+  if (hasBlankApi(env)) {
+    attempts.push(() => callBlankApiText(env, messages, options));
   }
   // Groq 是第三順位。掛幾把金鑰就排幾輪，一把額度用完或出錯就換下一把。
   const keys = groqKeys(env);
