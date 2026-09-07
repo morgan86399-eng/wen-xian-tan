@@ -2401,11 +2401,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const skipBtn = document.getElementById('wizardSkipPalmBtn');
       if (skipBtn) {
         skipBtn.addEventListener('click', () => {
-          answers.palmLeftDataUrl = null;
-          answers.palmLeftBase64 = '';
-          answers.palmRightDataUrl = null;
-          answers.palmRightBase64 = '';
-          executeDecodingFlow({ skipPalm: true });
+          showPrivacyConfirmModal(() => {
+            answers.palmLeftDataUrl = null;
+            answers.palmLeftBase64 = '';
+            answers.palmRightDataUrl = null;
+            answers.palmRightBase64 = '';
+            executeDecodingFlow({ skipPalm: true });
+          });
         });
       }
 
@@ -2416,7 +2418,9 @@ document.addEventListener('DOMContentLoaded', () => {
           if (hasPalmData) {
             if (!requirePalmConsent()) return;
           }
-          executeDecodingFlow({ skipPalm: false });
+          showPrivacyConfirmModal(() => {
+            executeDecodingFlow({ skipPalm: false });
+          });
         });
       }
     }
@@ -2452,6 +2456,97 @@ document.addEventListener('DOMContentLoaded', () => {
       state.wizard.currentStep = next;
       renderWizardStep();
     }
+  }
+
+  function showPrivacyConfirmModal(onConfirmed) {
+    let modal = document.getElementById('privacyConfirmModalBackdrop');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'privacyConfirmModalBackdrop';
+      modal.className = 'modal-backdrop privacy-confirm-backdrop';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      document.body.appendChild(modal);
+    }
+
+    const currentQuestion = String(state.wizard.answers.question || '').trim();
+    const previewText = currentQuestion || '（未填寫具體問題）';
+
+    modal.innerHTML = `
+      <div class="privacy-confirm-shell">
+        <div class="privacy-confirm-card">
+          
+          <div class="privacy-confirm-header">
+            <span class="privacy-confirm-icon">🛡️</span>
+            <div>
+              <h3 class="privacy-confirm-heading">
+                隱私安全確認提醒
+              </h3>
+              <p class="privacy-confirm-sub">
+                智能人生決策 · 個人隱私保護
+              </p>
+            </div>
+          </div>
+
+          <div class="privacy-confirm-alert-box">
+            <div class="privacy-confirm-alert-title">
+              <span>🔒</span>
+              <span>提醒：請勿填入真實個資</span>
+            </div>
+            <div class="privacy-confirm-alert-desc">
+              為維護您的隱私，請勿在問題中填寫<strong>真實姓名、電話、身分證字號或公司全名</strong>。
+            </div>
+          </div>
+
+          <div class="privacy-confirm-preview-box">
+            <div class="privacy-confirm-preview-head">
+              <span class="privacy-confirm-preview-label">📝 您的請示問題預覽：</span>
+              <button type="button" class="privacy-confirm-edit-btn" id="privacyConfirmEditBtn">
+                ✏️ 返回第 5 步修改問題
+              </button>
+            </div>
+            <div class="privacy-confirm-preview-content">
+              ${escapeHtml(previewText)}
+            </div>
+          </div>
+
+          <div class="privacy-confirm-actions">
+            <button type="button" class="btn btn-outline btn-sm" id="privacyConfirmCancelBtn" style="padding:8px 16px;">
+              返回修改
+            </button>
+            <button type="button" class="btn btn-gold btn-sm" id="privacyConfirmProceedBtn" style="padding:9px 24px;font-weight:900;font-size:0.92rem;box-shadow:0 0 16px rgba(245,158,11,0.4);">
+              ✓ 已確認
+            </button>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    modal.classList.add('show', 'active');
+
+    const closeModal = () => {
+      modal.classList.remove('show', 'active');
+    };
+
+    const handleConfirm = () => {
+      closeModal();
+      if (typeof onConfirmed === 'function') onConfirmed();
+    };
+
+    const handleEdit = () => {
+      closeModal();
+      state.wizard.currentStep = 5;
+      renderWizardStep();
+    };
+
+    modal.querySelector('#privacyConfirmProceedBtn')?.addEventListener('click', handleConfirm);
+    modal.querySelector('#privacyConfirmCancelBtn')?.addEventListener('click', handleEdit);
+    modal.querySelector('#privacyConfirmEditBtn')?.addEventListener('click', handleEdit);
+
+    modal.onclick = (e) => {
+      if (e.target === modal) closeModal();
+    };
   }
 
   function executeDecodingFlow(options = {}) {

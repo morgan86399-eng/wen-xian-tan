@@ -276,6 +276,73 @@ await check('已登入但缺點數回 402', async (env) => {
 
 console.log('\n[AI 呼叫順序]');
 
+await check('BlankAPI / grok-4.5 為第一順位，有 Groq 也先打 BlankAPI', async (env) => {
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+    if (String(url).includes('blankapi.com')) {
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: '{"summary":"blankapi-grok-ok"}' } }],
+          usage: { total_tokens: 18 }
+        })
+      };
+    }
+    throw new Error(`不該打到 ${url}`);
+  };
+  try {
+    const result = await generateReport({
+      ...env,
+      BLANKAPI_API_KEY: 'sk-test-blank',
+      GROQ_API_KEY: 'gsk_test',
+      GEMINI_API_KEY: 'AQ.test'
+    }, { systemPrompt: 's', userPrompt: 'u' });
+    assert.match(calls[0], /blankapi\.com/, '第一通應該打 BlankAPI');
+    assert.equal(calls.length, 1, 'BlankAPI 成功就不該再打 Groq 或 Gemini');
+    assert.equal(result.parsed.summary, 'blankapi-grok-ok');
+    assert.equal(result.model, 'grok-4.5');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
+await check('BlankAPI 失敗時依序降級換 Groq', async (env) => {
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    const href = String(url);
+    calls.push(href);
+    if (href.includes('blankapi.com')) {
+      return { ok: false, status: 500, text: async () => 'upstream error' };
+    }
+    if (href.includes('api.groq.com')) {
+      return {
+        ok: true,
+        json: async () => ({
+          choices: [{ message: { content: '{"summary":"groq-fallback-ok"}' } }],
+          usage: { total_tokens: 15 }
+        })
+      };
+    }
+    throw new Error(`不該打到 ${url}`);
+  };
+  try {
+    const result = await generateReport({
+      ...env,
+      BLANKAPI_API_KEY: 'sk-test-blank',
+      GROQ_API_KEY: 'gsk_test',
+      GEMINI_API_KEY: 'AQ.test'
+    }, { systemPrompt: 's', userPrompt: 'u' });
+    assert.match(calls[0], /blankapi\.com/, '第一通打 BlankAPI');
+    assert.match(calls[1], /api\.groq\.com/, 'BlankAPI 失敗後切換到 Groq');
+    assert.equal(result.parsed.summary, 'groq-fallback-ok');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 await check('Groq 是第一順位，有 Gemini 也先打 Groq', async (env) => {
   const calls = [];
   const realFetch = globalThis.fetch;

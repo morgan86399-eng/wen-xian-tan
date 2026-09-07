@@ -1,7 +1,11 @@
-/* Groq（可掛多把金鑰，逐把往下輪）→ Gemini → Workers AI */
+/* BlankAPI（grok-4.5 第一順位）→ Groq（可掛多把金鑰，逐把往下輪）→ Gemini → Workers AI */
 
 import { fetchWithTimeout } from './http.mjs';
 import { requireGroq } from './auth.mjs';
+
+/* BlankAPI / grok-4.5（weiyo 2026-09-07 指定為最優先順位） */
+const BLANKAPI_BASE_DEFAULT = 'https://blankapi.com/v1';
+const BLANKAPI_MODEL_DEFAULT = 'grok-4.5';
 
 /* 3.7-flash 回 503、3.6-flash 從 Cloudflare 打過去每次逾時，實測 3.5-flash 穩定約 1.3 秒 */
 const GEMINI_TEXT_DEFAULT = 'gemini-3.5-flash';
@@ -15,6 +19,22 @@ const PALM_VISION_PROMPT = '只描述掌心線條走向與紋路特徵，不下�
 
 function envText(env, name) {
   return String((env && env[name]) || '').trim();
+}
+
+export function blankApiKey(env) {
+  return envText(env, 'BLANKAPI_API_KEY');
+}
+
+export function hasBlankApi(env) {
+  return Boolean(blankApiKey(env));
+}
+
+function blankApiBaseUrl(env) {
+  return envText(env, 'BLANKAPI_BASE_URL') || BLANKAPI_BASE_DEFAULT;
+}
+
+function blankApiModel(env, model) {
+  return model || envText(env, 'BLANKAPI_MODEL') || BLANKAPI_MODEL_DEFAULT;
 }
 
 export function hasGemini(env) {
@@ -199,6 +219,42 @@ export async function callGeminiVision(env, imageBase64, { model } = {}) {
   return { text: String(extractText(payload) || '').trim(), model: usedModel, tokens: usageTokens(payload) };
 }
 
+export async function callBlankApiText(env, messages, { model, temperature = 0.5, jsonMode = true, keyLabel = 'BlankAPI' } = {}) {
+  const apiKey = blankApiKey(env);
+  if (!apiKey) throw new Error('BLANKAPI_API_KEY 未設定');
+  const usedModel = blankApiModel(env, model);
+  const baseUrl = blankApiBaseUrl(env).replace(/\/+$/, '');
+  const requestBody = {
+    model: usedModel,
+    temperature,
+    messages
+  };
+  if (jsonMode) requestBody.response_format = { type: 'json_object' };
+
+  const response = await fetchWithTimeout(
+    `${baseUrl}/chat/completions`,
+    {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody)
+    },
+    45000,
+    `${keyLabel} (${usedModel})`
+  );
+
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '');
+    throw new Error(`${keyLabel} (${usedModel}) 回應 ${response.status}${detail ? `：${detail.slice(0, 200)}` : ''}`);
+  }
+
+  const payload = await response.json();
+  const text = extractText(payload);
+  return { text, parsed: parseModelJson(text), model: usedModel, tokens: usageTokens(payload) };
+}
+
 /* Groq 這把金鑰每分鐘 8000 token（x-ratelimit-limit-tokens），額度按「實際用量」扣，
    但 max_tokens 不能大於分鐘上限，填 8192 會被退件。實測 8000 可以正常回（7.7 秒，實用 3671）。 */
 const GROQ_MAX_TOKENS = 8000;
@@ -298,7 +354,11 @@ export async function generateReport(env, { systemPrompt, userPrompt, jsonMode =
   ];
   const options = { jsonMode, temperature };
   const attempts = [];
-  // Groq 是第一順位（weiyo 2026-09-05 指定）。掛幾把金鑰就排幾輪，
+  // BlankAPI (grok-4.5) 是第一順位（weiyo 2026-09-07 指定）。
+  if (hasBlankApi(env)) {
+    attempts.push(() => callBlankApiText(env, messages, options));
+  }
+  // Groq 是第二順位。掛幾把金鑰就排幾輪，
   // 一把額度用完或出錯就換下一把，全部 Groq 都不行才輪到 Gemini，最後才是 Workers AI。
   const keys = groqKeys(env);
   keys.forEach((apiKey, index) => {

@@ -1698,6 +1698,148 @@ p {
   font-weight: 700;
 }
 
+/* ==========================================================================
+   Privacy Confirmation Modal (產出報告前個資防護二次確認彈窗)
+   ========================================================================== */
+.privacy-confirm-backdrop {
+  z-index: 10050 !important;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(4, 3, 12, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 16px;
+  animation: fadeIn 0.2s ease;
+}
+
+.privacy-confirm-backdrop.show,
+.privacy-confirm-backdrop.active {
+  display: flex !important;
+}
+
+.privacy-confirm-shell {
+  max-width: 480px;
+  width: 100%;
+  margin: auto;
+}
+
+.privacy-confirm-card {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-gold);
+  border-radius: var(--radius-lg);
+  padding: 26px 24px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.85), var(--shadow-gold);
+  position: relative;
+  animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.privacy-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.privacy-confirm-icon {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.privacy-confirm-heading {
+  margin: 0;
+  font-size: 1.22rem;
+  font-family: var(--font-serif);
+  color: var(--gold-bright);
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.privacy-confirm-sub {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.privacy-confirm-alert-box {
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px dashed rgba(245, 158, 11, 0.45);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.privacy-confirm-alert-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--gold-bright);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.privacy-confirm-alert-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.privacy-confirm-preview-box {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 20px;
+}
+
+.privacy-confirm-preview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.privacy-confirm-preview-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.privacy-confirm-edit-btn {
+  background: none;
+  border: none;
+  color: var(--gold-bright);
+  font-size: 0.78rem;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+}
+
+.privacy-confirm-preview-content {
+  font-size: 0.88rem;
+  color: #FFF;
+  max-height: 80px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.5;
+  padding: 2px 0;
+}
+
+.privacy-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  align-items: center;
+}
+
+@keyframes modalPopIn {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
 .wizard-upload-box {
   border: 2px dashed rgba(245, 158, 11, 0.4);
   border-radius: var(--radius-md);
