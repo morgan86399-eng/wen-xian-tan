@@ -1,0 +1,653 @@
+/* 從舊掌心解碼抽出：出生地氣泡地圖 + 十二時辰圓盤 */
+@media (prefers-reduced-motion: reduce) {
+  .shichen-orbit-bg { animation: none !important; }
+}
+.bubble-map-wrapper {
+  margin-top: 8px;
+  position: relative;
+  min-height: 360px;
+}
+
+/* 放射星軌大氣泡容器 (Radial Orbital Cloud Layout) */
+.big-bubbles-cloud {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  min-height: 360px;
+  margin: 14px auto 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 宇宙星系軌道光環背景 (Cosmic Orbit Background) */
+.big-bubbles-cloud::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  border: 1px dashed rgba(168, 85, 247, 0.28);
+  box-shadow: 0 0 50px rgba(139, 92, 246, 0.12) inset;
+  pointer-events: none;
+}
+
+.big-bubbles-cloud::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  border: 1px dotted rgba(245, 158, 11, 0.24);
+  pointer-events: none;
+}
+
+.big-bubble-item {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+.big-bubble-item:hover {
+  box-shadow: 0 12px 32px rgba(245, 158, 11, 0.6);
+  border-color: rgba(245, 158, 11, 0.9);
+  z-index: 25 !important;
+}
+
+.big-bubble-item:active {
+  transform: scale(0.94) !important;
+}
+
+/* 台灣主氣泡（位於最中央核心，最大、最醒目耀眼） */
+.big-bubble-tw {
+  position: relative; /* 居中核心 */
+  z-index: 12;
+  width: 145px;
+  height: 145px;
+  background: radial-gradient(circle at 35% 35%, rgba(245, 158, 11, 0.42), rgba(217, 70, 239, 0.52) 60%, rgba(30, 27, 75, 0.96));
+  border-color: rgba(245, 158, 11, 0.9);
+  box-shadow: 0 0 35px rgba(245, 158, 11, 0.45), 0 10px 25px rgba(0, 0, 0, 0.6);
+  animation: bubbleFloatCenter 4.2s ease-in-out infinite alternate;
+}
+.big-bubble-tw .bubble-icon { font-size: 2.2rem; }
+.big-bubble-tw .bubble-name { font-size: 1.1rem; font-weight: 800; color: #fef08a; margin-top: 2px; }
+.big-bubble-tw .bubble-hint { font-size: 0.72rem; color: #fde047; opacity: 0.95; }
+
+/* 放射四周 1：左上方（中國大陸） */
+.big-bubble-cn {
+  top: 10px;
+  left: 10px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle at 35% 35%, rgba(239, 68, 68, 0.35), rgba(168, 85, 247, 0.45) 65%, rgba(15, 23, 42, 0.9));
+  border-color: rgba(239, 68, 68, 0.7);
+  animation: bubbleFloatNW 4.8s ease-in-out infinite alternate;
+}
+.big-bubble-cn .bubble-icon { font-size: 1.6rem; }
+.big-bubble-cn .bubble-name { font-size: 0.92rem; font-weight: 700; color: #fecaca; }
+.big-bubble-cn .bubble-hint { font-size: 0.68rem; color: #fca5a5; opacity: 0.88; }
+
+/* 放射四周 2：右上方（港澳星馬） */
+.big-bubble-sea {
+  top: 10px;
+  right: 10px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle at 35% 35%, rgba(59, 130, 246, 0.35), rgba(147, 51, 234, 0.45) 65%, rgba(15, 23, 42, 0.9));
+  border-color: rgba(96, 165, 250, 0.7);
+  animation: bubbleFloatNE 4.5s ease-in-out infinite alternate;
+}
+.big-bubble-sea .bubble-icon { font-size: 1.55rem; }
+.big-bubble-sea .bubble-name { font-size: 0.92rem; font-weight: 700; color: #bae6fd; }
+.big-bubble-sea .bubble-hint { font-size: 0.68rem; color: #7dd3fc; opacity: 0.88; }
+
+/* 放射四周 3：左下方（亞洲鄰國） */
+.big-bubble-asia {
+  bottom: 10px;
+  left: 10px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle at 35% 35%, rgba(236, 72, 153, 0.35), rgba(99, 102, 241, 0.45) 65%, rgba(15, 23, 42, 0.9));
+  border-color: rgba(244, 114, 182, 0.7);
+  animation: bubbleFloatSW 5s ease-in-out infinite alternate;
+}
+.big-bubble-asia .bubble-icon { font-size: 1.55rem; }
+.big-bubble-asia .bubble-name { font-size: 0.92rem; font-weight: 700; color: #fbcfe8; }
+.big-bubble-asia .bubble-hint { font-size: 0.68rem; color: #f472b6; opacity: 0.88; }
+
+/* 放射四周 4：右下方（美國歐美） */
+.big-bubble-global {
+  bottom: 10px;
+  right: 10px;
+  width: 100px;
+  height: 100px;
+  background: radial-gradient(circle at 35% 35%, rgba(16, 185, 129, 0.35), rgba(59, 130, 246, 0.45) 65%, rgba(15, 23, 42, 0.9));
+  border-color: rgba(52, 211, 153, 0.7);
+  animation: bubbleFloatSE 5.2s ease-in-out infinite alternate;
+}
+.big-bubble-global .bubble-icon { font-size: 1.6rem; }
+.big-bubble-global .bubble-name { font-size: 0.92rem; font-weight: 700; color: #a7f3d0; }
+.big-bubble-global .bubble-hint { font-size: 0.68rem; color: #6ee7b7; opacity: 0.88; }
+
+/* 浮動微動動畫 (Floating Keyframes) */
+@keyframes bubbleFloatCenter {
+  0% { transform: translateY(0px) scale(1); }
+  100% { transform: translateY(-7px) scale(1.03); }
+}
+@keyframes bubbleFloatNW {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-6px) rotate(-3deg); }
+}
+@keyframes bubbleFloatNE {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(-7px) rotate(3deg); }
+}
+@keyframes bubbleFloatSW {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(6px) rotate(2deg); }
+}
+@keyframes bubbleFloatSE {
+  0% { transform: translateY(0px) rotate(0deg); }
+  100% { transform: translateY(7px) rotate(-2deg); }
+}
+
+@media (max-width: 480px) {
+  .big-bubbles-cloud {
+    min-height: 330px;
+    max-width: 350px;
+  }
+  .big-bubbles-cloud::before {
+    width: 260px;
+    height: 260px;
+  }
+  .big-bubbles-cloud::after {
+    width: 180px;
+    height: 180px;
+  }
+  .big-bubble-tw {
+    width: 126px;
+    height: 126px;
+  }
+  .big-bubble-tw .bubble-icon { font-size: 1.85rem; }
+  .big-bubble-tw .bubble-name { font-size: 0.98rem; }
+  .big-bubble-cn,
+  .big-bubble-sea,
+  .big-bubble-asia,
+  .big-bubble-global {
+    width: 86px;
+    height: 86px;
+  }
+  .big-bubble-cn { top: 4px; left: 4px; }
+  .big-bubble-sea { top: 4px; right: 4px; }
+  .big-bubble-asia { bottom: 4px; left: 4px; }
+  .big-bubble-global { bottom: 4px; right: 4px; }
+  .big-bubble-cn .bubble-icon,
+  .big-bubble-sea .bubble-icon,
+  .big-bubble-asia .bubble-icon,
+  .big-bubble-global .bubble-icon { font-size: 1.3rem; }
+  .big-bubble-cn .bubble-name,
+  .big-bubble-sea .bubble-name,
+  .big-bubble-asia .bubble-name,
+  .big-bubble-global .bubble-name { font-size: 0.8rem; }
+}
+
+/* ==========================================================================
+   分裂後的地圖排列容器 (Map Dispersion Container)
+   ========================================================================== */
+.bubble-scatter-stage {
+  animation: bubbleScatterIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes bubbleScatterIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.scatter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
+}
+.scatter-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fcd34d;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.back-btn-pill {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #e5e7eb;
+  padding: 5px 14px;
+  border-radius: 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.back-btn-pill:hover {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: #f59e0b;
+  color: #fcd34d;
+}
+
+/* ==========================================================================
+   台灣白線地圖與座標氣泡舞台 (Taiwan White-line Map & Geo-Coordinates Stage)
+   ========================================================================== */
+.taiwan-map-stage {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  height: 540px;
+  margin: 0 auto;
+  background: radial-gradient(circle at 50% 45%, rgba(30, 27, 75, 0.8) 0%, rgba(10, 10, 26, 0.98) 80%);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(168, 85, 247, 0.2) inset;
+}
+
+.taiwan-svg-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.tw-geo-chip {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: rgba(15, 23, 42, 0.88);
+  border: 1.5px solid rgba(255, 255, 255, 0.38);
+  color: #f3f4f6;
+  padding: 5px 9px;
+  border-radius: 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.55);
+  z-index: 5;
+  backdrop-filter: blur(4px);
+}
+
+.tw-geo-chip:hover {
+  background: rgba(245, 158, 11, 0.4);
+  border-color: #f59e0b;
+  color: #fef08a;
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.7);
+  z-index: 15;
+}
+
+.tw-geo-chip.active {
+  background: linear-gradient(135deg, #f59e0b, #ec4899);
+  border-color: #fef08a;
+  color: #fff;
+  font-weight: 800;
+  transform: translate(-50%, -50%) scale(1.2);
+  box-shadow: 0 0 22px rgba(245, 158, 11, 0.9);
+  z-index: 20;
+}
+
+@media (max-width: 480px) {
+  .taiwan-map-stage {
+    height: 500px;
+    max-width: 360px;
+  }
+  .tw-geo-chip {
+    padding: 4px 7px;
+    font-size: 0.72rem;
+    border-radius: 12px;
+  }
+}
+
+.geo-map-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.geo-map-stage {
+  position: relative;
+  width: 100%;
+  max-width: 440px;
+  height: 420px;
+  margin: 0 auto;
+  background: radial-gradient(circle at 50% 45%, rgba(30, 27, 75, 0.8) 0%, rgba(10, 10, 26, 0.98) 80%);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(168, 85, 247, 0.2) inset;
+}
+
+.geo-map-caption {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  z-index: 6;
+  color: #fcd34d;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+.geo-map-stage--china { height: 400px; }
+.geo-map-stage--sea { height: 520px; }
+.geo-map-stage--japan { height: 500px; }
+.geo-map-stage--korea { height: 420px; }
+.geo-map-stage--seasia { height: 500px; }
+.geo-map-stage--usa { height: 320px; }
+.geo-map-stage--canada { height: 280px; }
+.geo-map-stage--europe { height: 360px; }
+.geo-map-stage--oceania { height: 360px; }
+
+.geo-map-stage--china .tw-geo-chip,
+.geo-map-stage--seasia .tw-geo-chip {
+  padding: 4px 7px;
+  font-size: 0.7rem;
+}
+
+@media (max-width: 480px) {
+  .geo-map-stage {
+    max-width: 360px;
+  }
+  .geo-map-stage--china { height: 360px; }
+  .geo-map-stage--sea { height: 480px; }
+  .geo-map-stage--japan,
+  .geo-map-stage--seasia { height: 460px; }
+  .geo-map-stage--usa { height: 280px; }
+  .geo-map-stage--canada { height: 250px; }
+}
+
+/* 小氣泡樣式 */
+.sub-bubble-chip {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #f3f4f6;
+  padding: 7px 13px;
+  border-radius: 18px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  user-select: none;
+}
+.sub-bubble-chip:hover {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: #f59e0b;
+  color: #fef08a;
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
+}
+.sub-bubble-chip.active {
+  background: linear-gradient(135deg, #f59e0b, #ec4899);
+  border-color: #fef08a;
+  color: #fff;
+  font-weight: 800;
+  transform: scale(1.08);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.6);
+}
+
+
+/* ----------------------------------------------------
+   12 時辰星盤圖與子泡泡樣式 (12 Shichen Astrolabe Dial)
+   ---------------------------------------------------- */
+.shichen-dial-wrapper {
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.shichen-wheel-container {
+  position: relative;
+  width: 360px;
+  height: 360px;
+  margin: 10px auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+/* 天體星盤背景軌道環 */
+.shichen-orbit-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 270px;
+  height: 270px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(245, 158, 11, 0.35);
+  box-shadow: 0 0 40px rgba(139, 92, 246, 0.18) inset, 0 0 25px rgba(245, 158, 11, 0.12);
+  pointer-events: none;
+  animation: slow-rotate 120s linear infinite;
+}
+.shichen-orbit-bg::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  border: 1px dotted rgba(168, 85, 247, 0.3);
+}
+
+@keyframes slow-rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* 中央核心資訊樞紐 */
+.shichen-center-hub {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(30, 26, 62, 0.96) 0%, rgba(12, 10, 28, 0.96) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.25), 0 0 15px rgba(0, 0, 0, 0.6) inset;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8px;
+  pointer-events: none;
+  z-index: 2;
+  backdrop-filter: blur(10px);
+}
+.shichen-hub-icon {
+  font-size: 1.2rem;
+  margin-bottom: 2px;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.6));
+}
+.shichen-hub-title {
+  font-family: "Noto Serif TC", serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #FFFDF7;
+  line-height: 1.2;
+  background: linear-gradient(135deg, #FFFDF7 0%, #FDE68A 50%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.shichen-hub-desc {
+  font-size: 0.65rem;
+  color: #94A3B8;
+  margin-top: 2px;
+  line-height: 1.1;
+}
+
+/* 十二時辰子泡泡 (Clockwise Circular Bubbles) */
+.shichen-bubble {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(22, 19, 48, 0.88);
+  border: 1.5px solid rgba(245, 158, 11, 0.35);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: translate(-50%, -50%) rotate(var(--deg)) translateY(-135px) rotate(calc(-1 * var(--deg)));
+  backdrop-filter: blur(8px);
+  z-index: 5;
+  color: #F8FAFC;
+  padding: 2px;
+}
+.shichen-bubble-branch {
+  font-family: "Cinzel", "Noto Serif TC", serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #FDE68A;
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+.shichen-bubble-name {
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: #CBD5E1;
+  line-height: 1;
+  margin-top: 1px;
+}
+.shichen-bubble-range {
+  font-size: 0.52rem;
+  color: #94A3B8;
+  transform: scale(0.9);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Hover & Active States */
+.shichen-bubble:hover {
+  transform: translate(-50%, -50%) rotate(var(--deg)) translateY(-135px) rotate(calc(-1 * var(--deg))) scale(1.15);
+  border-color: rgba(245, 158, 11, 0.95);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.7);
+  background: rgba(35, 30, 75, 0.95);
+  z-index: 10;
+}
+.shichen-bubble.selected {
+  background: linear-gradient(135deg, #FFFDF7 0%, #FDE68A 30%, #F59E0B 100%);
+  border-color: #FFF;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.95), 0 0 10px rgba(255, 255, 255, 0.8);
+  transform: translate(-50%, -50%) rotate(var(--deg)) translateY(-135px) rotate(calc(-1 * var(--deg))) scale(1.18);
+  z-index: 12;
+}
+.shichen-bubble.selected .shichen-bubble-branch,
+.shichen-bubble.selected .shichen-bubble-name,
+.shichen-bubble.selected .shichen-bubble-range {
+  color: #070614 !important;
+  text-shadow: none;
+  font-weight: 800;
+}
+
+/* 不清楚時辰 底部專用按鈕 */
+.shichen-unknown-box {
+  width: 100%;
+  max-width: 360px;
+  margin: 4px auto 18px;
+}
+.shichen-unknown-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(22, 19, 48, 0.65);
+  border: 1px dashed rgba(245, 158, 11, 0.35);
+  border-radius: 16px;
+  padding: 12px 16px;
+  color: #CBD5E1;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(8px);
+}
+.shichen-unknown-btn:hover {
+  background: rgba(35, 30, 75, 0.85);
+  border-color: rgba(245, 158, 11, 0.8);
+  color: #FFF;
+  transform: translateY(-2px);
+}
+.shichen-unknown-btn.selected {
+  background: rgba(245, 158, 11, 0.18);
+  border-color: #F59E0B;
+  color: #FDE68A;
+  font-weight: 700;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.3);
+}
+.shichen-unknown-btn .unknown-icon {
+  font-size: 1.1rem;
+}
+.shichen-unknown-btn .unknown-text {
+  flex: 1;
+  text-align: left;
+}
+
+/* Responsive Adaptation for Smaller Mobile Screens (< 380px) */
+@media (max-width: 380px) {
+  .shichen-wheel-container {
+    width: 310px;
+    height: 310px;
+  }
+  .shichen-orbit-bg {
+    width: 230px;
+    height: 230px;
+  }
+  .shichen-center-hub {
+    width: 98px;
+    height: 98px;
+  }
+  .shichen-hub-title {
+    font-size: 0.78rem;
+  }
+  .shichen-hub-desc {
