@@ -1714,26 +1714,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const fullSearchText = `${questionText} ${roleText} ${goalText} ${relationText}`.toLowerCase();
 
     // 專屬情境需求判定 (User Situations & Intent Detection)
-    const isSingleSeeking = /single|單身|尋覓|正緣|桃花|找對象|另一半|姻緣|孤單|戀愛|脫單/.test(fullSearchText);
-    const isBreakupOrConflict = /breakup|conflict|divorced|分手|冷戰|吵架|挽回|看清|暴力|離開|情傷|心結|復合/.test(fullSearchText);
-    const isMarriedOrCouple = /married|dating|夫妻|先生|太太|結婚|婚姻|攜手|相處|公婆|熱戀/.test(fullSearchText);
+    const isSingleSeeking = /single|單身|尋覓|正緣|桃花|找對象|另一半|姻緣|孤單|戀愛|脫單|紅線/.test(fullSearchText);
+    const isBreakupOrConflict = /breakup|conflict|divorced|分手|冷戰|吵架|挽回|看清|暴力|家暴|劈腿|外遇|斷開|離開|爛桃花|情傷|心結|復合/.test(fullSearchText);
+    const isMarriedOrCouple = /married|dating|夫妻|伴侶|另一半|先生|太太|老公|老婆|結婚|婚姻|攜手|相處|公婆|熱戀/.test(fullSearchText);
     const isFriendOrPast = /知己|朋友|重新聯繫|好感|友達以上|遺憾/.test(fullSearchText);
+    const isLoveBurnout = /一句話都不想講|話都不想說|無話可說|疲憊|很累|回家|不想講話|冷淡|耗竭|掏空|沒話聊|相處累/.test(fullSearchText);
 
     const isJobSeeking = /job_seeking|求職|換工作|面試|履歷|待業|錄取|轉職|第一家|跳槽|上班/.test(fullSearchText);
     const isWorkWisdom = /智慧|理解|溝通|表達|思路|提升|得心應手|重點|順遂/.test(fullSearchText);
+    const isWorkAiOrMidAge = /ai|換工作|中年|年紀|老|留在原位|觀察|架構|技術主管|裁員|房貸/.test(fullSearchText);
+    const isWorkImposter = /做錯事|怕做錯|辭退|被辭|加班|不夠好|不敢問|新人|實習|討好|責怪/.test(fullSearchText);
+    const isWorkEthics = /單據|不合規|放行|合規|違規|離職|退休金|責任|會計|法務|審計/.test(fullSearchText);
+    const isWorkStudent = /買不起房|拼大學|拚大學|大學|高中|高二|升學|躺平|努力也|唸書|迷惘/.test(fullSearchText);
+    const isManagerPressure = /數字沒到|這組可能被裁|裁員|團隊|業績|中階|主管說明/.test(fullSearchText);
 
     const isBusiness = /業績|團隊|低迷|公司|生意|合夥|創業|業務/.test(fullSearchText);
     const isExamOrSuccession = /執照|考試|接班|傳承|會計師|升等/.test(fullSearchText);
+    const isCareerPivot = /流量|美妝|題材|轉型|自媒體|網紅|內容|創作者|少了一半/.test(fullSearchText);
+    const isCareerSocialOrValue = /倡議|非營利|理念|轉去企業|上班|低薪|企業|社會組織|同溫層/.test(fullSearchText);
+    const isFundraisingOrCashflow = /融資|縮編|保住現金|擴張|現金剩|投資人|過橋/.test(fullSearchText);
 
-    const isLawsuit = /官司|債務|法院|免賠|被訴|法官|律師/.test(fullSearchText);
+    const isLawsuit = /官司|債務|法院|免賠|被訴|法官|律師|幾百萬/.test(fullSearchText);
     const isInvestment = /投資|本金|退款|借|拿回錢|六十萬/.test(fullSearchText);
     const isIncome = /款項|入帳|報價|設計|收入|加薪|意外之財/.test(fullSearchText);
+    const isCashflowLeak = /團購|每個月都在轉|存款一直沒有增加|漏財|流水|做生意|開源|留不住|學顯化|課程|花費|進修/.test(fullSearchText);
+    const isSavingDownPayment = /頭期款|存頭期|存錢|買不起房|物價一直漲|三萬八|每月固定存|薪水/.test(fullSearchText);
+    const isContractorDebt = /倒帳|工班|薪水要怎麼發|發薪|工程統包|師傅/.test(fullSearchText);
 
     const isBuyingHouse = /買房|置產|新成屋|頭期款|房子|新家|看房|換屋|購置|購屋|起家厝|房貸|搬家|搬遷/.test(fullSearchText);
+    const isParentChildConflict = /房門|鎖著|不跟我講話|女兒|兒子|叛逆|哪裡做錯|不理我|心結|冷戰/.test(fullSearchText);
+    const isElderConflict = /退休|沒人要聽|每次見面都在吵|吵架|跟兒子|父子|長輩|世代/.test(fullSearchText);
+    const isAloneSenior = /一個人住|倒在家裡|沒人知道|獨居|老人|急難|先跟誰講/.test(fullSearchText);
+    const isNeetWithdrawal = /兩年沒有出門|不出門|停止金援|開口|半夜出房間|繭居|肯老|啃老/.test(fullSearchText);
     const isElderCare = /生病|住院|開刀|手術|心臟|骨折|復原|長輩|母親|父親|阿嬤|大姊/.test(fullSearchText);
     const isInsomnia = /失眠|酒精|喝酒|睡眠|放鬆|安眠|戒酒/.test(fullSearchText);
     const isLifeEnd = /最後一程|釋懷|人生終點|安詳|生死/.test(fullSearchText);
 
+    const isChildParentingOrRebellion = /國中|國二|不跟我說話|不理我|不在家|怎麼相處|叛逆|疏離|單親|溝通|上國中/.test(fullSearchText);
     const isPregnancy = /pre_pregnancy|pregnant|備孕|懷孕|生產|剖腹|陣痛|破水|寶寶/.test(fullSearchText);
     const isChildPeace = /電梯|陰影|害怕|受驚|收驚|哭鬧|安神/.test(fullSearchText);
     const isPalmistry = /掌紋|手相|智慧線|生命線|感情線|事業線|流年|避坑|破財|投資/.test(fullSearchText);
@@ -1757,33 +1774,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 2. 篇幅情境高精度加權 (Tailored Persona Matching)
       if (themeId === 'love') {
-        if (isSingleSeeking && (story.id === 'story_single_love' || story.keywords.includes('單身') || story.keywords.includes('正緣'))) {
-          score += 150;
-        }
-        if (isBreakupOrConflict && (story.id === 'story_14' || story.keywords.includes('分手') || story.keywords.includes('家暴'))) {
-          score += 150;
-        }
-        if (isMarriedOrCouple && (story.id === 'story_27' || story.keywords.includes('夫妻'))) {
-          score += 150;
-        }
-        if (isFriendOrPast && story.id === 'story_19') {
-          score += 160;
+        if (isLoveBurnout && story.id === 'story_love_burnout') score += 200;
+        if (isLoveBurnout && story.id === 'story_27') score += 150;
+        if (isSingleSeeking && (story.id === 'story_single_love' || story.keywords.includes('單身') || story.keywords.includes('正緣'))) score += 150;
+        if (isBreakupOrConflict && (story.id === 'story_14' || story.keywords.includes('分手') || story.keywords.includes('家暴'))) score += 150;
+        if (isMarriedOrCouple && !isLoveBurnout && (story.id === 'story_27' || story.keywords.includes('夫妻'))) score += 150;
+        if (isFriendOrPast && story.id === 'story_19') score += 160;
+
+        // 排他性：伴侶倦怠者不推薦單身找正緣或家暴分手
+        if (isLoveBurnout && (story.id === 'story_single_love' || story.id === 'story_14')) {
+          score -= 200;
         }
       } else if (themeId === 'work') {
-        if (isJobSeeking && (story.id === 'story_18' || story.id === 'story_31')) {
-          score += 130;
-        }
-        if (isWorkWisdom && story.id === 'story_26') {
-          score += 140;
+        if (isWorkAiOrMidAge && story.id === 'story_work_ai_crisis') score += 190;
+        if (isWorkImposter && story.id === 'story_work_imposter') score += 190;
+        if (isWorkEthics && story.id === 'story_work_ethics') score += 190;
+        if (isWorkStudent && story.id === 'story_work_student_direction') score += 190;
+        if (isManagerPressure && story.id === 'story_work_ai_crisis') score += 170;
+        if ((isWorkAiOrMidAge || isWorkImposter || isWorkEthics || isWorkWisdom) && story.id === 'story_26') score += 140;
+        if (isJobSeeking && (story.id === 'story_18' || story.id === 'story_31')) score += 130;
+
+        // 排他性：在職高壓與倫理問題不推薦新鮮人求職
+        if ((isWorkEthics || isWorkImposter || isWorkAiOrMidAge) && (story.id === 'story_18' || story.id === 'story_31')) {
+          score -= 100;
         }
       } else if (themeId === 'career') {
+        if (isCareerPivot && story.id === 'story_career_pivot') score += 200;
+        if (isCareerSocialOrValue && story.id === 'story_career_value') score += 200;
+        if (isFundraisingOrCashflow && story.id === 'story_16') score += 180;
+        if (isFundraisingOrCashflow && story.id === 'story_13') score += 150;
         if (isBusiness && story.id === 'story_16') score += 140;
         if (isExamOrSuccession && story.id === 'story_11') score += 140;
+
+        // 排他性：網紅轉型與倡議跳槽不推薦考會計師接班
+        if ((isCareerPivot || isCareerSocialOrValue || isFundraisingOrCashflow) && story.id === 'story_11') {
+          score -= 200;
+        }
       } else if (themeId === 'wealth') {
-        if (isLawsuit && story.id === 'story_12') score += 140;
+        if (isCashflowLeak && story.id === 'story_wealth_cashflow') score += 200;
+        if (isSavingDownPayment && story.id === 'story_wealth_saving') score += 200;
+        if (isContractorDebt && story.id === 'story_13') score += 180;
+        if (isContractorDebt && story.id === 'story_12') score += 160;
+        if (isLawsuit && story.id === 'story_12') score += 160;
         if (isInvestment && story.id === 'story_13') score += 140;
         if (isIncome && story.id === 'story_22') score += 140;
+
+        // 排他性：存頭期款與小本漏財不推薦舊債務官司免賠
+        if ((isCashflowLeak || isSavingDownPayment) && story.id === 'story_12') {
+          score -= 150;
+        }
       } else if (themeId === 'family') {
+        if (isParentChildConflict && story.id === 'story_family_parenting') score += 210;
+        if (isElderConflict && story.id === 'story_family_conflict') score += 210;
+        if (isAloneSenior && story.id === 'story_family_alone') score += 210;
+        if (isNeetWithdrawal && story.id === 'story_family_neet') score += 210;
+
+        if (isParentChildConflict && story.id === 'story_family_conflict') score += 140;
+        if (isElderConflict && story.id === 'story_family_parenting') score += 140;
+        if (isAloneSenior && story.id === 'story_family_conflict') score += 140;
+        if (isNeetWithdrawal && story.id === 'story_family_alone') score += 140;
+
         if (isBuyingHouse && (story.id === 'story_17' || story.id === 'story_28')) score += 180;
         if (isInsomnia && story.id === 'story_01') score += 150;
         if (isLifeEnd && story.id === 'story_23') score += 150;
@@ -1792,21 +1842,34 @@ document.addEventListener('DOMContentLoaded', () => {
         if (/大姊|姊/.test(fullSearchText) && story.id === 'story_06') score += 150;
         if (/母親|媽/.test(fullSearchText) && (story.id === 'story_03' || story.id === 'story_04')) score += 140;
 
-        // 意圖排他：買房問題嚴格排除任何非買房/換屋類見證
+        // 意圖排他：買房問題嚴格排除非房產；非買房問題嚴格排除買房故事
         if (isBuyingHouse && !story.keywords?.some(kw => /買房|置產|新成屋|房子|新家|看房|換屋|頭期款|起家厝|購屋/.test(kw))) {
           score -= 300;
         }
+        if (!isBuyingHouse && (story.id === 'story_17' || story.id === 'story_28')) {
+          score -= 150;
+        }
         // 長輩安康問題排除買房見證
         if (isElderCare && (story.id === 'story_17' || story.id === 'story_28')) {
-          score -= 100;
+          score -= 150;
+        }
+        // 親子爭執與長輩生活困擾排除醫療手術
+        if ((isParentChildConflict || isElderConflict || isAloneSenior || isNeetWithdrawal) && (story.id === 'story_03' || story.id === 'story_04' || story.id === 'story_05' || story.id === 'story_06' || story.id === 'story_20' || story.id === 'story_23')) {
+          score -= 120;
         }
       } else if (themeId === 'children') {
+        if (isChildParentingOrRebellion && story.id === 'story_children_rebellion') score += 210;
         if (isPregnancy && story.id === 'story_15') score += 150;
         if (isChildPeace && story.id === 'story_21') score += 150;
         if (isPalmistry && story.id === 'story_08') score += 150;
         if (/手指|板機指/.test(fullSearchText) && story.id === 'story_02') score += 150;
         if (/眼睛|畏光/.test(fullSearchText) && story.id === 'story_07') score += 150;
         if (/流產|無緣/.test(fullSearchText) && story.id === 'story_10') score += 150;
+
+        // 親職溝通與叛逆排他：不推薦幼童手指板機指或眼睛畏光
+        if (isChildParentingOrRebellion && (story.id === 'story_02' || story.id === 'story_07')) {
+          score -= 200;
+        }
       }
 
       // 3. 泛用關鍵字命中增益
