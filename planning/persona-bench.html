@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多角色報告評分 · 一眼看完</title>
+<style>
+:root {
+  --bg:#0C0A1C; --card:#14122A; --line:rgba(245,158,11,.28);
+  --gold:#F59E0B; --gold2:#FDE68A; --text:#F8FAFC; --muted:#94A3B8;
+  --pass:#34D399; --mid:#FBBF24; --low:#F87171;
+}
+* { box-sizing:border-box; }
+html,body { margin:0; background:
+  radial-gradient(1200px 600px at 10% -10%, rgba(245,158,11,.12), transparent 55%),
+  var(--bg); color:var(--text); font-family:"PingFang TC","Noto Sans TC",sans-serif; }
+body { padding:20px 16px 80px; }
+.wrap { max-width:980px; margin:0 auto; }
+.hero {
+  position:sticky; top:0; z-index:20;
+  background:rgba(12,10,28,.92); backdrop-filter:blur(10px);
+  border:1px solid var(--line); border-radius:18px; padding:16px 18px 14px;
+  margin-bottom:18px;
+}
+.hero h1 { margin:0 0 6px; font-size:1.35rem; letter-spacing:.04em; }
+.hero .lead { margin:0; color:var(--gold2); font-size:1.02rem; }
+.stats { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.stat, .chip {
+  border:1px solid var(--line); border-radius:999px; padding:7px 14px;
+  background:#1A1733; cursor:pointer; color:var(--text); font-size:.92rem;
+}
+.stat b, .chip b { font-size:1.15rem; }
+.stat.pass, .chip.pass { color:var(--pass); border-color:rgba(52,211,153,.4); }
+.stat.mid, .chip.mid { color:var(--mid); border-color:rgba(251,191,36,.4); }
+.stat.low, .chip.low { color:var(--low); border-color:rgba(248,113,113,.45); }
+.chip.active { outline:2px solid var(--gold); }
+.hint { color:var(--muted); font-size:.82rem; margin:8px 0 0; }
+.card {
+  background:var(--card); border:1px solid var(--line); border-radius:16px;
+  padding:16px; margin:12px 0; scroll-margin-top:110px;
+}
+.card.low { border-color:rgba(248,113,113,.55); box-shadow:0 0 0 1px rgba(248,113,113,.15) inset; }
+.card.mid { border-color:rgba(251,191,36,.4); }
+.card.pass { border-color:rgba(52,211,153,.28); }
+.card header { display:flex; gap:14px; align-items:center; }
+.score {
+  width:72px; height:72px; border-radius:18px; display:grid; place-items:center;
+  font-size:1.7rem; font-weight:800; flex-shrink:0;
+}
+.score.pass { background:rgba(52,211,153,.15); color:var(--pass); }
+.score.mid { background:rgba(251,191,36,.14); color:var(--mid); }
+.score.low { background:rgba(248,113,113,.16); color:var(--low); }
+.who h2 { margin:0; font-size:1.2rem; }
+.meta { margin:6px 0 0; color:var(--muted); font-size:.86rem; }
+.badge { display:inline-block; padding:2px 8px; border-radius:999px; font-weight:700; }
+.badge.pass { background:rgba(52,211,153,.18); color:var(--pass); }
+.badge.mid { background:rgba(251,191,36,.18); color:#FCD34D; }
+.badge.low { background:rgba(248,113,113,.2); color:#FCA5A5; }
+.why { margin:12px 0 8px; line-height:1.65; font-size:1.02rem; }
+.why mark {
+  background:linear-gradient(transparent 60%, rgba(245,158,11,.35) 60%);
+  color:inherit; padding:0 2px;
+}
+.card.low .why mark { background:linear-gradient(transparent 55%, rgba(248,113,113,.45) 55%); }
+details { margin-top:6px; }
+summary { cursor:pointer; color:var(--gold2); font-weight:700; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+@media (max-width:720px) { .grid2 { grid-template-columns:1fr; } .score { width:60px; height:60px; font-size:1.4rem; } }
+section h3 { margin:0 0 6px; font-size:.82rem; letter-spacing:.12em; color:var(--gold); text-transform:uppercase; }
+.q,.t,.s,.goal { margin:0 0 8px; line-height:1.6; color:#E2E8F0; font-size:.92rem; }
+.goal { color:var(--muted); }
+ul { margin:0; padding-left:0; list-style:none; }
+li { padding:7px 10px; border-radius:10px; margin:6px 0; font-size:.92rem; line-height:1.45; }
+li.hit { background:rgba(52,211,153,.12); border-left:3px solid var(--pass); }
+li.miss { background:rgba(248,113,113,.14); border-left:3px solid var(--low); }
+li.none { color:var(--muted); }
+.foot { color:var(--muted); font-size:.78rem; margin-top:24px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>多角色報告評分 · 一眼看完</h1>
+    <p class="lead">20 份正式站真實報告：<b>9 符合</b>／<b>5 部分符合</b>／<b>6 低分</b>。低分已排在最上面。</p>
+    <div class="stats">
+      <button class="chip active" data-f="all">全部 20</button>
+      <button class="chip low" data-f="low">先看低分 <b>6</b></button>
+      <button class="chip mid" data-f="mid">部分符合 <b>5</b></button>
+      <button class="chip pass" data-f="pass">符合 <b>9</b></button>
+    </div>
+    <p class="hint">黃底是結論。點卡片「看他問了什麼」才展開全文。綠條＝有對到，紅條＝寫錯或沒寫。</p>
+  </div>
+  
+<article class="card low" data-v="low" id="p-anxious-manager">
+  <header>
+    <div class="score low">49</div>
+    <div class="who">
+      <h2>楊政達</h2>
+      <p class="meta"><span class="badge low">低分：需改善</span> 工作篇 · Groq</p>
+    </div>
+  </header>
+  <p class="why"><mark>捏造「流量仍在、下單率掉 2 百分點」</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我是電商營運副理。下週 Q3 Review，數字再上不來，我擔心整個組被端掉。我已經常對組員說皮繃緊一點。現在只剩一週，我該先救哪個數字、怎麼跟老闆講，才不會把人都嚇跑？</p>
+        <p class="goal">期望：一週內做得到的動作、會議怎麼講、不要保證一定保組。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">一週內逆轉 Q3 數字的關鍵行動</p>
+        <p class="s">聚焦轉換率、快速資料檢視、分配資源、用事實說服老闆，避免團隊恐慌，七天內可見改善。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">Q3 Review</li><li class="hit">一週行動</li><li class="hit">不要再喊皮繃緊</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">捏造下單率掉2百分點</li><li class="miss">捏造過去兩週流量仍在</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card low" data-v="low" id="p-influencer">
+  <header>
+    <div class="score low">49</div>
+    <div class="who">
+      <h2>林若涵</h2>
+      <p class="meta"><span class="badge low">低分：需改善</span> 事業篇 · Grok</p>
+    </div>
+  </header>
+  <p class="why"><mark>前半拒週日無酬對了，後半竄入上一份的「過橋融資／AI SaaS」</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">朋友邀週日新品聚會。流程要交三支影片且沒有酬勞。週日我已留給家人。合作我習慣先寫修改次數，週二才回信。這場我不想去，但又怕得罪人。該怎麼回？</p>
+        <p class="goal">期望：週日不工作；沒酬勞、無限修改就不接；回覆可週二寄出。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">朋友邀週日新品聚會你不接，該這週二直接回覆底線</p>
+        <p class="s">朋友邀週日新品聚會你不接，該這週二直接回覆底線。直接判斷不該去，因為無酬勞、無限修改、週日已留給家人。優先講清楚不接，確保底線。這個月先直接回覆朋友，列出理由，避免被拖著走。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">週日留給家人</li><li class="hit">無酬不接</li><li class="hit">週二回信</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">竄入過橋融資</li><li class="miss">竄入AI SaaS跑道</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card low" data-v="low" id="p-petty-bourgeois">
+  <header>
+    <div class="score low">49</div>
+    <div class="who">
+      <h2>溫郁雯</h2>
+      <p class="meta"><span class="badge low">低分：需改善</span> 財運篇 · Groq</p>
+    </div>
+  </header>
+  <p class="why"><mark>一千八不報對了，卻把緊急金12萬寫成120萬</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">同事邀週末手作課，我有興趣所以先看費用時間。後來是一千八、來回三小時。我想這次先不報，下次附近有短課再約。月休閒預算大約三千，要留十二萬緊急金。嘴上有興趣不等于要買。升遷名額少，我在整理企劃成果準備轉職。這筆課該不該報？</p>
+        <p class="goal">期望：週日晚二十五分鐘整理一份成果，現有文件、零費用；三百元一小時的課才再考慮。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">手作課報名決策報告</p>
+        <p class="s">以儲蓄為主、守住緊急金、先投資轉職，只有每小時≤300元且不超預算時才報名手作課。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">1800先不報</li><li class="hit">每小時300才再考慮</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">緊急金12萬寫成120萬</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card low" data-v="low" id="p-senior-engineer">
+  <header>
+    <div class="score low">50</div>
+    <div class="who">
+      <h2>柯明哲</h2>
+      <p class="meta"><span class="badge low">低分：需改善</span> 工作篇 · Llama保底</p>
+    </div>
+  </header>
+  <p class="why"><mark>空話溝通，沒給重構成本／時程／最小改動清單</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我是一線科技廠資深工程師。現在這套架構沒考慮並發擴展，重構成本很高，業務邏輯也很亂。主管催下週就要新功能。我該先擋重構、還是先做能上線的最小改動？請給我可執行、有時間成本的做法，不要空話激勵。</p>
+        <p class="goal">期望：要有時程、人力成本、以及不做會怎樣；不要保證一定成功。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">一線科技廠資深工程師的困境</p>
+        <p class="s">一線科技廠資深工程師面臨著艱難的決定，需要考慮短期和長期的需求，快速做出決定和行動，同時也要有效地與主管和團隊溝通。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">下週要新功能</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">沒有成本數字</li><li class="miss">沒有最小改動清單</li><li class="miss">建議只剩「去溝通」</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card low" data-v="low" id="p-overseas-student">
+  <header>
+    <div class="score low">50</div>
+    <div class="who">
+      <h2>杜家瑋</h2>
+      <p class="meta"><span class="badge low">低分：需改善</span> 工作篇 · Llama保底</p>
+    </div>
+  </header>
+  <p class="why"><mark>有提到80美元，沒明確「這次不報名改線上20分鐘」</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我在美國讀碩二。同學邀週六求職午餐，門票八十美元、交流安排不清楚。我想改約學長線上談二十分鐘。遠距交往兩年，畢業去處還沒談完。生活費要算到哪一個月，不用預期薪資算還款。這週求職我該把時間花在哪？</p>
+        <p class="goal">期望：免費練一次兩分鐘自我介紹；不借款買求職保證。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">求職策略與時間管理</p>
+        <p class="s">本報告提供求職策略與時間管理的建議，幫助你有效地管理時間和資源，集中精力在最重要的求職活動上。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">提到八十美元門票</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">沒說這次不報名</li><li class="miss">空話求職節奏</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card low" data-v="low" id="p-counselor">
+  <header>
+    <div class="score low">59</div>
+    <div class="who">
+      <h2>簡心儀</h2>
+      <p class="meta"><span class="badge low">低分：需改善</span> 工作篇 · Gemini</p>
+    </div>
+  </header>
+  <p class="why"><mark>十二點／一點前入座對了，卻推創業貸款</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我是自費所諮商心理師，週六上午有班、十二點才結束。朋友邀週六咖啡，後來改十二點半、只兩人、附近店。我可以訂一點前能入座的那間。私人相處不要一直給專業意見，也不能拿還沒預約的收入去付固定費用。開所還沒估完租金人力，不要把我說成已經要創業。這週六怎麼排？</p>
+        <p class="goal">期望：準時結束會談；工作延長就提前改約；零費用記超時原因兩週。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">守住週六時間防線與財務底線，用精準數據定錨你的獨立執業之路</p>
+        <p class="s">本週核心在於建立精準的時程防線與財務邊界。週六聚會前須主動定錨聊天範圍，拒絕免費諮商；工作超時則果斷改約，並記錄原因兩週。開所規劃應暫緩大額支出，下週一向主力銀行評估信貸與創業貸款，用精確的租金人力數據取代預期收入，穩健佈局。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">十二點結束</li><li class="hit">一點前入座</li><li class="hit">私人場合不諮商</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">推創業貸款</li><li class="miss">違反不拿未預約收入</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card mid" data-v="mid" id="p-passionate-sales">
+  <header>
+    <div class="score mid">60</div>
+    <div class="who">
+      <h2>蔡宗憲</h2>
+      <p class="meta"><span class="badge mid">部分符合</span> 工作篇 · Groq</p>
+    </div>
+  </header>
+  <p class="why"><mark>把週六聚餐寫成看屋，週一晚餐被套上 13:30 離席</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我是房仲店主任。週一晚餐要留給交往對象，臨時客戶只能用事先講好的備用時段。朋友邀週六聚餐，晚上可能有帶看。後來改中午十二點、離店十分鐘，我一點半前要離席。未入帳佣金我不會拿來花。這餐該怎麼安排才不會失約？</p>
+        <p class="goal">期望：零成本先核對未收款；不保證房價上漲；準時離席。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">兼顧約會與客戶的時間管理攻略</p>
+        <p class="s">先鎖定備用時段、核對未收佣金、設定離席底線，依序聯絡、確認、提醒，即可保證週六午看與週一晚餐不衝突。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">13:30前離席</li><li class="hit">核對未收佣金</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">週六聚餐被寫成看屋</li><li class="miss">週一晚餐被套13:30</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card mid" data-v="mid" id="p-isolated-youth">
+  <header>
+    <div class="score mid">64</div>
+    <div class="who">
+      <h2>韓宇晨</h2>
+      <p class="meta"><span class="badge mid">部分符合</span> 工作篇 · Groq</p>
+    </div>
+  </header>
+  <p class="why"><mark>聚餐18–19點、200元有；把每週兩份改成每天狂投</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我離職四個月，住父母出資的小套房，家援約再兩個月要重談。我在找固定班表的入門職缺，不付求職押金。同學邀週末聚餐，我問幾個人、可能只待一小時。後來是三位熟人、每人二百元、能自行離席。我可以六點到七點先回家。這週求職跟聚餐怎麼排？</p>
+        <p class="goal">期望：週二下午二十分鐘投一份核對過的職缺，零費用；電話難就先用文字問。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">四天內兼顧求職與聚餐的行動排程</p>
+        <p class="s">先把每天上午至下午劃為求職時間，週二投遞、週三跟進、週四修簡歷、週五發冷郵件，週六18-19點參加聚餐，立即列出五家目標公司並於今天投遞第一封，確保兩個月內穩定收入。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">六點到七點回家</li><li class="hit">每人200元</li><li class="hit">固定班表</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">每天狂投（人格是每週兩份）</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card mid" data-v="mid" id="p-single-father">
+  <header>
+    <div class="score mid">72</div>
+    <div class="who">
+      <h2>謝文彬</h2>
+      <p class="meta"><span class="badge mid">部分符合</span> 小孩篇 · Grok</p>
+    </div>
+  </header>
+  <p class="why"><mark>接送／七點／三個日期有；把「不想當面談就改傳訊」寫成「不要當面談」</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我是跨縣市貨車司機，離婚，女兒十四歲週間住阿嬤家。妹妹代接要提前兩天。朋友邀週六晚餐，我要先確認接送。餐廳若在女兒活動場地旁、七點結束，我可以參加但七點得去接她，還要問過女兒。週末加班曾經讓我錯過運動會。接下來怎麼排才不會漏接？</p>
+        <p class="goal">期望：週日飯後十分鐘看紙本行程，零費用；女兒不想當面談就傳三個日期。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">安排接送女兒以避免錯過活動與漏接</p>
+        <p class="s">孩子最需要穩定接送避免漏接活動，你要調整互動方式主導安排，家庭學校觀察接送準時度和活動場地，現在就列出女兒活動日期傳給她三個選項，確保紙本行程零費用不漏接。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">七點去接</li><li class="hit">紙本行程零費用</li><li class="hit">傳三個日期</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">扭曲成不要當面談</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card mid" data-v="mid" id="p-mother">
+  <header>
+    <div class="score mid">80</div>
+    <div class="who">
+      <h2>林秀芬</h2>
+      <p class="meta"><span class="badge mid">部分符合</span> 家庭篇 · Groq</p>
+    </div>
+  </header>
+  <p class="why"><mark>把在外租屋的女兒拉回來陪診，違反「核對範圍限於自己負責的部分」</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我想週日晚飯後用十分鐘跟家人確認下週誰陪診，不要每次都取消我自己的課。女兒二十六歲在外租屋、自己付生活費。非必要支出超過三千元我會隔天再決定。朋友邀週二烘焙課，但那是我縫紉課時間。我該怎麼排，才不會把孩子的事全攬下來？</p>
+        <p class="goal">期望：十分鐘、零成本；時間費用有範圍才報名單次活動；不代墊、不替孩子報名。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">十分鐘排好陪診，保留自己的課程</p>
+        <p class="s">先確定陪診排程、保護縫紉課、調整烘焙課，三步即時執行，避免臨時取消與過度負擔。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">十分鐘確認陪診</li><li class="hit">保護縫紉課</li><li class="hit">烘焙課可婉拒</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">請女兒挑兩天陪診</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card pass" data-v="pass" id="p-entrepreneur">
+  <header>
+    <div class="score pass">86</div>
+    <div class="who">
+      <h2>陸震華</h2>
+      <p class="meta"><span class="badge pass">符合</span> 事業篇 · Grok</p>
+    </div>
+  </header>
+  <p class="why"><mark>有降條件先拿錢；夾了銀行過橋與更新履歷</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我是 AI SaaS 創辦人。我對外說這輪過橋融資進來估值會翻三倍，但其實帳上現金撐不久。我該不該這週就降條件先拿錢，還是繼續撐估值？請按跑道月數與可做的下一步講，不要雞湯。</p>
+        <p class="goal">期望：要有現金跑道、本週可做的一件事、以及不保證融資一定進來。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">AI SaaS founder現金撐不久，該這週降過橋融資條件先拿錢</p>
+        <p class="s">你AI SaaS founder帳上現金撐不久，該這週降過橋融資條件先拿錢。直接判斷不該繼續撐估值，否則風險高。優先評估現金與跑道月數，確保底線。這個月先約談投資方、找銀行談過橋融資，把現金流控制好。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">這週降條件先拿錢</li><li class="hit">先算現金跑道</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">夾帶更新履歷</li><li class="miss">銀行過橋不一定適用</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card pass" data-v="pass" id="p-retired-teacher">
+  <header>
+    <div class="score pass">88</div>
+    <div class="who">
+      <h2>曾國榮</h2>
+      <p class="meta"><span class="badge pass">符合</span> 家庭篇 · Groq</p>
+    </div>
+  </header>
+  <p class="why"><mark>九十分鐘、只帶前半段有；回信抄送太太違反「太太不是助手」</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">鄰居邀我週末主持讀書會。題目有意思，但我還沒接，因為沒看到時長。若有九十分鐘議程、共同主持，我可以帶前半段，不接全程，好留問答、準備不超過兩小時。太太不是我的助手。我該怎麼回覆才不會被拖成無限修改？</p>
+        <p class="goal">期望：先看結束時間與主持人；準備不逾兩小時；可自由離席。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">把讀書會主持限制在兩小時內的直接回覆策略</p>
+        <p class="s">先確認時長與共同主持，明確說明只負責前半段，設定兩小時上限，立即以書面回覆確保界線，避免無限修改。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">主持前45分鐘</li><li class="hit">議程九十分鐘</li><li class="hit">準備上限兩小時</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">抄送太太</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card pass" data-v="pass" id="p-social-activist">
+  <header>
+    <div class="score pass">90</div>
+    <div class="who">
+      <h2>梁詠欣</h2>
+      <p class="meta"><span class="badge pass">符合</span> 事業篇 · Gemini</p>
+    </div>
+  </header>
+  <p class="why"><mark>傍晚、不預審、不公布姓名有；金流段臆測補償金</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">商家邀我參加社區座談。居民平常要上班，我希望改傍晚。我可以參加，但要能提問、不預審發言，也會說明資料限制。不能公布未同意的居民姓名，也不承諾支持商家全部主張。這場該怎麼回？</p>
+        <p class="goal">期望：週四午休打兩通電話確認時段；無人接聽就給紙本選項。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">守住中立研究員底線：社區座談的防禦性回覆與溝通策略</p>
+        <p class="s">本月核心任務是守住研究中立底線。週四午休必須主動出擊，致電商家要求將座談改至傍晚，並書面定錨「自由提問、不預審發言、保護居民隱私、不為特定主張背書」等原則。若對方不接受，則果斷拒絕出席，改以書面報告替代，確保專案信譽不受地方利益綁架。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">改到傍晚</li><li class="hit">不預審發言</li><li class="hit">不公布未同意姓名</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">臆測地方補償金</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card pass" data-v="pass" id="p-group-buying-mom">
+  <header>
+    <div class="score pass">94</div>
+    <div class="who">
+      <h2>陳淑惠</h2>
+      <p class="meta"><span class="badge pass">符合</span> 財運篇 · Gemini</p>
+    </div>
+  </header>
+  <p class="why"><mark>週六攤、兩小時、三千上限、貨款分開都有；孩子可拒絕包貨沒寫</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我做社區團購，週三週五傍晚要交貨，晚上九點後隔日才回。家用跟代收貨款要分開，單團自有資金風險上限三千元。朋友邀週五擺攤，我還沒答應，因為原有交貨不能延誤。對方改週六、攤費五百且有人共顧。這攤我該不該接？</p>
+        <p class="goal">期望：先守交貨與接送；新團額外工時兩小時內；不拿未交貨款付私人支出。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">守住原有團購信用，限時限額嘗試週六擺攤開源</p>
+        <p class="s">針對週六擺攤邀請，判斷為可接，但必須堅守先守後開原則。本週請與朋友明確約定兩小時工時底線，並準備獨立零錢包，將五百元攤費與週轉金控制在三千元內，與家用及團購代收貨款徹底分流，確保不影響原有交貨與接送。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">交貨不能延誤</li><li class="hit">攤費五百</li><li class="hit">風險三千內</li><li class="hit">家用與貨款分開</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">孩子可拒絕包貨沒寫</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card pass" data-v="pass" id="p-spiritual-elder">
+  <header>
+    <div class="score pass">94</div>
+    <div class="who">
+      <h2>廖素蘭</h2>
+      <p class="meta"><span class="badge pass">符合</span> 家庭篇 · Groq</p>
+    </div>
+  </header>
+  <p class="why"><mark>單次300、不買全年、月預算三千有對到</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">朋友邀週末靜坐課，我有興趣但還沒付款。我想先看費用、日期、取消方式能不能放進每月三千元興趣預算。對方若是單次三百元且可自由退出，我願意報名一次，拒絕同時買全年方案。也不要用課程說法去指揮女兒帶孫子。我該怎麼決定？</p>
+        <p class="goal">期望：資料不齊就參加免費聚會；不借款；不自動續費。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">週末靜坐課參與決策</p>
+        <p class="s">先確認費用與取消條款，對照月預算，先參加免費聚會測試，再依序完成付款、與女兒溝通，保留財務與家庭界線。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">單次300元</li><li class="hit">可自由退出</li><li class="hit">不自動續費</li><li class="hit">不指揮女兒帶孫</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="none">這份沒有明顯踩線句</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card pass" data-v="pass" id="p-gen-z-student">
+  <header>
+    <div class="score pass">94</div>
+    <div class="who">
+      <h2>邱子軒</h2>
+      <p class="meta"><span class="badge pass">符合</span> 工作篇 · Gemini</p>
+    </div>
+  </header>
+  <p class="why"><mark>十一點離場、三百元、分鏡備案有</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">同學邀週六全天拍片，我下午有書店班。他們後來改上午九到十一點、有分工表。我可以負責字幕，十一點要回家。不能借錢參加，一次活動最多大約三百元兩小時。升學志願不要父母代填。我該不該去？</p>
+        <p class="goal">期望：不影響排班；借不到電腦就先畫分鏡；不要幫我決定告白。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">守住書店排班與財務底線，用具體行動拿回升學與人生的主導權</p>
+        <p class="s">週六拍片可去但須死守十一點離場底線，不容影響下午書店班。借不到電腦就果斷改畫分鏡，守住三百元預算。本月內整理好升學志願計畫向父母展現實力，感情告白由自己定奪，全面拿回人生主導權。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">十一點必須離開</li><li class="hit">下午書店班</li><li class="hit">最多三百元</li><li class="hit">借不到電腦改畫分鏡</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="none">這份沒有明顯踩線句</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card pass" data-v="pass" id="p-blue-collar-worker">
+  <header>
+    <div class="score pass">94</div>
+    <div class="who">
+      <h2>吳萬財</h2>
+      <p class="meta"><span class="badge pass">符合</span> 工作篇 · Gemini</p>
+    </div>
+  </header>
+  <p class="why"><mark>週日不看現場、吃飯另約、平日加費用確認</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我做室內裝修水電統包。同業邀週日下午聚餐，後來又要我順道看未付費工地。週日我通常不接例行工程。追加項目一定要照片或文字確認。大額支出要先跟太太核對。家用預備金和營運金是分開的。這邀約我該怎麼回？</p>
+        <p class="goal">期望：吃飯另外約；看現場排平日；先把時間和費用確認再安排。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">明確畫出專業界線，別讓同業人情透支你的假日與專業價值</p>
+        <p class="s">針對同業試探，今天必須立刻發送訊息婉拒週日看現場，並將聚餐與工作拆開。堅守週日不接案、大額支出與太太核對、家用與營運金分開的底線，用平日、收費、文字確認三原則重新定錨你的專業價值。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">週日不接例行工程</li><li class="hit">吃飯另外約</li><li class="hit">看現場排平日並先問費用</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="none">這份沒有明顯踩線句</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card pass" data-v="pass" id="p-senior-citizen">
+  <header>
+    <div class="score pass">96</div>
+    <div class="who">
+      <h2>洪金土</h2>
+      <p class="meta"><span class="badge pass">符合</span> 家庭篇 · Gemini</p>
+    </div>
+  </header>
+  <p class="why"><mark>密碼、十分鐘、三百元、不網路付款都有；把兒女寫成要拿走控制權</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我一個人住二樓公寓。兒女會關心，但常常整天追問我出門去哪。女兒住一小時車程，不能隨時來。我想把舊港口照片標好地點給家人看，也不想把提款密碼交出去。這件事我該怎麼跟他們講，才不會被管整天？</p>
+        <p class="goal">期望：字要放大讓我自己核對。不要叫我網路付款。先講回程怎麼回來、一次不要超過十分鐘。交通最多再加三百元。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">守住財務自主與生活界線：用舊照片與明確規則讓兒女安心放手</p>
+        <p class="s">本報告針對獨居長者面臨兒女過度關切與財務自主權爭奪，給出明確的防守與溝通策略。透過主動去銀行做實體防守、用舊港口照片定錨行程，並設定十分鐘通話規則，在不破壞親子關係的前提下，守住提款密碼與個人隱私。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">提款密碼自己保管</li><li class="hit">通話不超過十分鐘</li><li class="hit">計程車最多三百</li><li class="hit">拒絕網路付款</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="miss">兒女要拿走財務控制權（輸入沒說）</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card pass" data-v="pass" id="p-intern">
+  <header>
+    <div class="score pass">98</div>
+    <div class="who">
+      <h2>許庭萱</h2>
+      <p class="meta"><span class="badge pass">符合</span> 工作篇 · Gemini</p>
+    </div>
+  </header>
+  <p class="why"><mark>有今晚八點前第一輪、明天十點補齊的台詞</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">我是外商公關行銷實習生、大四。前輩說稿有問題，我習慣立刻回「好的收到，今晚加班改好」。可是晚上還有報告，連續加班我會撐不住。這次改稿我該怎麼回，才不會被當成不負責，也不把今晚全部賠進去？</p>
+        <p class="goal">期望：給我今晚可做完的範圍、可跟前輩講的短句、以及明天補交的替代。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">停止用廉價加班交換負責：外商實習生的精準溝通與界線談判術</p>
+        <p class="s">停止反射性答應加班。今晚透過「分段交付」策略，先改核心部分，其餘明天早上補齊，既能兼顧大四學校報告，又能展現外商實習生應有的專業時間管理能力。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">今晚八點前第一輪</li><li class="hit">明天早上十點補齊</li><li class="hit">不要反射性答應加班</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="none">這份沒有明顯踩線句</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+<article class="card pass" data-v="pass" id="p-compliance-accountant">
+  <header>
+    <div class="score pass">98</div>
+    <div class="who">
+      <h2>莊美玲</h2>
+      <p class="meta"><span class="badge pass">符合</span> 工作篇 · Gemini</p>
+    </div>
+  </header>
+  <p class="why"><mark>不放行＋週五五點補件短句都有</mark></p>
+  <details>
+    <summary>看他問了什麼、報告怎麼回</summary>
+    <div class="grid2">
+      <section>
+        <h3>他填進去的問題</h3>
+        <p class="q">發票品名與合約完全不符。沒有總經理特批簽核，這筆款我不會放行。業務說會影響客戶關係，要我先通融。我該怎麼回，才能守住放行條件，又給對方一條補件路徑？</p>
+        <p class="goal">期望：列出放行條件、補件期限、以及我能說出口的短句。</p>
+      </section>
+      <section>
+        <h3>報告標題</h3>
+        <p class="t">守住財務合規底線的專業談判術</p>
+        <p class="s">堅守沒有總經理特批簽核絕不放行的底線，將發票品名與合約不符定性為稅務風險。今天下午立即給予業務具體短句，明確以本週五下午五點為補件期限，要求其補齊總經理特批單或重開發票。透過書面化與責任上移，既維護財務合規，又提供合理解決路徑。</p>
+      </section>
+    </div>
+    <div class="grid2">
+      <section>
+        <h3>有對到的重點</h3>
+        <ul class="hits"><li class="hit">沒特批不放行</li><li class="hit">週五下午五點補件</li><li class="hit">可重開發票</li></ul>
+      </section>
+      <section>
+        <h3>標紅：沒對到／寫錯</h3>
+        <ul class="misses"><li class="none">這份沒有明顯踩線句</li></ul>
+      </section>
+    </div>
+  </details>
+</article>
+  <p class="foot">資料來自 2026-09-08 正式站 generate · 未部署此頁到官網 · 這是內部觀看頁</p>
+</div>
+<script>
+const chips=[...document.querySelectorAll('.chip')];
+chips.forEach(ch=>ch.onclick=()=>{
+  chips.forEach(x=>x.classList.remove('active'));
+  ch.classList.add('active');
+  const f=ch.dataset.f;
+  document.querySelectorAll('.card').forEach(c=>{
+    c.style.display=(f==='all'||c.dataset.v===f)?'':'none';
+  });
+  window.scrollTo({top:0,behavior:'smooth'});
+});
+</script>
+</body>
+</html>
