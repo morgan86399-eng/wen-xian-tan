@@ -1151,12 +1151,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    document.getElementById('memberOpenPurchaseModalBtn')?.addEventListener('click', () => {
-      openPurchaseModal();
-    });
-    document.getElementById('memberHeaderRechargeBtn')?.addEventListener('click', () => {
-      openPurchaseModal();
-    });
+    const openBtn = document.getElementById('memberOpenPurchaseModalBtn');
+    if (openBtn) openBtn.onclick = () => openPurchaseModal();
+    const headerBtn = document.getElementById('memberHeaderRechargeBtn');
+    if (headerBtn) headerBtn.onclick = () => openPurchaseModal();
 
     renderPricingPlans();
     renderThemePicker();
