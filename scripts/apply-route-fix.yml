@@ -1,8 +1,0 @@
-name: apply route fix patch
-on:
-  workflow_dispatch:
-jobs:
-  apply:
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo ok
