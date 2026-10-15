@@ -1,0 +1,120 @@
+diff --git a/index.html b/index.html
+index 76cd13e..21566d2 100644
+--- a/index.html
++++ b/index.html
+@@ -37,7 +37,7 @@
+     <div class="celestial-transition__mist celestial-transition__mist--one"></div>
+     <div class="celestial-transition__mist celestial-transition__mist--two"></div>
+     <div class="celestial-transition__stars" aria-hidden="true"></div>
+-    <p class="celestial-couplet celestial-couplet--right">天公疼慢人誠心改變</p>
++    <p class="celestial-couplet celestial-couplet--right">天公疼憨人誠心改變</p>
+     <p class="celestial-couplet celestial-couplet--left">老祖惜善者渡化一切</p>
+     <div class="celestial-figure" aria-hidden="true">
+       <div class="celestial-figure__aureole"></div>
+diff --git a/src/css/style.css b/src/css/style.css
+index 6468c95..1592e42 100644
+--- a/src/css/style.css
++++ b/src/css/style.css
+@@ -537,6 +537,7 @@ p {
+   border: none;
+   background: transparent;
+   color: var(--text-muted);
++  text-decoration: none;
+   font-weight: 700;
+   font-size: clamp(0.78rem, 1.1vw, 0.88rem);
+   padding: 6px clamp(10px, 1.2vw, 14px);
+@@ -604,6 +605,7 @@ p {
+   appearance: none;
+   border: none;
+   cursor: pointer;
++  text-decoration: none;
+   font-weight: 700;
+   font-size: 0.92rem;
+   letter-spacing: 0.02em;
+@@ -2746,6 +2748,7 @@ p {
+   border: none;
+   background: transparent;
+   color: var(--text-muted);
++  text-decoration: none;
+   font-size: 0.72rem;
+   font-weight: 700;
+   padding: 6px 0;
+diff --git a/src/js/app.js b/src/js/app.js
+index 59e7dd7..3574308 100644
+--- a/src/js/app.js
++++ b/src/js/app.js
+@@ -24,6 +24,7 @@ import {
+ } from './birth-ui.js';
+ import { WalletManager } from './wallet.js';
+ import { MemberManager } from './member.js';
++import { pathForTab, tabFromPath } from './tab-routes.js';
+ import { openCamera, openFilePicker, ensurePalmCaptureDom, closeCameraDialog } from './palm_capture.js';
+ import { showLegalModal } from './legal.js';
+ import { setOverlayOpen, syncUiLayerLock } from './ui-layer.js';
+@@ -68,6 +69,12 @@ document.addEventListener('DOMContentLoaded', () => {
+             if (typeof updateCheckoutSummary === 'function') {
+               updateCheckoutSummary();
+             }
++            const notice = document.getElementById('paymentsNotice');
++            if (notice) {
++              notice.textContent = siteConfig.paymentsEnabled === true
++                ? '線上付款由合作金流服務商處理。'
++                : '線上收款整備中，開放後將公告合作的金流服務商。';
++            }
+           } catch (_) {}
+           return siteConfig;
+         })
+@@ -583,9 +590,16 @@ document.addEventListener('DOMContentLoaded', () => {
+   celestialTransitionSkip?.addEventListener('click', () => finishCelestialTransition?.());
+ 
+   // ============ 2. App Tab Switching ============
+-  function switchTab(tabId) {
++  function switchTab(tabId, historyMode = 'push') {
+     dismissUiLayers();
+     state.currentTab = tabId;
++    const nextPath = pathForTab(tabId);
++    const currentPath = window.location.pathname.replace(/\/+$/, '') || '/';
++    if (historyMode !== 'skip' && currentPath !== nextPath) {
++      const url = `${nextPath}${window.location.search}${window.location.hash}`;
++      if (historyMode === 'replace') window.history.replaceState({ tab: tabId }, '', url);
++      else window.history.pushState({ tab: tabId }, '', url);
++    }
+ 
+     headerTabBtns.forEach((btn) => {
+       btn.classList.toggle('active', btn.dataset.tab === tabId);
+@@ -622,13 +636,20 @@ document.addEventListener('DOMContentLoaded', () => {
+     window.scrollTo({ top: 0, behavior: 'smooth' });
+   }
+ 
+-  headerTabBtns.forEach((btn) => {
+-    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+-  });
++  function onTabClick(event) {
++    const btn = event.currentTarget;
++    event.preventDefault();
++    const tabId = btn.dataset.tab;
++    if (tabId === state.currentTab && tabFromPath(window.location.pathname) === tabId) {
++      window.scrollTo({ top: 0, behavior: 'smooth' });
++      return;
++    }
++    switchTab(tabId);
++  }
+ 
+-  bottomTabBtns.forEach((btn) => {
+-    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+-  });
++  headerTabBtns.forEach((btn) => btn.addEventListener('click', onTabClick));
++  bottomTabBtns.forEach((btn) => btn.addEventListener('click', onTabClick));
++  window.addEventListener('popstate', () => switchTab(tabFromPath(window.location.pathname), 'skip'));
+ 
+   // 全域委派事件：所有 [data-goto-tab] 按鈕點擊切換
+   document.addEventListener('click', (e) => {
+@@ -3428,6 +3449,8 @@ document.addEventListener('DOMContentLoaded', () => {
+     renderThemesHub();
+     updateTopBarUserStatus();
+     ensurePalmCaptureDom();
++    const initialTab = tabFromPath(window.location.pathname);
++    if (initialTab !== 'hub') switchTab(initialTab, 'skip');
+     await handleAuthReturnFromUrl();
+     await handlePaymentReturnFromUrl();
+     if (state.currentTab === 'history') renderHistoryReports();
