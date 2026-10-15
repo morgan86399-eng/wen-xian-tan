@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { tabFromPath, pathForTab, TAB_PATHS } from '../src/js/tab-routes.js';
 import { removeConflictingRouteFiles } from '../scripts/copy-static.mjs';
+import { applyUploadPatch } from '../scripts/apply-upload-patch.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let passed = 0;
@@ -57,6 +58,24 @@ await check('同時存在的 route.html 與 route/index.html 會被刪掉', asyn
   await assert.rejects(access(path.join(dir, 'auth.html')));
   await assert.rejects(access(path.join(dir, 'auth/index.html')));
   await access(path.join(dir, 'index.html'));
+});
+
+await check('登入修正補丁可套用，而且第二次不會再改檔', async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), 'zenasker-patch-'));
+  const files = ['index.html', 'src/css/style.css', 'src/js/app.js'];
+  for (const file of [...files, 'upload-fix.patch']) {
+    const dest = path.join(dir, file);
+    await mkdir(path.dirname(dest), { recursive: true });
+    await writeFile(dest, readFileSync(path.join(root, file)));
+  }
+  await applyUploadPatch(dir);
+  const once = files.map((file) => readFileSync(path.join(dir, file)));
+  const applied = await applyUploadPatch(dir);
+  const twice = files.map((file) => readFileSync(path.join(dir, file)));
+  assert.equal(applied.length, 3);
+  assert.deepEqual(twice, once);
+  assert.match(once[0].toString(), /天公疼憨人誠心改變/);
+  assert.match(once[2].toString(), /tab-routes\.js/);
 });
 
 if (!process.exitCode) console.log(`\n${passed} passed`);
