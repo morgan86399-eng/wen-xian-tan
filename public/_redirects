@@ -1,3 +1,6 @@
 # 正式站只認 www；apex 一律 301
+# 分頁網址（/auth、/member、/history、/stories）不要在這裡 308 指回自己。
+# 這些路徑由首頁同一支程式處理。若同時部署 route.html 與 route/index.html，
+# Cloudflare Pages 會無限 308，瀏覽器顯示 ERR_TOO_MANY_REDIRECTS。
 https://zenasker.com/* https://www.zenasker.com/:splat 301
 https://zenasker.com https://www.zenasker.com/ 301
